@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "./firebase";
 import { signOut } from "firebase/auth";
-import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc } from "firebase/firestore";
+import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc, where } from "firebase/firestore";
 
 export default function Home() {
   const router = useRouter();
@@ -17,6 +17,8 @@ export default function Home() {
   const [comentarios, setComentarios] = useState<any>({});
   const [showComentarios, setShowComentarios] = useState<any>({});
   const [nuevoComentario, setNuevoComentario] = useState<any>({});
+  const [notificaciones, setNotificaciones] = useState<any[]>([]);
+  const [showNotif, setShowNotif] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -26,6 +28,7 @@ export default function Home() {
         setUser(user);
         setLoading(false);
         cargarPosts();
+        cargarNotificaciones(user.email || "");
       }
     });
     return () => unsubscribe();
@@ -36,6 +39,25 @@ export default function Home() {
     const snapshot = await getDocs(q);
     const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
     setPosts(data);
+  };
+
+  const cargarNotificaciones = async (email: string) => {
+    const q = query(
+      collection(db, "notificaciones"),
+      where("para", "==", email),
+      orderBy("fecha", "desc")
+    );
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    setNotificaciones(data);
+  };
+
+  const marcarLeidas = async () => {
+    const noLeidas = notificaciones.filter((n) => !n.leida);
+    for (const n of noLeidas) {
+      await updateDoc(doc(db, "notificaciones", n.id), { leida: true });
+    }
+    setNotificaciones(notificaciones.map((n) => ({ ...n, leida: true })));
   };
 
   const cargarComentarios = async (postId: string) => {
@@ -52,7 +74,7 @@ export default function Home() {
     setShowComentarios((prev: any) => ({ ...prev, [postId]: !prev[postId] }));
   };
 
-  const publicarComentario = async (postId: string) => {
+  const publicarComentario = async (postId: string, postAutorEmail: string) => {
     const texto = nuevoComentario[postId];
     if (!texto?.trim()) return;
     await addDoc(collection(db, "posts", postId, "comentarios"), {
@@ -61,6 +83,15 @@ export default function Home() {
       email: user.email,
       fecha: serverTimestamp(),
     });
+    if (postAutorEmail !== user.email) {
+      await addDoc(collection(db, "notificaciones"), {
+        para: postAutorEmail,
+        de: user.displayName || user.email,
+        mensaje: `comentó en tu publicación: "${texto.slice(0, 50)}..."`,
+        leida: false,
+        fecha: serverTimestamp(),
+      });
+    }
     setNuevoComentario((prev: any) => ({ ...prev, [postId]: "" }));
     await cargarComentarios(postId);
   };
@@ -95,6 +126,8 @@ export default function Home() {
     "Actividad": "bg-green-100 text-green-700",
   };
 
+  const noLeidas = notificaciones.filter((n) => !n.leida).length;
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <p className="text-gray-400">Cargando...</p>
@@ -110,9 +143,36 @@ export default function Home() {
           <button onClick={() => router.push("/portafolio")} className="text-sm text-gray-500 hover:text-gray-800">Mi portafolio</button>
           <button onClick={() => router.push("/comunidad")} className="text-sm text-gray-500 hover:text-gray-800">Comunidad</button>
           <button onClick={() => router.push("/perfil")} className="text-sm text-gray-500 hover:text-gray-800">Mi perfil</button>
+          <button
+            onClick={() => { setShowNotif(!showNotif); if (!showNotif) marcarLeidas(); }}
+            className="relative text-sm text-gray-500 hover:text-gray-800"
+          >
+            🔔
+            {noLeidas > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {noLeidas}
+              </span>
+            )}
+          </button>
           <button onClick={handleLogout} className="text-sm text-red-500 hover:text-red-700">Cerrar sesión</button>
         </div>
       </nav>
+
+      {/* Panel de notificaciones */}
+      {showNotif && (
+        <div className="fixed top-14 right-4 w-80 bg-white rounded-2xl border border-gray-200 shadow-lg z-20 p-4">
+          <h3 className="text-sm font-medium text-gray-800 mb-3">Notificaciones</h3>
+          {notificaciones.length === 0 && (
+            <p className="text-xs text-gray-400">No tienes notificaciones.</p>
+          )}
+          {notificaciones.map((n) => (
+            <div key={n.id} className={`mb-3 p-3 rounded-xl text-xs ${n.leida ? "bg-gray-50" : "bg-green-50 border border-green-100"}`}>
+              <span className="font-medium text-gray-800">{n.de}</span>
+              <span className="text-gray-600"> {n.mensaje}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-4 gap-6">
 
@@ -225,7 +285,7 @@ export default function Home() {
                   onClick={() => toggleComentarios(post.id)}
                   className="text-xs text-gray-400 hover:text-blue-500"
                 >
-                  💬 {showComentarios[post.id] ? "Ocultar comentarios" : "Comentar"}
+                  💬 {showComentarios[post.id] ? "Ocultar" : "Comentar"}
                 </button>
               </div>
 
@@ -251,11 +311,11 @@ export default function Home() {
                       placeholder="Escribe un comentario..."
                       value={nuevoComentario[post.id] || ""}
                       onChange={(e) => setNuevoComentario((prev: any) => ({ ...prev, [post.id]: e.target.value }))}
-                      onKeyDown={(e) => e.key === "Enter" && publicarComentario(post.id)}
+                      onKeyDown={(e) => e.key === "Enter" && publicarComentario(post.id, post.email)}
                       className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-green-400"
                     />
                     <button
-                      onClick={() => publicarComentario(post.id)}
+                      onClick={() => publicarComentario(post.id, post.email)}
                       className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-xl"
                     >
                       Enviar
