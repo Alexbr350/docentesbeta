@@ -19,6 +19,7 @@ export default function Home() {
   const [nuevoComentario, setNuevoComentario] = useState<any>({});
   const [notificaciones, setNotificaciones] = useState<any[]>([]);
   const [showNotif, setShowNotif] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -139,6 +140,13 @@ export default function Home() {
       <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
         <h1 className="text-lg font-semibold text-gray-800">Docentes<span className="text-green-600">Beta</span></h1>
         <div className="flex items-center gap-4">
+        <input
+  type="text"
+  placeholder="Buscar..."
+  value={busqueda}
+  onChange={(e) => setBusqueda(e.target.value)}
+  className="bg-gray-100 text-sm px-3 py-1.5 rounded-xl border border-gray-200 focus:outline-none focus:border-green-400 w-48"
+/>
           <button onClick={() => router.push("/")} className="text-sm text-gray-500 hover:text-gray-800">Feed</button>
           <button onClick={() => router.push("/portafolio")} className="text-sm text-gray-500 hover:text-gray-800">Mi portafolio</button>
           <button onClick={() => router.push("/comunidad")} className="text-sm text-gray-500 hover:text-gray-800">Comunidad</button>
@@ -268,7 +276,11 @@ export default function Home() {
               Aún no hay publicaciones. ¡Sé el primero en publicar!
             </div>
           )}
-          {posts.map((post) => (
+         {posts.filter((post) =>
+  post.contenido?.toLowerCase().includes(busqueda.toLowerCase()) ||
+  post.autor?.toLowerCase().includes(busqueda.toLowerCase()) ||
+  post.tipo?.toLowerCase().includes(busqueda.toLowerCase())
+).map((post) => (
             <div key={post.id} className="bg-white rounded-2xl border border-gray-200 p-4 mb-4">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-semibold">
