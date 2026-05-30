@@ -15,7 +15,7 @@ export default function Portafolio() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
-        router.push("/login");
+        router.push("/landing");
       } else {
         setUser(user);
         cargarMisPosts(user.email || "");
@@ -31,7 +31,7 @@ export default function Portafolio() {
       orderBy("fecha", "desc")
     );
     const snapshot = await getDocs(q);
-    const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
     setPosts(data);
     setLoading(false);
   };
@@ -44,100 +44,137 @@ export default function Portafolio() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.push("/login");
+    router.push("/landing");
   };
 
   const coloresTipo: any = {
     "Diario": "bg-blue-100 text-blue-700",
-    "Planeación": "bg-purple-100 text-purple-700",
-    "Narrativa": "bg-yellow-100 text-yellow-700",
-    "Extra": "bg-blue-100 text-blue-700",
+    "Planeación": "bg-indigo-100 text-indigo-700",
+    "Narrativa": "bg-amber-100 text-amber-700",
+    "Extra": "bg-cyan-100 text-cyan-700",
     "Pedir ayuda": "bg-red-100 text-red-700",
+  };
+
+  const iconosTipo: any = {
+    "Diario": "📓",
+    "Planeación": "📋",
+    "Narrativa": "✍️",
+    "Extra": "📎",
+    "Pedir ayuda": "❓",
   };
 
   const tipos = ["Todos", "Diario", "Planeación", "Narrativa", "Extra", "Pedir ayuda"];
   const postsFiltrados = filtro === "Todos" ? posts : posts.filter((p) => p.tipo === filtro);
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <p className="text-gray-400">Cargando portafolio...</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="text-center">
+        <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
+        <p className="text-slate-400 text-sm">Cargando portafolio...</p>
+      </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
-        <h1 className="text-lg font-semibold text-gray-800">Docentes<span className="text-green-600">Beta</span></h1>
-        <div className="flex items-center gap-4">
-          <button onClick={() => router.push("/")} className="text-sm text-gray-500 hover:text-gray-800">Feed</button>
-          <button onClick={() => router.push("/portafolio")} className="text-sm text-gray-500 hover:text-gray-800">Mi portafolio</button>
-<button onClick={() => router.push("/comunidad")} className="text-sm text-gray-500 hover:text-gray-800">Comunidad</button>
-          <button onClick={handleLogout} className="text-sm text-red-500 hover:text-red-700">Cerrar sesión</button>
+    <div className="min-h-screen bg-slate-100">
+
+      {/* Navbar */}
+      <nav className="bg-slate-900 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-xl">
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full" />
+          <div>
+            <p className="text-xs text-slate-400 leading-none">ENSFA</p>
+            <h1 className="text-sm font-bold text-white leading-tight">Docentes<span className="text-blue-400">Beta</span></h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {["Feed", "Portafolio", "Comunidad", "Perfil"].map((item) => (
+            <button
+              key={item}
+              onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
+              className={`text-xs font-medium px-3 py-1.5 rounded-lg transition ${item === "Portafolio" ? "text-white bg-slate-700" : "text-slate-400 hover:text-white hover:bg-slate-800"}`}
+            >
+              {item}
+            </button>
+          ))}
+          <button onClick={handleLogout} className="text-xs text-red-400 hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition">
+            Salir
+          </button>
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6 flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-2xl font-semibold">
-            {user?.email?.charAt(0).toUpperCase()}
+      <div className="max-w-5xl mx-auto px-4 py-6">
+
+        {/* Header perfil */}
+        <div className="bg-slate-900 rounded-2xl p-6 mb-6 flex items-center gap-5 shadow-xl">
+          <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-extrabold shadow-lg flex-shrink-0">
+            {user?.displayName?.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800">{user?.displayName || "Practicante"}</h2>
-            <p className="text-sm text-gray-500">{user?.email}</p>
-            <p className="text-xs text-green-600 mt-1">{posts.length} publicaciones en total</p>
+          <div className="flex-1">
+            <h2 className="text-lg font-extrabold text-white">{user?.displayName || "Practicante"}</h2>
+            <p className="text-sm text-slate-400">{user?.email}</p>
+            <div className="flex gap-2 mt-2">
+              <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-medium">Practicante docente</span>
+              <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">{posts.length} publicaciones</span>
+            </div>
           </div>
+          <img src="/logo.png" alt="ENSFA" className="w-12 h-12 rounded-full opacity-60" />
         </div>
 
         {/* Estadísticas */}
         <div className="grid grid-cols-5 gap-3 mb-6">
           {["Diario", "Planeación", "Narrativa", "Extra", "Pedir ayuda"].map((tipo) => (
-            <div key={tipo} className="bg-white rounded-2xl border border-gray-200 p-3 text-center">
-              <div className="text-2xl font-semibold text-gray-800">
+            <div key={tipo} className="bg-white rounded-2xl p-4 text-center shadow-md hover:shadow-lg transition">
+              <div className="text-2xl mb-1">{iconosTipo[tipo]}</div>
+              <div className="text-2xl font-extrabold text-gray-800">
                 {posts.filter((p) => p.tipo === tipo).length}
               </div>
-              <div className="text-xs text-gray-400 mt-1">{tipo}</div>
+              <div className="text-xs text-slate-400 mt-0.5 font-medium">{tipo}</div>
             </div>
           ))}
         </div>
 
         {/* Filtros */}
-        <div className="flex gap-2 flex-wrap mb-4">
+        <div className="flex gap-2 flex-wrap mb-5">
           {tipos.map((tipo) => (
             <button
               key={tipo}
               onClick={() => setFiltro(tipo)}
-              className={`text-xs px-3 py-1.5 rounded-full border transition ${filtro === tipo ? "bg-green-600 text-white border-green-600" : "border-gray-200 text-gray-500 hover:border-green-400"}`}
+              className={`text-xs px-4 py-1.5 rounded-full border transition font-semibold ${filtro === tipo ? "bg-slate-900 text-white border-slate-900 shadow-md" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
             >
-              {tipo} {tipo !== "Todos" && `(${posts.filter((p) => p.tipo === tipo).length})`}
+              {tipo !== "Todos" && iconosTipo[tipo]} {tipo} {tipo !== "Todos" && `(${posts.filter((p) => p.tipo === tipo).length})`}
             </button>
           ))}
         </div>
 
-        {/* Lista de publicaciones */}
+        {/* Publicaciones */}
         {postsFiltrados.length === 0 && (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center text-gray-400 text-sm">
+          <div className="bg-white rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
             No tienes publicaciones de tipo "{filtro}" todavía.
           </div>
         )}
         {postsFiltrados.map((post) => (
-          <div key={post.id} className="bg-white rounded-2xl border border-gray-200 p-5 mb-4">
+          <div key={post.id} className="bg-white rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
             <div className="flex items-center justify-between mb-3">
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${coloresTipo[post.tipo] || "bg-gray-100 text-gray-600"}`}>
-                {post.tipo}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{iconosTipo[post.tipo]}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>
+                  {post.tipo}
+                </span>
+              </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-slate-400 font-medium">
                   {post.fecha?.toDate?.()?.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
                 </span>
                 <button
                   onClick={() => eliminar(post.id)}
-                  className="text-xs text-red-400 hover:text-red-600"
+                  className="text-xs text-red-400 hover:text-red-600 font-medium hover:bg-red-50 px-2 py-1 rounded-lg transition"
                 >
                   Eliminar
                 </button>
               </div>
             </div>
-            <p className="text-sm text-gray-700 leading-relaxed">{post.contenido}</p>
+            <p className="text-sm text-slate-700 leading-relaxed">{post.contenido}</p>
           </div>
         ))}
       </div>
