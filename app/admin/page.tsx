@@ -5,7 +5,7 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp } from "firebase/firestore";
 
-const ADMINS = [
+const ADMINS: string[] = [
   // Aquí irán los correos de los evaluadores
   // Ejemplo: "evaluador@ensfa.edu.mx"
 ];
