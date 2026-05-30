@@ -24,8 +24,8 @@ export default function Home() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
-  router.push("/landing");
-} else {
+        router.push("/landing");
+      } else {
         setUser(user);
         setLoading(false);
         cargarPosts();
@@ -109,7 +109,7 @@ export default function Home() {
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.push("/login");
+    router.push("/landing");
   };
 
   const coloresTipo: any = {
@@ -130,61 +130,68 @@ export default function Home() {
   );
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-50">
+    <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
-        <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-          <span className="text-white text-xl font-bold">D</span>
-        </div>
-        <p className="text-gray-400 text-sm">Cargando...</p>
+        <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
+        <p className="text-slate-400 text-sm">Cargando DocentesBeta...</p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Navbar */}
-      <nav className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
-            <span className="text-white text-sm font-bold">D</span>
-          </div>
-          <h1 className="text-lg font-bold text-gray-800">Docentes<span className="text-blue-600">Beta</span></h1>
-        </div>
+    <div className="min-h-screen bg-slate-100">
+
+      {/* Navbar oscuro */}
+      <nav className="bg-slate-900 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-xl">
         <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full" />
+          <div>
+            <p className="text-xs text-slate-400 leading-none">ENSFA</p>
+            <h1 className="text-sm font-bold text-white leading-tight">Docentes<span className="text-blue-400">Beta</span></h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
           <input
             type="text"
             placeholder="🔍 Buscar..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className="bg-slate-100 text-sm px-3 py-1.5 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-400 w-44"
+            className="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-blue-500 w-40 placeholder-slate-500"
           />
-          <button onClick={() => router.push("/")} className="text-sm text-slate-500 hover:text-blue-600 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 transition">Feed</button>
-          <button onClick={() => router.push("/portafolio")} className="text-sm text-slate-500 hover:text-blue-600 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 transition">Portafolio</button>
-          <button onClick={() => router.push("/comunidad")} className="text-sm text-slate-500 hover:text-blue-600 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 transition">Comunidad</button>
-          <button onClick={() => router.push("/perfil")} className="text-sm text-slate-500 hover:text-blue-600 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 transition">Perfil</button>
+          {["Feed", "Portafolio", "Comunidad", "Perfil"].map((item) => (
+            <button
+              key={item}
+              onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
+              className="text-xs text-slate-400 hover:text-white font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition"
+            >
+              {item}
+            </button>
+          ))}
           <button
             onClick={() => { setShowNotif(!showNotif); if (!showNotif) marcarLeidas(); }}
-            className="relative text-lg px-2 py-1 rounded-lg hover:bg-blue-50 transition"
+            className="relative text-lg px-2 py-1 rounded-lg hover:bg-slate-800 transition"
           >
             🔔
             {noLeidas > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
                 {noLeidas}
               </span>
             )}
           </button>
-          <button onClick={handleLogout} className="text-sm text-red-400 hover:text-red-600 font-medium px-2 py-1 rounded-lg hover:bg-red-50 transition">Salir</button>
+          <button onClick={handleLogout} className="text-xs text-red-400 hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition">
+            Salir
+          </button>
         </div>
       </nav>
 
       {/* Notificaciones */}
       {showNotif && (
-        <div className="fixed top-14 right-4 w-80 bg-white rounded-2xl border border-slate-200 shadow-xl z-20 p-4">
-          <h3 className="text-sm font-semibold text-gray-800 mb-3">🔔 Notificaciones</h3>
+        <div className="fixed top-14 right-4 w-80 bg-white rounded-2xl border border-slate-200 shadow-2xl z-20 p-4">
+          <h3 className="text-sm font-bold text-gray-800 mb-3">🔔 Notificaciones</h3>
           {notificaciones.length === 0 && <p className="text-xs text-gray-400">No tienes notificaciones.</p>}
           {notificaciones.map((n) => (
             <div key={n.id} className={`mb-2 p-3 rounded-xl text-xs ${n.leida ? "bg-slate-50" : "bg-blue-50 border border-blue-100"}`}>
-              <span className="font-semibold text-gray-800">{n.de}</span>
+              <span className="font-bold text-gray-800">{n.de}</span>
               <span className="text-gray-600"> {n.mensaje}</span>
             </div>
           ))}
@@ -195,45 +202,52 @@ export default function Home() {
 
         {/* Sidebar */}
         <div className="col-span-1">
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-4 text-center shadow-sm">
-            <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-bold mx-auto mb-3">
+          <div className="bg-white rounded-2xl p-4 mb-4 text-center shadow-md">
+            <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-extrabold mx-auto mb-3 shadow-lg">
               {user?.displayName?.charAt(0).toUpperCase()}
             </div>
-            <p className="text-sm font-semibold text-gray-800">{user?.displayName || "Practicante"}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{user?.email}</p>
-            <span className="inline-block mt-2 text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">Practicante</span>
+            <p className="text-sm font-bold text-gray-800">{user?.displayName || "Practicante"}</p>
+            <p className="text-xs text-gray-400 mt-0.5 truncate">{user?.email}</p>
+            <span className="inline-block mt-2 text-xs bg-blue-50 text-blue-600 px-3 py-0.5 rounded-full font-medium">Practicante</span>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Mi espacio</p>
+          <div className="bg-white rounded-2xl p-4 shadow-md">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mi espacio</p>
             <div className="flex flex-col gap-0.5">
-              {["Feed", "Portafolio", "Perfil"].map((item) => (
+              {[
+                { label: "📰 Feed", path: "/" },
+                { label: "📁 Portafolio", path: "/portafolio" },
+                { label: "👤 Perfil", path: "/perfil" },
+              ].map((item) => (
                 <button
-                  key={item}
-                  onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
-                  className="text-left px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition">
-                  {item}
+                  key={item.label}
+                  onClick={() => router.push(item.path)}
+                  className="text-left px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition font-medium">
+                  {item.label}
                 </button>
               ))}
             </div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-4 mb-2">Comunidad</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-4 mb-3">Comunidad</p>
             <div className="flex flex-col gap-0.5">
-              {["Preguntas", "Actividades"].map((item) => (
+              {[
+                { label: "❓ Preguntas", path: "/comunidad" },
+                { label: "💡 Actividades", path: "/comunidad" },
+              ].map((item) => (
                 <button
-                  key={item}
-                  onClick={() => router.push("/comunidad")}
-                  className="text-left px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition">
-                  {item}
+                  key={item.label}
+                  onClick={() => router.push(item.path)}
+                  className="text-left px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition font-medium">
+                  {item.label}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Feed */}
+        {/* Feed central */}
         <div className="col-span-2">
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 mb-4 shadow-sm">
+          <div className="bg-white rounded-2xl p-4 mb-4 shadow-md">
             <div className="flex gap-3 mb-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-extrabold flex-shrink-0 shadow">
                 {user?.displayName?.charAt(0).toUpperCase()}
               </div>
               <div
@@ -268,7 +282,7 @@ export default function Home() {
                   <button
                     onClick={publicar}
                     disabled={publicando || !contenido.trim()}
-                    className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-medium shadow-sm"
+                    className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow"
                   >
                     {publicando ? "Publicando..." : "Publicar"}
                   </button>
@@ -278,24 +292,24 @@ export default function Home() {
           </div>
 
           {postsFiltrados.length === 0 && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-400 text-sm shadow-sm">
+            <div className="bg-white rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
               {busqueda ? `No se encontraron resultados para "${busqueda}"` : "Aún no hay publicaciones. ¡Sé el primero!"}
             </div>
           )}
           {postsFiltrados.map((post) => (
-            <div key={post.id} className="bg-white rounded-2xl border border-slate-200 p-4 mb-3 shadow-sm hover:shadow-md transition">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center text-sm font-bold">
+            <div key={post.id} className="bg-white rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow">
                   {post.autor?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-gray-800">{post.autor}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>{post.tipo}</span>
+                  <p className="text-sm font-bold text-gray-900">{post.autor}</p>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>{post.tipo}</span>
                 </div>
               </div>
               <p className="text-sm text-slate-700 leading-relaxed mb-3">{post.contenido}</p>
-              <div className="flex gap-2 border-t border-slate-100 pt-3">
-                <button onClick={() => toggleComentarios(post.id)} className="text-xs text-slate-400 hover:text-blue-500 font-medium transition">
+              <div className="flex gap-3 border-t border-slate-100 pt-3">
+                <button onClick={() => toggleComentarios(post.id)} className="text-xs text-slate-400 hover:text-blue-500 font-semibold transition">
                   💬 {showComentarios[post.id] ? "Ocultar" : "Comentar"}
                 </button>
               </div>
@@ -304,11 +318,11 @@ export default function Home() {
                   {comentarios[post.id]?.length === 0 && <p className="text-xs text-slate-400 mb-3">Aún no hay comentarios.</p>}
                   {comentarios[post.id]?.map((c: any) => (
                     <div key={c.id} className="flex gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                         {c.autor?.charAt(0).toUpperCase()}
                       </div>
                       <div className="bg-slate-50 rounded-xl px-3 py-2 flex-1">
-                        <p className="text-xs font-semibold text-gray-700">{c.autor}</p>
+                        <p className="text-xs font-bold text-gray-700">{c.autor}</p>
                         <p className="text-xs text-slate-600">{c.texto}</p>
                       </div>
                     </div>
@@ -322,7 +336,7 @@ export default function Home() {
                       onKeyDown={(e) => e.key === "Enter" && publicarComentario(post.id, post.email)}
                       className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-400"
                     />
-                    <button onClick={() => publicarComentario(post.id, post.email)} className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-medium">
+                    <button onClick={() => publicarComentario(post.id, post.email)} className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold">
                       Enviar
                     </button>
                   </div>
@@ -334,24 +348,30 @@ export default function Home() {
 
         {/* Panel derecho */}
         <div className="col-span-1">
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Mi avance</p>
+          <div className="bg-white rounded-2xl p-4 shadow-md">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mi avance</p>
             {[
               { label: "Diarios", value: 60, color: "bg-blue-500" },
               { label: "Planeaciones", value: 60, color: "bg-indigo-500" },
               { label: "Narrativa", value: 100, color: "bg-amber-500" },
               { label: "Extras", value: 66, color: "bg-cyan-500" },
             ].map((item) => (
-              <div key={item.label} className="mb-3">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-slate-600 font-medium">{item.label}</span>
+              <div key={item.label} className="mb-4">
+                <div className="flex justify-between text-xs mb-1.5">
+                  <span className="text-slate-700 font-semibold">{item.label}</span>
                   <span className="text-slate-400">{item.value}%</span>
                 </div>
-                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full ${item.color} rounded-full`} style={{ width: `${item.value}%` }}></div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className={`h-full ${item.color} rounded-full shadow-sm`} style={{ width: `${item.value}%` }}></div>
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="bg-slate-900 rounded-2xl p-4 mt-4 shadow-md text-center">
+            <img src="/logo.png" alt="ENSFA" className="w-12 h-12 rounded-full mx-auto mb-2 opacity-90" />
+            <p className="text-xs font-bold text-white">ENSFA</p>
+            <p className="text-xs text-slate-400 mt-0.5">Aguascalientes</p>
           </div>
         </div>
 
