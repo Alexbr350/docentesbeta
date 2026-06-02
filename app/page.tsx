@@ -351,15 +351,15 @@ export default function Home() {
           <div className="bg-white rounded-2xl p-4 shadow-md">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mi avance</p>
             {[
-              { label: "Diarios", value: 60, color: "bg-blue-500" },
-              { label: "Planeaciones", value: 60, color: "bg-indigo-500" },
-              { label: "Narrativa", value: 100, color: "bg-amber-500" },
-              { label: "Extras", value: 66, color: "bg-cyan-500" },
+              { label: "Diarios", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Diario").length / 10) * 100, 100), color: "bg-blue-500" },
+{ label: "Planeaciones", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Planeación").length / 5) * 100, 100), color: "bg-indigo-500" },
+{ label: "Narrativa", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Narrativa").length / 1) * 100, 100), color: "bg-amber-500" },
+{ label: "Extras", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Extra").length / 3) * 100, 100), color: "bg-cyan-500" },
             ].map((item) => (
               <div key={item.label} className="mb-4">
                 <div className="flex justify-between text-xs mb-1.5">
                   <span className="text-slate-700 font-semibold">{item.label}</span>
-                  <span className="text-slate-400">{item.value}%</span>
+                  <span className="text-slate-400">{item.value.toFixed(0)}%</span>
                 </div>
                 <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                   <div className={`h-full ${item.color} rounded-full shadow-sm`} style={{ width: `${item.value}%` }}></div>

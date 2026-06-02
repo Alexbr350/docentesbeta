@@ -47,7 +47,7 @@ export default function Admin() {
     const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
     setPosts(data);
     const cals: any = {};
-    data.forEach((p) => { if (p.calificacion) cals[p.id] = p.calificacion; });
+    data.forEach((p: any) => { if (p.calificacion) cals[p.id] = p.calificacion; });
     setCalificaciones(cals);
   };
 
