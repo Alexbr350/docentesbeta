@@ -3,11 +3,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
-import { collection, getDocs, orderBy, query, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 
 const ADMINS: string[] = [
-  // Aquí irán los correos de los evaluadores
-  // Ejemplo: "evaluador@ensfa.edu.mx"
+  // Agrega aquí el correo del evaluador
 ];
 
 export default function Admin() {
@@ -21,11 +20,12 @@ export default function Admin() {
   const [comentarios, setComentarios] = useState<any>({});
   const [showComentarios, setShowComentarios] = useState<any>({});
   const [nuevoComentario, setNuevoComentario] = useState<any>({});
+  const [calificaciones, setCalificaciones] = useState<any>({});
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
-        router.push("/login");
+        router.push("/landing");
         return;
       }
       if (!ADMINS.includes(user.email || "")) {
@@ -46,6 +46,9 @@ export default function Admin() {
     const snapshot = await getDocs(q);
     const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
     setPosts(data);
+    const cals: any = {};
+    data.forEach((p) => { if (p.calificacion) cals[p.id] = p.calificacion; });
+    setCalificaciones(cals);
   };
 
   const cargarUsuarios = async () => {
@@ -91,32 +94,48 @@ export default function Admin() {
     await cargarComentarios(postId);
   };
 
+  const calificar = async (postId: string, postAutorEmail: string, calificacion: number) => {
+    await updateDoc(doc(db, "posts", postId), { calificacion });
+    await addDoc(collection(db, "notificaciones"), {
+      para: postAutorEmail,
+      de: user.displayName || user.email,
+      mensaje: `calificó tu publicación con ${calificacion}/10 ⭐`,
+      leida: false,
+      fecha: serverTimestamp(),
+    });
+    setCalificaciones((prev: any) => ({ ...prev, [postId]: calificacion }));
+    setPosts(posts.map((p) => p.id === postId ? { ...p, calificacion } : p));
+  };
+
   const handleLogout = async () => {
     await signOut(auth);
-    router.push("/login");
+    router.push("/landing");
   };
 
   const coloresTipo: any = {
     "Diario": "bg-blue-100 text-blue-700",
-    "Planeación": "bg-purple-100 text-purple-700",
-    "Narrativa": "bg-yellow-100 text-yellow-700",
-    "Extra": "bg-blue-100 text-blue-700",
+    "Planeación": "bg-indigo-100 text-indigo-700",
+    "Narrativa": "bg-amber-100 text-amber-700",
+    "Extra": "bg-cyan-100 text-cyan-700",
     "Pedir ayuda": "bg-red-100 text-red-700",
   };
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <p className="text-gray-400">Cargando...</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="text-center">
+        <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
+        <p className="text-slate-400 text-sm">Cargando panel...</p>
+      </div>
     </div>
   );
 
   if (accesoDenegado) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center max-w-sm">
-        <div className="text-4xl mb-4">🔒</div>
-        <h2 className="text-lg font-semibold text-gray-800 mb-2">Acceso denegado</h2>
-        <p className="text-sm text-gray-500 mb-4">No tienes permisos para ver esta página.</p>
-        <button onClick={() => router.push("/")} className="text-sm bg-green-600 text-white px-4 py-2 rounded-xl">
+    <div className="min-h-screen flex items-center justify-center bg-slate-900">
+      <div className="bg-slate-800 rounded-2xl border border-slate-700 p-10 text-center max-w-sm shadow-2xl">
+        <div className="text-5xl mb-4">🔒</div>
+        <h2 className="text-lg font-extrabold text-white mb-2">Acceso denegado</h2>
+        <p className="text-sm text-slate-400 mb-6">No tienes permisos para ver esta página.</p>
+        <button onClick={() => router.push("/")} className="text-sm bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow">
           Volver al inicio
         </button>
       </div>
@@ -124,12 +143,18 @@ export default function Admin() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between sticky top-0 z-10">
-        <h1 className="text-lg font-semibold text-gray-800">Docentes<span className="text-green-600">Beta</span> <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full ml-1">Evaluador</span></h1>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">{user?.email}</span>
-          <button onClick={handleLogout} className="text-sm text-red-500 hover:text-red-700">Cerrar sesión</button>
+    <div className="min-h-screen bg-slate-100">
+      <nav className="bg-slate-900 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-xl">
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full" />
+          <div>
+            <p className="text-xs text-slate-400 leading-none">ENSFA · Panel Evaluador</p>
+            <h1 className="text-sm font-bold text-white leading-tight">Docentes<span className="text-blue-400">Beta</span> <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full ml-1">Admin</span></h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-400">{user?.email}</span>
+          <button onClick={handleLogout} className="text-xs text-red-400 hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition">Salir</button>
         </div>
       </nav>
 
@@ -137,29 +162,28 @@ export default function Admin() {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
-            <div className="text-3xl font-semibold text-gray-800">{usuarios.length}</div>
-            <div className="text-xs text-gray-400 mt-1">Practicantes</div>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
-            <div className="text-3xl font-semibold text-gray-800">{posts.length}</div>
-            <div className="text-xs text-gray-400 mt-1">Publicaciones totales</div>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-200 p-5 text-center">
-            <div className="text-3xl font-semibold text-gray-800">{posts.filter(p => p.tipo === "Diario").length}</div>
-            <div className="text-xs text-gray-400 mt-1">Diarios</div>
-          </div>
+          {[
+            { num: usuarios.length, label: "Practicantes", icon: "👥" },
+            { num: posts.length, label: "Publicaciones totales", icon: "📋" },
+            { num: posts.filter(p => p.calificacion).length, label: "Calificadas", icon: "⭐" },
+          ].map((s) => (
+            <div key={s.label} className="bg-slate-900 rounded-2xl p-5 text-center shadow-xl">
+              <div className="text-3xl mb-2">{s.icon}</div>
+              <div className="text-3xl font-extrabold text-white">{s.num}</div>
+              <div className="text-xs text-slate-400 mt-1 font-medium">{s.label}</div>
+            </div>
+          ))}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-5">
           {["publicaciones", "practicantes"].map((v) => (
             <button
               key={v}
               onClick={() => setVistaActual(v)}
-              className={`text-sm px-4 py-2 rounded-xl border transition ${vistaActual === v ? "bg-green-600 text-white border-green-600" : "border-gray-200 text-gray-500 hover:border-green-400"}`}
+              className={`text-sm px-5 py-2 rounded-xl border transition font-semibold ${vistaActual === v ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
             >
-              {v === "publicaciones" ? "📋 Todas las publicaciones" : "👥 Practicantes"}
+              {v === "publicaciones" ? "📋 Publicaciones" : "👥 Practicantes"}
             </button>
           ))}
         </div>
@@ -168,20 +192,20 @@ export default function Admin() {
         {vistaActual === "practicantes" && (
           <div>
             {usuarios.map((u) => (
-              <div key={u.email} className="bg-white rounded-2xl border border-gray-200 p-5 mb-4">
+              <div key={u.email} className="bg-white rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-semibold">
+                    <div className="w-11 h-11 rounded-xl bg-slate-800 text-white flex items-center justify-center font-extrabold shadow">
                       {u.nombre?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-800">{u.nombre}</p>
-                      <p className="text-xs text-gray-400">{u.email}</p>
+                      <p className="text-sm font-bold text-gray-800">{u.nombre}</p>
+                      <p className="text-xs text-slate-400">{u.email}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-semibold text-gray-800">{u.publicaciones}</p>
-                    <p className="text-xs text-gray-400">publicaciones</p>
+                    <p className="text-2xl font-extrabold text-gray-800">{u.publicaciones}</p>
+                    <p className="text-xs text-slate-400 font-medium">publicaciones</p>
                   </div>
                 </div>
               </div>
@@ -193,41 +217,62 @@ export default function Admin() {
         {vistaActual === "publicaciones" && (
           <div>
             {posts.map((post) => (
-              <div key={post.id} className="bg-white rounded-2xl border border-gray-200 p-5 mb-4">
+              <div key={post.id} className="bg-white rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-semibold">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow">
                       {post.autor?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-800">{post.autor}</p>
-                      <p className="text-xs text-gray-400">{post.email}</p>
+                      <p className="text-sm font-bold text-gray-800">{post.autor}</p>
+                      <p className="text-xs text-slate-400">{post.email}</p>
                     </div>
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${coloresTipo[post.tipo] || "bg-gray-100 text-gray-600"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>
                     {post.tipo}
                   </span>
                 </div>
-                <p className="text-sm text-gray-700 leading-relaxed mb-3">{post.contenido}</p>
-                <div className="border-t border-gray-100 pt-3">
+
+                <p className="text-sm text-slate-700 leading-relaxed mb-4">{post.contenido}</p>
+
+                {/* Calificación */}
+                <div className="bg-slate-50 rounded-xl p-3 mb-3">
+                  <p className="text-xs font-bold text-slate-600 mb-2">⭐ Calificación</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                      <button
+                        key={n}
+                        onClick={() => calificar(post.id, post.email, n)}
+                        className={`w-8 h-8 rounded-lg text-xs font-extrabold transition shadow-sm ${calificaciones[post.id] === n ? "bg-blue-600 text-white shadow-md scale-110" : "bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-600 border border-slate-200"}`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                    {calificaciones[post.id] && (
+                      <span className="ml-2 text-sm font-extrabold text-blue-600">{calificaciones[post.id]}/10 ✓</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-3">
                   <button
                     onClick={() => toggleComentarios(post.id)}
-                    className="text-xs text-gray-400 hover:text-blue-500"
+                    className="text-xs text-slate-400 hover:text-blue-500 font-semibold transition"
                   >
                     💬 {showComentarios[post.id] ? "Ocultar" : "Comentar como evaluador"}
                   </button>
                 </div>
 
                 {showComentarios[post.id] && (
-                  <div className="mt-3 border-t border-gray-100 pt-3">
+                  <div className="mt-3 border-t border-slate-100 pt-3">
                     {comentarios[post.id]?.map((c: any) => (
-                      <div key={c.id} className="flex gap-2 mb-3">
-                        <div className="w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-semibold flex-shrink-0">
+                      <div key={c.id} className="flex gap-2 mb-2">
+                        <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                           {c.autor?.charAt(0).toUpperCase()}
                         </div>
-                        <div className="bg-gray-50 rounded-xl px-3 py-2 flex-1">
-                          <p className="text-xs font-medium text-gray-700">{c.autor}</p>
-                          <p className="text-xs text-gray-600">{c.texto}</p>
+                        <div className="bg-slate-50 rounded-xl px-3 py-2 flex-1">
+                          <p className="text-xs font-bold text-gray-700">{c.autor}</p>
+                          <p className="text-xs text-slate-600">{c.texto}</p>
                         </div>
                       </div>
                     ))}
@@ -238,11 +283,11 @@ export default function Admin() {
                         value={nuevoComentario[post.id] || ""}
                         onChange={(e) => setNuevoComentario((prev: any) => ({ ...prev, [post.id]: e.target.value }))}
                         onKeyDown={(e) => e.key === "Enter" && publicarComentario(post.id, post.email)}
-                        className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-400"
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-400"
                       />
                       <button
                         onClick={() => publicarComentario(post.id, post.email)}
-                        className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-xl"
+                        className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-xl font-semibold"
                       >
                         Enviar
                       </button>
