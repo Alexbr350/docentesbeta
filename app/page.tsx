@@ -20,7 +20,7 @@ export default function Home() {
   const [notificaciones, setNotificaciones] = useState<any[]>([]);
   const [showNotif, setShowNotif] = useState(false);
   const [busqueda, setBusqueda] = useState("");
-
+const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
@@ -94,14 +94,26 @@ export default function Home() {
   const publicar = async () => {
     if (!contenido.trim()) return;
     setPublicando(true);
+    let archivoUrl = null;
+    let archivoNombre = null;
+    if (archivoSeleccionado) {
+      const formData = new FormData();
+      formData.append("file", archivoSeleccionado);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      archivoUrl = data.secure_url;
+      archivoNombre = archivoSeleccionado.name;
+    }
     await addDoc(collection(db, "posts"), {
       tipo: tipoSeleccionado,
       contenido,
       autor: user.displayName || user.email,
       email: user.email,
       fecha: serverTimestamp(),
+      ...(archivoUrl && { archivoUrl, archivoNombre }),
     });
     setContenido("");
+    setArchivoSeleccionado(null);
     setShowComposer(false);
     setPublicando(false);
     cargarPosts();
@@ -277,8 +289,14 @@ export default function Home() {
                   value={contenido}
                   onChange={(e) => setContenido(e.target.value)}
                 />
-                <div className="flex justify-end gap-2 mt-2">
-                  <button onClick={() => { setShowComposer(false); setContenido(""); }} className="text-sm text-slate-400 hover:text-slate-600 px-4 py-2">Cancelar</button>
+                <div className="flex items-center gap-2 mt-2">
+                  <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl hover:border-blue-400 transition">
+                    📎 Adjuntar
+                    <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" className="hidden" onChange={(e) => setArchivoSeleccionado(e.target.files?.[0] || null)} />
+                  </label>
+                  {archivoSeleccionado && <span className="text-xs text-blue-600 font-medium">✓ {archivoSeleccionado.name}</span>}
+                  <div className="flex justify-end gap-2 ml-auto">
+                  <button onClick={() => { setShowComposer(false); setContenido(""); setArchivoSeleccionado(null); }} className="text-sm text-slate-400 hover:text-slate-600 px-4 py-2">Cancelar</button>
                   <button
                     onClick={publicar}
                     disabled={publicando || !contenido.trim()}
@@ -287,6 +305,7 @@ export default function Home() {
                     {publicando ? "Publicando..." : "Publicar"}
                   </button>
                 </div>
+                  </div>
               </div>
             )}
           </div>
@@ -307,7 +326,13 @@ export default function Home() {
                   <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>{post.tipo}</span>
                 </div>
               </div>
-              <p className="text-sm text-slate-700 leading-relaxed mb-3">{post.contenido}</p>
+             <p className="text-sm text-slate-700 leading-relaxed mb-3">{post.contenido}</p>
+              {post.archivoUrl && (
+                <a href={post.archivoUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mb-3">
+                  📎 {post.archivoNombre || "Ver archivo adjunto"}
+                </a>
+              )}
               <div className="flex gap-3 border-t border-slate-100 pt-3">
                 <button onClick={() => toggleComentarios(post.id)} className="text-xs text-slate-400 hover:text-blue-500 font-semibold transition">
                   💬 {showComentarios[post.id] ? "Ocultar" : "Comentar"}
