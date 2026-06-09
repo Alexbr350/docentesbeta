@@ -6,7 +6,7 @@ import { signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 
 const ADMINS: string[] = [
-  "alejandro_br.his23u@ensfa.edu.mx",
+  // Agrega aquí el correo del evaluador
 ];
 
 export default function Admin() {

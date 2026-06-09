@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "./firebase";
 import { signOut } from "firebase/auth";
-import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc, where } from "firebase/firestore";
-
+import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc, where, deleteDoc, setDoc } from "firebase/firestore";
 export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -21,6 +20,7 @@ export default function Home() {
   const [showNotif, setShowNotif] = useState(false);
   const [busqueda, setBusqueda] = useState("");
 const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
+const [likes, setLikes] = useState<any>({});
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
@@ -34,11 +34,41 @@ const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null
     });
     return () => unsubscribe();
   }, [router]);
+const darLike = async (postId: string, postAutorEmail: string) => {
+    const likeRef = doc(db, "posts", postId, "likes", user.email);
+    if (likes[postId]) {
+      await deleteDoc(likeRef);
+      setLikes((prev: any) => ({ ...prev, [postId]: false }));
+    } else {
+      await setDoc(likeRef, { email: user.email, fecha: serverTimestamp() });
+      setLikes((prev: any) => ({ ...prev, [postId]: true }));
+      if (postAutorEmail !== user.email) {
+        await addDoc(collection(db, "notificaciones"), {
+          para: postAutorEmail,
+          de: user.displayName || user.email,
+          mensaje: "le dio ❤️ a tu publicación",
+          leida: false,
+          fecha: serverTimestamp(),
+        });
+      }
+    }
+  };
 
+const cargarLikes = async (postId: string) => {
+    const snapshot = await getDocs(collection(db, "posts", postId, "likes"));
+    const userLike = snapshot.docs.find(d => d.id === user.email);
+    setLikes((prev: any) => ({ ...prev, [postId]: !!userLike }));
+    return snapshot.docs.length;
+  };
   const cargarPosts = async () => {
     const q = query(collection(db, "posts"), orderBy("fecha", "desc"));
     const snapshot = await getDocs(q);
-    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const data = await Promise.all(snapshot.docs.map(async (d) => {
+      const likesSnap = await getDocs(collection(db, "posts", d.id, "likes"));
+      const userLike = likesSnap.docs.find(l => l.id === user?.email);
+      setLikes((prev: any) => ({ ...prev, [d.id]: !!userLike }));
+      return { id: d.id, likesCount: likesSnap.docs.length, ...d.data() };
+    }));
     setPosts(data);
   };
 
@@ -334,6 +364,12 @@ const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null
                 </a>
               )}
               <div className="flex gap-3 border-t border-slate-100 pt-3">
+                <button
+                  onClick={() => darLike(post.id, post.email)}
+                  className={`text-xs font-semibold transition-all duration-200 ${likes[post.id] ? "text-red-500 scale-110" : "text-slate-400 hover:text-red-500"}`}
+                >
+                  ❤️ {post.likesCount || 0}
+                </button>
                 <button onClick={() => toggleComentarios(post.id)} className="text-xs text-slate-400 hover:text-blue-500 font-semibold transition">
                   💬 {showComentarios[post.id] ? "Ocultar" : "Comentar"}
                 </button>
