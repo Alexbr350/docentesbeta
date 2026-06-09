@@ -174,7 +174,19 @@ export default function Portafolio() {
                 </button>
               </div>
             </div>
-            <p className="text-sm text-slate-700 leading-relaxed">{post.contenido}</p>
+           <p className="text-sm text-slate-700 leading-relaxed">{post.contenido}</p>
+{post.archivoUrl && (
+  <a href={post.archivoUrl} target="_blank" rel="noopener noreferrer"
+    className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mt-3">
+    📎 {post.archivoNombre || "Ver archivo adjunto"}
+  </a>
+)}
+{post.calificacion && (
+  <div className="flex items-center gap-2 mt-3 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2">
+    <span className="text-xs font-bold text-blue-600">⭐ Calificación del evaluador:</span>
+    <span className="text-lg font-extrabold text-blue-700">{post.calificacion}/10</span>
+  </div>
+)}
           </div>
         ))}
       </div>

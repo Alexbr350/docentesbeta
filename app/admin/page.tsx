@@ -6,7 +6,7 @@ import { signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 
 const ADMINS: string[] = [
-  // Agrega aquí el correo del evaluador
+  "alejandro_br.his23u@ensfa.edu.mx",
 ];
 
 export default function Admin() {
@@ -152,7 +152,17 @@ export default function Admin() {
             <h1 className="text-sm font-bold text-white leading-tight">Docentes<span className="text-blue-400">Beta</span> <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full ml-1">Admin</span></h1>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {["Feed", "Portafolio", "Comunidad", "Perfil"].map((item) => (
+            <button
+              key={item}
+              onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
+              className="text-xs text-slate-400 hover:text-white font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition"
+            >
+              {item}
+            </button>
+          ))}
+          <span className="text-xs text-slate-500">|</span>
           <span className="text-xs text-slate-400">{user?.email}</span>
           <button onClick={handleLogout} className="text-xs text-red-400 hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition">Salir</button>
         </div>
