@@ -21,6 +21,7 @@ export default function Home() {
   const [busqueda, setBusqueda] = useState("");
 const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
 const [likes, setLikes] = useState<any>({});
+const [dislikes, setDislikes] = useState<any>({});
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (!user) {
@@ -53,7 +54,19 @@ const darLike = async (postId: string, postAutorEmail: string) => {
       }
     }
   };
-
+const darDislike = async (postId: string) => {
+    if (!user?.email) return;
+    const dislikeRef = doc(db, "posts", postId, "dislikes", user.email);
+    if (dislikes[postId]) {
+      await deleteDoc(dislikeRef);
+      setDislikes((prev: any) => ({ ...prev, [postId]: false }));
+      setPosts(posts.map(p => p.id === postId ? { ...p, dislikesCount: (p.dislikesCount || 1) - 1 } : p));
+    } else {
+      await setDoc(dislikeRef, { email: user.email, fecha: serverTimestamp() });
+      setDislikes((prev: any) => ({ ...prev, [postId]: true }));
+      setPosts(posts.map(p => p.id === postId ? { ...p, dislikesCount: (p.dislikesCount || 0) + 1 } : p));
+    }
+  };
 const cargarLikes = async (postId: string) => {
     const snapshot = await getDocs(collection(db, "posts", postId, "likes"));
     const userLike = snapshot.docs.find(d => d.id === user.email);
@@ -67,7 +80,10 @@ const cargarLikes = async (postId: string) => {
       const likesSnap = await getDocs(collection(db, "posts", d.id, "likes"));
       const userLike = likesSnap.docs.find(l => l.id === user?.email);
       setLikes((prev: any) => ({ ...prev, [d.id]: !!userLike }));
-      return { id: d.id, likesCount: likesSnap.docs.length, ...d.data() };
+      const dislikesSnap = await getDocs(collection(db, "posts", d.id, "dislikes"));
+const userDislike = dislikesSnap.docs.find(l => l.id === user?.email);
+setDislikes((prev: any) => ({ ...prev, [d.id]: !!userDislike }));
+return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSnap.docs.length, ...d.data() };
     }));
     setPosts(data);
   };
@@ -370,6 +386,19 @@ const cargarLikes = async (postId: string) => {
                 >
                   ❤️ {post.likesCount || 0}
                 </button>
+                {post.email === user?.email && (
+                  <span className="text-xs text-slate-400 font-semibold">
+                    👎 {post.dislikesCount || 0}
+                  </span>
+                )}
+                {post.email !== user?.email && (
+                  <button
+                    onClick={() => darDislike(post.id)}
+                    className={`text-xs font-semibold transition-all duration-200 ${dislikes[post.id] ? "text-slate-700 scale-110" : "text-slate-400 hover:text-slate-600"}`}
+                  >
+                    👎
+                  </button>
+                )}
                 <button onClick={() => toggleComentarios(post.id)} className="text-xs text-slate-400 hover:text-blue-500 font-semibold transition">
                   💬 {showComentarios[post.id] ? "Ocultar" : "Comentar"}
                 </button>
