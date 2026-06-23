@@ -107,11 +107,11 @@ export default function Usuarios() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {["Feed", "Portafolio", "Comunidad", "Perfil"].map((item) => (
+          {["Feed", "Portafolio", "Comunidad", "Perfil", "Usuarios"].map((item) => (
             <button
               key={item}
               onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
-              className="text-xs text-slate-400 hover:text-white font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition"
+              className={`text-xs font-medium px-3 py-1.5 rounded-lg transition ${item === "Usuarios" ? "text-white bg-slate-700" : "text-slate-400 hover:text-white hover:bg-slate-800"}`}
             >
               {item}
             </button>
