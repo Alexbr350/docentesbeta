@@ -6,9 +6,89 @@ import { signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
 const ADMINS: string[] = [
-  // Agrega aquí el correo del evaluador
-  "eira.vargas@ensfa.edu.mx" ,
+  "eira.vargas@ensfa.edu.mx",
 ];
+const MAESTROS: string[] = [];
+
+function AddMaestroForm() {
+  const [email, setEmail] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [agregando, setAgregando] = useState(false);
+
+  const agregar = async () => {
+    if (!email.trim()) return;
+    setAgregando(true);
+    await addDoc(collection(db, "maestros"), {
+      email,
+      nombre,
+      fecha: serverTimestamp(),
+    });
+    setEmail("");
+    setNombre("");
+    setAgregando(false);
+    alert("¡Maestro agregado!");
+  };
+
+  return (
+    <div className="flex gap-2 flex-wrap">
+      <input
+        type="text"
+        placeholder="Nombre del maestro..."
+        value={nombre}
+        onChange={(e) => setNombre(e.target.value)}
+        className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-blue-400 flex-1"
+      />
+      <input
+        type="email"
+        placeholder="Correo @ensfa.edu.mx..."
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-blue-400 flex-1"
+      />
+      <button
+        onClick={agregar}
+        disabled={agregando || !email.trim()}
+        className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl disabled:opacity-50 font-semibold"
+      >
+        {agregando ? "Agregando..." : "Agregar maestro"}
+      </button>
+    </div>
+  );
+}
+
+function MaestrosList() {
+  const [maestros, setMaestros] = useState<any[]>([]);
+
+  useEffect(() => {
+    getDocs(collection(db, "maestros")).then((snap) => {
+      setMaestros(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+  }, []);
+
+  return (
+    <div>
+      {maestros.length === 0 && (
+        <div className="bg-white rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
+          No hay maestros registrados todavía.
+        </div>
+      )}
+      {maestros.map((m) => (
+        <div key={m.id} className="bg-white rounded-2xl p-4 mb-3 shadow-md flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-green-600 text-white flex items-center justify-center font-extrabold shadow">
+              {m.nombre?.charAt(0).toUpperCase() || "M"}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-800">{m.nombre || "Sin nombre"}</p>
+              <p className="text-xs text-slate-400">{m.email}</p>
+            </div>
+          </div>
+          <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-semibold">👨‍🏫 Maestro</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Admin() {
   const router = useRouter();
@@ -192,13 +272,13 @@ const eliminarPost = async (postId: string) => {
 
         {/* Tabs */}
         <div className="flex gap-2 mb-5">
-          {["publicaciones", "practicantes"].map((v) => (
+          {["publicaciones", "practicantes", "maestros"].map((v) => (
             <button
               key={v}
               onClick={() => setVistaActual(v)}
               className={`text-sm px-5 py-2 rounded-xl border transition font-semibold ${vistaActual === v ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
             >
-              {v === "publicaciones" ? "📋 Publicaciones" : "👥 Practicantes"}
+              {v === "publicaciones" ? "📋 Publicaciones" : v === "practicantes" ? "👥 Practicantes" : "👨‍🏫 Maestros"}
             </button>
           ))}
         </div>
@@ -317,6 +397,17 @@ const eliminarPost = async (postId: string) => {
                 )}
               </div>
             ))}
+          </div>
+        )}
+        {/* Vista maestros */}
+        {vistaActual === "maestros" && (
+          <div>
+            <div className="bg-white rounded-2xl p-5 mb-4 shadow-md">
+              <h3 className="text-sm font-extrabold text-gray-800 mb-4">👨‍🏫 Gestionar Maestros</h3>
+              <p className="text-xs text-slate-500 mb-4">Agrega correos de maestros para que puedan calificar a sus grupos.</p>
+              <AddMaestroForm />
+            </div>
+            <MaestrosList />
           </div>
         )}
       </div>
