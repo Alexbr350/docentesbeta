@@ -88,7 +88,7 @@ export default function Portafolio() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {["Feed", "Portafolio", "Comunidad", "Perfil"].map((item) => (
+          {["Feed", "Portafolio", "Comunidad", "Perfil", "Usuarios"].map((item) => (
             <button
               key={item}
               onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}

@@ -31,6 +31,7 @@ const [dislikes, setDislikes] = useState<any>({});
         setLoading(false);
         cargarPosts();
         cargarNotificaciones(user.email || "");
+        cargarAmigos(user.email || "");
       }
     });
     return () => unsubscribe();
@@ -181,11 +182,24 @@ return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSna
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
 
-  const postsFiltrados = posts.filter((post) =>
-    post.contenido?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    post.autor?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    post.tipo?.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const [amigos, setAmigos] = useState<string[]>([]);
+
+  const cargarAmigos = async (email: string) => {
+    const snap = await getDocs(query(collection(db, "amigos"), where("usuario", "==", email)));
+    setAmigos(snap.docs.map((d) => d.data().amigo));
+  };
+
+  const postsFiltrados = posts
+    .filter((post) =>
+      post.contenido?.toLowerCase().includes(busqueda.toLowerCase()) ||
+      post.autor?.toLowerCase().includes(busqueda.toLowerCase()) ||
+      post.tipo?.toLowerCase().includes(busqueda.toLowerCase())
+    )
+    .sort((a, b) => {
+      const aEsAmigo = amigos.includes(a.email) ? 1 : 0;
+      const bEsAmigo = amigos.includes(b.email) ? 1 : 0;
+      return bEsAmigo - aEsAmigo;
+    });
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
