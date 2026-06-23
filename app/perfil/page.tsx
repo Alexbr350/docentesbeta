@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
+import Navbar from "../components/Navbar";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 
 export default function Perfil() {
@@ -67,29 +68,7 @@ export default function Perfil() {
     <div className="min-h-screen bg-slate-100">
 
       {/* Navbar */}
-      <nav className="bg-slate-900 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-xl">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full" />
-          <div>
-            <p className="text-xs text-slate-400 leading-none">ENSFA</p>
-            <h1 className="text-sm font-bold text-white leading-tight">Docentes<span className="text-blue-400">Beta</span></h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {["Feed", "Portafolio", "Comunidad", "Perfil", "Usuarios"].map((item) => (
-            <button
-              key={item}
-              onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
-              className={`text-xs font-medium px-3 py-1.5 rounded-lg transition ${item === "Perfil" ? "text-white bg-slate-700" : "text-slate-400 hover:text-white hover:bg-slate-800"}`}
-            >
-              {item}
-            </button>
-          ))}
-          <button onClick={handleLogout} className="text-xs text-red-400 hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition">
-            Salir
-          </button>
-        </div>
-      </nav>
+      <Navbar paginaActual="Perfil" />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
 
