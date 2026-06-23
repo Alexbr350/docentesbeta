@@ -183,7 +183,17 @@ return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSna
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
 
   const [amigos, setAmigos] = useState<string[]>([]);
-
+  const [misGrupos, setMisGrupos] = useState<any[]>([]);
+const cargarGrupos = async (email: string) => {
+    const snap = await getDocs(collection(db, "grupos"));
+    const grupos = await Promise.all(snap.docs.map(async (d) => {
+      const miembrosSnap = await getDocs(collection(db, "grupos", d.id, "miembros"));
+      const esMiembro = miembrosSnap.docs.find(m => m.data().email === email);
+      if (esMiembro) return { id: d.id, ...d.data() };
+      return null;
+    }));
+    setMisGrupos(grupos.filter(Boolean));
+  };
   const cargarAmigos = async (email: string) => {
     const snap = await getDocs(query(collection(db, "amigos"), where("usuario", "==", email)));
     setAmigos(snap.docs.map((d) => d.data().amigo));
@@ -471,7 +481,21 @@ return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSna
               </div>
             ))}
           </div>
-
+<div className="bg-white rounded-2xl p-4 mt-4 shadow-md">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mis grupos</p>
+            {misGrupos.length === 0 && <p className="text-xs text-slate-400">No perteneces a ningún grupo.</p>}
+            {misGrupos.map((grupo: any) => (
+              <div key={grupo.id} className="flex items-center gap-2 mb-2 p-2 rounded-xl hover:bg-blue-50 cursor-pointer transition" onClick={() => router.push("/grupos")}>
+                <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
+                  👥
+                </div>
+                <p className="text-xs font-semibold text-slate-700">{grupo.nombre}</p>
+              </div>
+            ))}
+            <button onClick={() => router.push("/grupos")} className="text-xs text-blue-500 hover:text-blue-700 font-semibold mt-2">
+              Ver todos →
+            </button>
+          </div>
           <div className="bg-slate-900 rounded-2xl p-4 mt-4 shadow-md text-center">
             <img src="/logo.png" alt="ENSFA" className="w-12 h-12 rounded-full mx-auto mb-2 opacity-90" />
             <p className="text-xs font-bold text-white">ENSFA</p>
