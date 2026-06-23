@@ -7,7 +7,7 @@ import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, upda
 
 const ADMINS: string[] = [
   // Agrega aquí el correo del evaluador
-  "eira.vargas@ensfa.edu.mx"
+  "eira.vargas@ensfa.edu.mx" ,
 ];
 
 export default function Admin() {
