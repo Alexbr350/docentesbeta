@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
-import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
 const ADMINS: string[] = [
   // Agrega aquí el correo del evaluador
@@ -94,7 +94,11 @@ export default function Admin() {
     setNuevoComentario((prev: any) => ({ ...prev, [postId]: "" }));
     await cargarComentarios(postId);
   };
-
+const eliminarPost = async (postId: string) => {
+    if (!confirm("¿Seguro que quieres eliminar esta publicación?")) return;
+    await deleteDoc(doc(db, "posts", postId));
+    setPosts(posts.filter((p) => p.id !== postId));
+  };
   const calificar = async (postId: string, postAutorEmail: string, calificacion: number) => {
     await updateDoc(doc(db, "posts", postId), { calificacion });
     await addDoc(collection(db, "notificaciones"), {
@@ -265,12 +269,18 @@ export default function Admin() {
                   </div>
                 </div>
 
-                <div className="border-t border-slate-100 pt-3">
+               <div className="border-t border-slate-100 pt-3 flex gap-3">
                   <button
                     onClick={() => toggleComentarios(post.id)}
                     className="text-xs text-slate-400 hover:text-blue-500 font-semibold transition"
                   >
                     💬 {showComentarios[post.id] ? "Ocultar" : "Comentar como evaluador"}
+                  </button>
+                  <button
+                    onClick={() => eliminarPost(post.id)}
+                    className="text-xs text-red-400 hover:text-red-600 font-semibold transition"
+                  >
+                    🗑️ Eliminar publicación
                   </button>
                 </div>
 
