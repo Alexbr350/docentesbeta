@@ -216,7 +216,7 @@ return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSna
             onChange={(e) => setBusqueda(e.target.value)}
             className="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-blue-500 w-40 placeholder-slate-500"
           />
-          {["Feed", "Portafolio", "Comunidad", "Perfil"].map((item) => (
+          {["Feed", "Portafolio", "Comunidad", "Perfil", "Usuarios"].map((item) => (
             <button
               key={item}
               onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
