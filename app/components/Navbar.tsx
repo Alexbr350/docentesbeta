@@ -53,6 +53,17 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="🔍 Buscar..."
+            className="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-blue-500 w-40 placeholder-slate-500"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const valor = (e.target as HTMLInputElement).value;
+                if (valor.trim()) router.push(`/?buscar=${encodeURIComponent(valor)}`);
+              }
+            }}
+          />
           {["Feed", "Portafolio", "Comunidad", "Perfil", "Usuarios"].map((item) => (
             <button
               key={item}
