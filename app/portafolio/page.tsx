@@ -5,7 +5,7 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import Navbar from "../components/Navbar";
 import { collection, getDocs, query, where, orderBy, deleteDoc, doc } from "firebase/firestore";
-
+import jsPDF from "jspdf";
 export default function Portafolio() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -37,6 +37,53 @@ export default function Portafolio() {
     setLoading(false);
   };
 
+  const exportarPDF = () => {
+    const pdf = new jsPDF();
+    let y = 20;
+
+    pdf.setFontSize(18);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("Portafolio Digital - ENSFA+", 20, y);
+    y += 10;
+
+    pdf.setFontSize(11);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(`${user?.displayName || "Practicante"} — ${user?.email}`, 20, y);
+    y += 6;
+    pdf.text(`Total de publicaciones: ${posts.length}`, 20, y);
+    y += 12;
+
+    posts.forEach((post) => {
+      if (y > 260) {
+        pdf.addPage();
+        y = 20;
+      }
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(12);
+      pdf.text(`${post.tipo}`, 20, y);
+      y += 6;
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9);
+      const fecha = post.fecha?.toDate?.()?.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" }) || "";
+      pdf.text(fecha, 20, y);
+      y += 6;
+
+      const contenido = pdf.splitTextToSize(post.contenido || "", 170);
+      pdf.text(contenido, 20, y);
+      y += contenido.length * 5 + 3;
+
+      if (post.calificacion) {
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`Calificación: ${post.calificacion}/10`, 20, y);
+        y += 6;
+      }
+
+      y += 6;
+    });
+
+    pdf.save(`Portafolio_${user?.displayName || "practicante"}.pdf`);
+  };
   const eliminar = async (id: string) => {
     if (!confirm("¿Seguro que quieres eliminar esta publicación?")) return;
     await deleteDoc(doc(db, "posts", id));
@@ -97,6 +144,12 @@ export default function Portafolio() {
             </div>
           </div>
           <img src="/logo.png" alt="ENSFA" className="w-12 h-12 rounded-full opacity-60" />
+          <button
+            onClick={exportarPDF}
+            className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold shadow"
+          >
+            📄 Exportar PDF
+          </button>
         </div>
 
         {/* Estadísticas */}
