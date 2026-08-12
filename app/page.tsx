@@ -398,6 +398,11 @@ export default function Home() {
                 <div>
                   <p className="text-sm font-bold text-gray-900">{post.autor}</p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>{post.tipo}</span>
+                  {post.fecha && (
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {post.fecha?.toDate?.()?.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })} · {post.fecha?.toDate?.()?.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                  )}
                 </div>
               </div>
               <p className="text-sm text-slate-700 leading-relaxed mb-3">{post.contenido}</p>
