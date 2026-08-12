@@ -30,6 +30,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "app/firebase.js"  ],
+, "app/firebase.ts"  ],
   "exclude": ["node_modules"]
 }

@@ -7,6 +7,7 @@ import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, upda
 
 const ADMINS: string[] = [
   "eira.vargas@ensfa.edu.mx",
+  "alejandro_br.his23u@ensfa.edu.mx",
 ];
 const MAESTROS: string[] = [];
 
