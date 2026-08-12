@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
@@ -11,21 +11,45 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
   const [user, setUser] = useState<any>(null);
   const [notificaciones, setNotificaciones] = useState<any[]>([]);
   const [showNotif, setShowNotif] = useState(false);
+  const notifRef = useRef<any[]>([]);
+  const emailRef = useRef<string>("");
 
   useEffect(() => {
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       if (currentUser) {
         setUser(currentUser);
+        emailRef.current = currentUser.email || "";
         cargarNotificaciones(currentUser.email || "");
       }
     });
-    return () => unsubscribe();
+    const intervalo = setInterval(() => {
+      if (emailRef.current) cargarNotificaciones(emailRef.current);
+    }, 15000);
+    return () => { unsubscribe(); clearInterval(intervalo); };
   }, []);
 
   const cargarNotificaciones = async (email: string) => {
     const q = query(collection(db, "notificaciones"), where("para", "==", email), orderBy("fecha", "desc"));
     const snapshot = await getDocs(q);
-    setNotificaciones(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
+    const nuevas = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+    const noLeidasAntes = notifRef.current.filter((n: any) => !n.leida).length;
+    const noLeidasAhora = nuevas.filter((n: any) => !n.leida).length;
+    if (noLeidasAhora > noLeidasAntes && typeof Notification !== "undefined" && Notification.permission === "granted") {
+      const ultimaNoLeida: any = nuevas.find((n: any) => !n.leida);
+      if (ultimaNoLeida) {
+        new Notification("ENSFA+", {
+          body: `${ultimaNoLeida.de}: ${ultimaNoLeida.mensaje}`,
+          icon: "/logo.png",
+        });
+      }
+    }
+
+    notifRef.current = nuevas;
+    setNotificaciones(nuevas);
   };
 
   const marcarLeidas = async () => {
@@ -33,7 +57,9 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
     for (const n of noLeidas) {
       await updateDoc(doc(db, "notificaciones", n.id), { leida: true });
     }
-    setNotificaciones(notificaciones.map((n) => ({ ...n, leida: true })));
+    const actualizadas = notificaciones.map((n) => ({ ...n, leida: true }));
+    notifRef.current = actualizadas;
+    setNotificaciones(actualizadas);
   };
 
   const handleLogout = async () => {
