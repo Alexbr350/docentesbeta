@@ -31,7 +31,7 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <span className="text-white text-2xl font-bold">D</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800">DocentesBeta</h1>
+          <h1 className="text-3xl font-bold text-gray-800">ENSFA+</h1>
           <p className="text-gray-500 mt-2 text-sm">Plataforma para practicantes docentes</p>
           <p className="text-xs text-blue-500 mt-1">Escuela Normal Superior de...</p>
         </div>

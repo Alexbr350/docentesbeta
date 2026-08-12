@@ -49,7 +49,7 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
           <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full" />
           <div>
             <p className="text-xs text-slate-400 leading-none">ENSFA</p>
-            <h1 className="text-sm font-bold text-white leading-tight">Docentes<span className="text-blue-400">Beta</span></h1>
+            <h1 className="text-sm font-bold text-white leading-tight">ENSFA<span className="text-blue-400">+</span></h1>
           </div>
         </div>
         <div className="flex items-center gap-2">

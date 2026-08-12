@@ -227,7 +227,7 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
         <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
-        <p className="text-slate-400 text-sm">Cargando DocentesBeta...</p>
+        <p className="text-slate-400 text-sm">Cargando ENSFA+...</p>
       </div>
     </div>
   );
@@ -240,7 +240,7 @@ export default function Home() {
           <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full" />
           <div>
             <p className="text-xs text-slate-400 leading-none">ENSFA</p>
-            <h1 className="text-sm font-bold text-white leading-tight">Docentes<span className="text-blue-400">Beta</span></h1>
+            <h1 className="text-sm font-bold text-white leading-tight">ENSFA<span className="text-blue-400">+</span></h1>
           </div>
         </div>
         <div className="flex items-center gap-2">

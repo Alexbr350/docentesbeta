@@ -13,7 +13,7 @@ export default function Landing() {
           <img src="/logo.png" alt="ENSFA" width={40} height={40} className="rounded-full shadow" />
           <div>
             <p className="text-xs text-slate-400 leading-none">ENSFA · Aguascalientes</p>
-            <p className="text-base font-bold text-blue-600 leading-tight">DocentesBeta</p>
+            <p className="text-sm font-bold text-blue-600 leading-tight">ENSFA+</p>
           </div>
         </div>
         <button
@@ -146,7 +146,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="bg-slate-900 py-8 text-center">
         <img src="/logo.png" alt="ENSFA" className="w-10 h-10 rounded-full mx-auto mb-3 opacity-80" />
-        <p className="text-slate-400 text-sm">© 2026 DocentesBeta</p>
+        <p className="text-slate-400 text-sm">© 2026 ENSFA+</p>
         <p className="text-slate-500 text-xs mt-1">Escuela Normal Superior Federal de Aguascalientes · Profr. José Santos Valdés</p>
       </footer>
 

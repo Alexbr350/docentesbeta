@@ -279,7 +279,7 @@ const eliminarPost = async (postId: string) => {
           <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full" />
           <div>
             <p className="text-xs text-slate-400 leading-none">ENSFA · Panel Evaluador</p>
-            <h1 className="text-sm font-bold text-white leading-tight">Docentes<span className="text-blue-400">Beta</span> <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full ml-1">Admin</span></h1>
+            <h1 className="text-sm font-bold text-white leading-tight">ENSFA<span className="text-blue-400">+</span> <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full ml-1">Admin</span></h1>
           </div>
         </div>
         <div className="flex items-center gap-2">
