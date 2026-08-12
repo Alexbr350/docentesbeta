@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, query, where, orderBy, updateDoc, doc } from "firebase/firestore";
+import ChatBubble from "./ChatBubble";
 
 export default function Navbar({ paginaActual }: { paginaActual: string }) {
   const router = useRouter();
@@ -64,7 +65,7 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
               }
             }}
           />
-         {["Feed", "Portafolio", "Comunidad", "Perfil", "Usuarios", "Grupos", "Maestro"].map((item) => (
+          {["Feed", "Portafolio", "Comunidad", "Perfil", "Usuarios", "Grupos", "Maestro"].map((item) => (
             <button
               key={item}
               onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
@@ -102,6 +103,8 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
           ))}
         </div>
       )}
+
+      <ChatBubble />
     </>
   );
 }
