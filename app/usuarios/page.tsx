@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import Navbar from "../components/Navbar";
-import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, doc } from "firebase/firestore";
+import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, doc, deleteDoc } from "firebase/firestore";
 
 export default function Usuarios() {
   const router = useRouter();
@@ -68,6 +68,10 @@ export default function Usuarios() {
     alert("¡Solicitud enviada!");
   };
 
+  const rechazarSolicitud = async (solicitudId: string) => {
+    await deleteDoc(doc(db, "solicitudes", solicitudId));
+    setSolicitudes(solicitudes.filter((s) => s.id !== solicitudId));
+  };
   const aceptarSolicitud = async (solicitud: any) => {
     await updateDoc(doc(db, "solicitudes", solicitud.id), { estado: "aceptada" });
     await addDoc(collection(db, "amigos"), { usuario: user.email, amigo: solicitud.de, fecha: serverTimestamp() });
@@ -125,7 +129,10 @@ export default function Usuarios() {
                   >
                     Aceptar
                   </button>
-                  <button className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-xl font-semibold">
+                  <button
+                    onClick={() => rechazarSolicitud(sol.id)}
+                    className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-xl font-semibold"
+                  >
                     Rechazar
                   </button>
                 </div>
