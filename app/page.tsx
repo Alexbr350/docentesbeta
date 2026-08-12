@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "./firebase";
 import { signOut } from "firebase/auth";
 import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc, where, deleteDoc, setDoc } from "firebase/firestore";
+
 export default function Home() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -19,24 +20,46 @@ export default function Home() {
   const [notificaciones, setNotificaciones] = useState<any[]>([]);
   const [showNotif, setShowNotif] = useState(false);
   const [busqueda, setBusqueda] = useState("");
-const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
-const [likes, setLikes] = useState<any>({});
-const [dislikes, setDislikes] = useState<any>({});
+  const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
+  const [likes, setLikes] = useState<any>({});
+  const [dislikes, setDislikes] = useState<any>({});
+  const [amigos, setAmigos] = useState<string[]>([]);
+  const [misGrupos, setMisGrupos] = useState<any[]>([]);
+
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (!user) {
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      if (!currentUser) {
         router.push("/landing");
       } else {
-        setUser(user);
+        setUser(currentUser);
         setLoading(false);
         cargarPosts();
-        cargarNotificaciones(user.email || "");
-        cargarAmigos(user.email || "");
+        cargarNotificaciones(currentUser.email || "");
+        cargarAmigos(currentUser.email || "");
+        cargarGrupos(currentUser.email || "");
       }
     });
     return () => unsubscribe();
   }, [router]);
-const darLike = async (postId: string, postAutorEmail: string) => {
+
+  const reportarPost = async (postId: string, autorNombre: string, autorEmail: string) => {
+    const motivo = prompt("¿Por qué quieres reportar esta publicación? (motivo breve)");
+    if (!motivo?.trim()) return;
+    await addDoc(collection(db, "reportes"), {
+      tipo: "publicacion",
+      postId,
+      autorReportado: autorNombre,
+      emailReportado: autorEmail,
+      reportadoPor: user.displayName || user.email,
+      emailReportadoPor: user.email,
+      motivo,
+      estado: "pendiente",
+      fecha: serverTimestamp(),
+    });
+    alert("Reporte enviado al evaluador. Gracias por ayudarnos a mantener la comunidad segura.");
+  };
+
+  const darLike = async (postId: string, postAutorEmail: string) => {
     const likeRef = doc(db, "posts", postId, "likes", user.email);
     if (likes[postId]) {
       await deleteDoc(likeRef);
@@ -55,7 +78,8 @@ const darLike = async (postId: string, postAutorEmail: string) => {
       }
     }
   };
-const darDislike = async (postId: string) => {
+
+  const darDislike = async (postId: string) => {
     if (!user?.email) return;
     const dislikeRef = doc(db, "posts", postId, "dislikes", user.email);
     if (dislikes[postId]) {
@@ -68,23 +92,14 @@ const darDislike = async (postId: string) => {
       setPosts(posts.map(p => p.id === postId ? { ...p, dislikesCount: (p.dislikesCount || 0) + 1 } : p));
     }
   };
-const cargarLikes = async (postId: string) => {
-    const snapshot = await getDocs(collection(db, "posts", postId, "likes"));
-    const userLike = snapshot.docs.find(d => d.id === user.email);
-    setLikes((prev: any) => ({ ...prev, [postId]: !!userLike }));
-    return snapshot.docs.length;
-  };
+
   const cargarPosts = async () => {
     const q = query(collection(db, "posts"), orderBy("fecha", "desc"));
     const snapshot = await getDocs(q);
     const data = await Promise.all(snapshot.docs.map(async (d) => {
       const likesSnap = await getDocs(collection(db, "posts", d.id, "likes"));
-      const userLike = likesSnap.docs.find(l => l.id === user?.email);
-      setLikes((prev: any) => ({ ...prev, [d.id]: !!userLike }));
       const dislikesSnap = await getDocs(collection(db, "posts", d.id, "dislikes"));
-const userDislike = dislikesSnap.docs.find(l => l.id === user?.email);
-setDislikes((prev: any) => ({ ...prev, [d.id]: !!userDislike }));
-return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSnap.docs.length, ...d.data() };
+      return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSnap.docs.length, ...d.data() };
     }));
     setPosts(data);
   };
@@ -92,8 +107,7 @@ return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSna
   const cargarNotificaciones = async (email: string) => {
     const q = query(collection(db, "notificaciones"), where("para", "==", email), orderBy("fecha", "desc"));
     const snapshot = await getDocs(q);
-    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-    setNotificaciones(data);
+    setNotificaciones(snapshot.docs.map((d) => ({ id: d.id, ...d.data() })));
   };
 
   const marcarLeidas = async () => {
@@ -107,8 +121,7 @@ return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSna
   const cargarComentarios = async (postId: string) => {
     const q = query(collection(db, "posts", postId, "comentarios"), orderBy("fecha", "asc"));
     const snapshot = await getDocs(q);
-    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-    setComentarios((prev: any) => ({ ...prev, [postId]: data }));
+    setComentarios((prev: any) => ({ ...prev, [postId]: snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) }));
   };
 
   const toggleComentarios = async (postId: string) => {
@@ -171,6 +184,22 @@ return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSna
     router.push("/landing");
   };
 
+  const cargarGrupos = async (email: string) => {
+    const snap = await getDocs(collection(db, "grupos"));
+    const grupos = await Promise.all(snap.docs.map(async (d) => {
+      const miembrosSnap = await getDocs(collection(db, "grupos", d.id, "miembros"));
+      const esMiembro = miembrosSnap.docs.find(m => m.data().email === email);
+      if (esMiembro) return { id: d.id, ...d.data() };
+      return null;
+    }));
+    setMisGrupos(grupos.filter(Boolean));
+  };
+
+  const cargarAmigos = async (email: string) => {
+    const snap = await getDocs(query(collection(db, "amigos"), where("usuario", "==", email)));
+    setAmigos(snap.docs.map((d) => d.data().amigo));
+  };
+
   const coloresTipo: any = {
     "Diario": "bg-blue-100 text-blue-700",
     "Planeación": "bg-indigo-100 text-indigo-700",
@@ -181,23 +210,6 @@ return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSna
   };
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
-
-  const [amigos, setAmigos] = useState<string[]>([]);
-  const [misGrupos, setMisGrupos] = useState<any[]>([]);
-const cargarGrupos = async (email: string) => {
-    const snap = await getDocs(collection(db, "grupos"));
-    const grupos = await Promise.all(snap.docs.map(async (d) => {
-      const miembrosSnap = await getDocs(collection(db, "grupos", d.id, "miembros"));
-      const esMiembro = miembrosSnap.docs.find(m => m.data().email === email);
-      if (esMiembro) return { id: d.id, ...d.data() };
-      return null;
-    }));
-    setMisGrupos(grupos.filter(Boolean));
-  };
-  const cargarAmigos = async (email: string) => {
-    const snap = await getDocs(query(collection(db, "amigos"), where("usuario", "==", email)));
-    setAmigos(snap.docs.map((d) => d.data().amigo));
-  };
 
   const postsFiltrados = posts
     .filter((post) =>
@@ -223,7 +235,6 @@ const cargarGrupos = async (email: string) => {
   return (
     <div className="min-h-screen bg-slate-100">
 
-      {/* Navbar oscuro */}
       <nav className="bg-slate-900 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-xl">
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full" />
@@ -266,7 +277,6 @@ const cargarGrupos = async (email: string) => {
         </div>
       </nav>
 
-      {/* Notificaciones */}
       {showNotif && (
         <div className="fixed top-14 right-4 w-80 bg-white rounded-2xl border border-slate-200 shadow-2xl z-20 p-4">
           <h3 className="text-sm font-bold text-gray-800 mb-3">🔔 Notificaciones</h3>
@@ -282,7 +292,6 @@ const cargarGrupos = async (email: string) => {
 
       <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-4 gap-5">
 
-        {/* Sidebar */}
         <div className="col-span-1">
           <div className="bg-white rounded-2xl p-4 mb-4 text-center shadow-md">
             <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-extrabold mx-auto mb-3 shadow-lg">
@@ -300,9 +309,7 @@ const cargarGrupos = async (email: string) => {
                 { label: "📁 Portafolio", path: "/portafolio" },
                 { label: "👤 Perfil", path: "/perfil" },
               ].map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => router.push(item.path)}
+                <button key={item.label} onClick={() => router.push(item.path)}
                   className="text-left px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition font-medium">
                   {item.label}
                 </button>
@@ -314,9 +321,7 @@ const cargarGrupos = async (email: string) => {
                 { label: "❓ Preguntas", path: "/comunidad" },
                 { label: "💡 Actividades", path: "/comunidad" },
               ].map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => router.push(item.path)}
+                <button key={item.label} onClick={() => router.push(item.path)}
                   className="text-left px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition font-medium">
                   {item.label}
                 </button>
@@ -325,7 +330,6 @@ const cargarGrupos = async (email: string) => {
           </div>
         </div>
 
-        {/* Feed central */}
         <div className="col-span-2">
           <div className="bg-white rounded-2xl p-4 mb-4 shadow-md">
             <div className="flex gap-3 mb-3">
@@ -366,16 +370,16 @@ const cargarGrupos = async (email: string) => {
                   </label>
                   {archivoSeleccionado && <span className="text-xs text-blue-600 font-medium">✓ {archivoSeleccionado.name}</span>}
                   <div className="flex justify-end gap-2 ml-auto">
-                  <button onClick={() => { setShowComposer(false); setContenido(""); setArchivoSeleccionado(null); }} className="text-sm text-slate-400 hover:text-slate-600 px-4 py-2">Cancelar</button>
-                  <button
-                    onClick={publicar}
-                    disabled={publicando || !contenido.trim()}
-                    className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow"
-                  >
-                    {publicando ? "Publicando..." : "Publicar"}
-                  </button>
-                </div>
+                    <button onClick={() => { setShowComposer(false); setContenido(""); setArchivoSeleccionado(null); }} className="text-sm text-slate-400 hover:text-slate-600 px-4 py-2">Cancelar</button>
+                    <button
+                      onClick={publicar}
+                      disabled={publicando || !contenido.trim()}
+                      className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow"
+                    >
+                      {publicando ? "Publicando..." : "Publicar"}
+                    </button>
                   </div>
+                </div>
               </div>
             )}
           </div>
@@ -396,14 +400,14 @@ const cargarGrupos = async (email: string) => {
                   <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>{post.tipo}</span>
                 </div>
               </div>
-             <p className="text-sm text-slate-700 leading-relaxed mb-3">{post.contenido}</p>
+              <p className="text-sm text-slate-700 leading-relaxed mb-3">{post.contenido}</p>
               {post.archivoUrl && (
                 <a href={post.archivoUrl} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mb-3">
                   📎 {post.archivoNombre || "Ver archivo adjunto"}
                 </a>
               )}
-              <div className="flex gap-3 border-t border-slate-100 pt-3">
+              <div className="flex gap-3 border-t border-slate-100 pt-3 items-center">
                 <button
                   onClick={() => darLike(post.id, post.email)}
                   className={`text-xs font-semibold transition-all duration-200 ${likes[post.id] ? "text-red-500 scale-110" : "text-slate-400 hover:text-red-500"}`}
@@ -411,9 +415,7 @@ const cargarGrupos = async (email: string) => {
                   ❤️ {post.likesCount || 0}
                 </button>
                 {post.email === user?.email && (
-                  <span className="text-xs text-slate-400 font-semibold">
-                    👎 {post.dislikesCount || 0}
-                  </span>
+                  <span className="text-xs text-slate-400 font-semibold">👎 {post.dislikesCount || 0}</span>
                 )}
                 {post.email !== user?.email && (
                   <button
@@ -426,6 +428,14 @@ const cargarGrupos = async (email: string) => {
                 <button onClick={() => toggleComentarios(post.id)} className="text-xs text-slate-400 hover:text-blue-500 font-semibold transition">
                   💬 {showComentarios[post.id] ? "Ocultar" : "Comentar"}
                 </button>
+                {post.email !== user?.email && (
+                  <button
+                    onClick={() => reportarPost(post.id, post.autor, post.email)}
+                    className="text-xs text-slate-400 hover:text-orange-500 font-semibold transition ml-auto"
+                  >
+                    🚩 Reportar
+                  </button>
+                )}
               </div>
               {showComentarios[post.id] && (
                 <div className="mt-3 border-t border-slate-100 pt-3">
@@ -460,15 +470,14 @@ const cargarGrupos = async (email: string) => {
           ))}
         </div>
 
-        {/* Panel derecho */}
         <div className="col-span-1">
           <div className="bg-white rounded-2xl p-4 shadow-md">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mi avance</p>
             {[
               { label: "Diarios", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Diario").length / 10) * 100, 100), color: "bg-blue-500" },
-{ label: "Planeaciones", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Planeación").length / 5) * 100, 100), color: "bg-indigo-500" },
-{ label: "Narrativa", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Narrativa").length / 1) * 100, 100), color: "bg-amber-500" },
-{ label: "Extras", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Extra").length / 3) * 100, 100), color: "bg-cyan-500" },
+              { label: "Planeaciones", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Planeación").length / 5) * 100, 100), color: "bg-indigo-500" },
+              { label: "Narrativa", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Narrativa").length / 1) * 100, 100), color: "bg-amber-500" },
+              { label: "Extras", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Extra").length / 3) * 100, 100), color: "bg-cyan-500" },
             ].map((item) => (
               <div key={item.label} className="mb-4">
                 <div className="flex justify-between text-xs mb-1.5">
@@ -481,14 +490,12 @@ const cargarGrupos = async (email: string) => {
               </div>
             ))}
           </div>
-<div className="bg-white rounded-2xl p-4 mt-4 shadow-md">
+          <div className="bg-white rounded-2xl p-4 mt-4 shadow-md">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mis grupos</p>
             {misGrupos.length === 0 && <p className="text-xs text-slate-400">No perteneces a ningún grupo.</p>}
             {misGrupos.map((grupo: any) => (
               <div key={grupo.id} className="flex items-center gap-2 mb-2 p-2 rounded-xl hover:bg-blue-50 cursor-pointer transition" onClick={() => router.push("/grupos")}>
-                <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
-                  👥
-                </div>
+                <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">👥</div>
                 <p className="text-xs font-semibold text-slate-700">{grupo.nombre}</p>
               </div>
             ))}

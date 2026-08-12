@@ -56,7 +56,51 @@ function AddMaestroForm() {
     </div>
   );
 }
+function ReportesList() {
+  const [reportes, setReportes] = useState<any[]>([]);
 
+  useEffect(() => {
+    getDocs(query(collection(db, "reportes"), orderBy("fecha", "desc"))).then((snap) => {
+      setReportes(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+  }, []);
+
+  const marcarRevisado = async (id: string) => {
+    await updateDoc(doc(db, "reportes", id), { estado: "revisado" });
+    setReportes(reportes.map((r) => r.id === id ? { ...r, estado: "revisado" } : r));
+  };
+
+  return (
+    <div>
+      {reportes.length === 0 && (
+        <div className="bg-white rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
+          No hay reportes todavía.
+        </div>
+      )}
+      {reportes.map((r) => (
+        <div key={r.id} className={`bg-white rounded-2xl p-5 mb-3 shadow-md border-l-4 ${r.estado === "revisado" ? "border-emerald-400" : "border-orange-400"}`}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold text-orange-600">🚩 Reporte de publicación</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${r.estado === "revisado" ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-600"}`}>
+              {r.estado === "revisado" ? "✅ Revisado" : "⏳ Pendiente"}
+            </span>
+          </div>
+          <p className="text-sm text-slate-700 mb-1"><span className="font-bold">Reportado:</span> {r.autorReportado} ({r.emailReportado})</p>
+          <p className="text-sm text-slate-700 mb-1"><span className="font-bold">Reportado por:</span> {r.reportadoPor}</p>
+          <p className="text-sm text-slate-700 mb-3"><span className="font-bold">Motivo:</span> {r.motivo}</p>
+          {r.estado !== "revisado" && (
+            <button
+              onClick={() => marcarRevisado(r.id)}
+              className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl font-semibold"
+            >
+              Marcar como revisado
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 function MaestrosList() {
   const [maestros, setMaestros] = useState<any[]>([]);
 
@@ -273,13 +317,13 @@ const eliminarPost = async (postId: string) => {
 
         {/* Tabs */}
         <div className="flex gap-2 mb-5">
-          {["publicaciones", "practicantes", "maestros"].map((v) => (
+          {["publicaciones", "practicantes", "maestros", "reportes"].map((v) => (
             <button
               key={v}
               onClick={() => setVistaActual(v)}
               className={`text-sm px-5 py-2 rounded-xl border transition font-semibold ${vistaActual === v ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
             >
-              {v === "publicaciones" ? "📋 Publicaciones" : v === "practicantes" ? "👥 Practicantes" : "👨‍🏫 Maestros"}
+              {v === "publicaciones" ? "📋 Publicaciones" : v === "practicantes" ? "👥 Practicantes" : v === "maestros" ? "👨‍🏫 Maestros" : "🚩 Reportes"}
             </button>
           ))}
         </div>
@@ -400,6 +444,8 @@ const eliminarPost = async (postId: string) => {
             ))}
           </div>
         )}
+        {/* Vista reportes */}
+        {vistaActual === "reportes" && <ReportesList />}
         {/* Vista maestros */}
         {vistaActual === "maestros" && (
           <div>
