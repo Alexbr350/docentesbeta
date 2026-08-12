@@ -64,7 +64,7 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
               }
             }}
           />
-         {["Feed", "Portafolio", "Comunidad", "Perfil", "Usuarios", "Grupos"].map((item) => (
+         {["Feed", "Portafolio", "Comunidad", "Perfil", "Usuarios", "Grupos", "Maestro"].map((item) => (
             <button
               key={item}
               onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
