@@ -23,6 +23,8 @@ export default function Home() {
   const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
   const [likes, setLikes] = useState<any>({});
   const [dislikes, setDislikes] = useState<any>({});
+  const [likesComentarios, setLikesComentarios] = useState<any>({});
+  const [dislikesComentarios, setDislikesComentarios] = useState<any>({});
   const [amigos, setAmigos] = useState<string[]>([]);
   const [misGrupos, setMisGrupos] = useState<any[]>([]);
 
@@ -121,7 +123,42 @@ export default function Home() {
   const cargarComentarios = async (postId: string) => {
     const q = query(collection(db, "posts", postId, "comentarios"), orderBy("fecha", "asc"));
     const snapshot = await getDocs(q);
-    setComentarios((prev: any) => ({ ...prev, [postId]: snapshot.docs.map((d) => ({ id: d.id, ...d.data() })) }));
+    const data = await Promise.all(snapshot.docs.map(async (d) => {
+      const likesSnap = await getDocs(collection(db, "posts", postId, "comentarios", d.id, "likes"));
+      const dislikesSnap = await getDocs(collection(db, "posts", postId, "comentarios", d.id, "dislikes"));
+      const userLike = likesSnap.docs.find(l => l.id === user?.email);
+      const userDislike = dislikesSnap.docs.find(l => l.id === user?.email);
+      setLikesComentarios((prev: any) => ({ ...prev, [d.id]: !!userLike }));
+      setDislikesComentarios((prev: any) => ({ ...prev, [d.id]: !!userDislike }));
+      return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSnap.docs.length, ...d.data() };
+    }));
+    setComentarios((prev: any) => ({ ...prev, [postId]: data }));
+  };
+
+  const darLikeComentario = async (postId: string, comentarioId: string) => {
+    if (!user?.email) return;
+    const likeRef = doc(db, "posts", postId, "comentarios", comentarioId, "likes", user.email);
+    if (likesComentarios[comentarioId]) {
+      await deleteDoc(likeRef);
+      setLikesComentarios((prev: any) => ({ ...prev, [comentarioId]: false }));
+    } else {
+      await setDoc(likeRef, { email: user.email, fecha: serverTimestamp() });
+      setLikesComentarios((prev: any) => ({ ...prev, [comentarioId]: true }));
+    }
+    await cargarComentarios(postId);
+  };
+
+  const darDislikeComentario = async (postId: string, comentarioId: string) => {
+    if (!user?.email) return;
+    const dislikeRef = doc(db, "posts", postId, "comentarios", comentarioId, "dislikes", user.email);
+    if (dislikesComentarios[comentarioId]) {
+      await deleteDoc(dislikeRef);
+      setDislikesComentarios((prev: any) => ({ ...prev, [comentarioId]: false }));
+    } else {
+      await setDoc(dislikeRef, { email: user.email, fecha: serverTimestamp() });
+      setDislikesComentarios((prev: any) => ({ ...prev, [comentarioId]: true }));
+    }
+    await cargarComentarios(postId);
   };
 
   const toggleComentarios = async (postId: string) => {
@@ -453,6 +490,20 @@ export default function Home() {
                       <div className="bg-slate-50 rounded-xl px-3 py-2 flex-1">
                         <p className="text-xs font-bold text-gray-700">{c.autor}</p>
                         <p className="text-xs text-slate-600">{c.texto}</p>
+                        <div className="flex gap-2 mt-1">
+                          <button
+                            onClick={() => darLikeComentario(post.id, c.id)}
+                            className={`text-xs font-semibold transition ${likesComentarios[c.id] ? "text-red-500" : "text-slate-400 hover:text-red-500"}`}
+                          >
+                            ❤️ {c.likesCount || 0}
+                          </button>
+                          <button
+                            onClick={() => darDislikeComentario(post.id, c.id)}
+                            className={`text-xs font-semibold transition ${dislikesComentarios[c.id] ? "text-slate-700" : "text-slate-400 hover:text-slate-600"}`}
+                          >
+                            👎 {c.dislikesCount || 0}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
