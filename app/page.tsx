@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "./firebase";
 import { signOut } from "firebase/auth";
 import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc, where, deleteDoc, setDoc } from "firebase/firestore";
+import { Heart, ThumbsDown, MessageCircle, Flag, Paperclip, Calendar, ArrowRight, Layers } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
@@ -75,7 +76,7 @@ export default function Home() {
         await addDoc(collection(db, "notificaciones"), {
           para: postAutorEmail,
           de: user.displayName || user.email,
-          mensaje: "le dio ❤️ a tu publicación",
+          mensaje: "le dio like a tu publicación",
           leida: false,
           fecha: serverTimestamp(),
         });
@@ -293,7 +294,7 @@ export default function Home() {
         <div className="flex items-center gap-2">
           <input
             type="text"
-            placeholder="🔍 Buscar..."
+            placeholder="Buscar..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             className="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-blue-500 w-40 placeholder-slate-500"
@@ -383,7 +384,7 @@ export default function Home() {
               onClick={() => router.push("/eventos")}
               className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-4 mb-4 shadow-md cursor-pointer hover:shadow-lg transition flex items-center gap-3"
             >
-              <div className="text-2xl">📅</div>
+              <Calendar size={22} className="text-white flex-shrink-0" />
               <div className="flex-1">
                 <p className="text-xs text-blue-100 font-semibold uppercase tracking-wide">Próximo evento</p>
                 <p className="text-sm font-bold text-white">{proximoEvento.titulo}</p>
@@ -391,7 +392,9 @@ export default function Home() {
                   {new Date(proximoEvento.fechaEvento + "T00:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
                 </p>
               </div>
-              <span className="text-xs text-white font-semibold">Ver →</span>
+              <div className="flex items-center gap-1 text-xs text-white font-semibold">
+                Ver <ArrowRight size={14} />
+              </div>
             </div>
           )}
 
@@ -429,7 +432,7 @@ export default function Home() {
                 />
                 <div className="flex items-center gap-2 mt-2">
                   <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl hover:border-blue-400 transition">
-                    📎 Adjuntar
+                    <Paperclip size={14} /> Adjuntar
                     <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp" className="hidden" onChange={(e) => setArchivoSeleccionado(e.target.files?.[0] || null)} />
                   </label>
                   {archivoSeleccionado && <span className="text-xs text-blue-600 font-medium">✓ {archivoSeleccionado.name}</span>}
@@ -479,36 +482,38 @@ export default function Home() {
               ) : post.archivoUrl && (
                 <a href={post.archivoUrl} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mb-3">
-                  📎 {post.archivoNombre || "Ver archivo adjunto"}
+                  <Paperclip size={14} /> {post.archivoNombre || "Ver archivo adjunto"}
                 </a>
               )}
               <div className="flex gap-3 border-t border-slate-100 pt-3 items-center">
                 <button
                   onClick={() => darLike(post.id, post.email)}
-                  className={`text-xs font-semibold transition-all duration-200 ${likes[post.id] ? "text-red-500 scale-110" : "text-slate-400 hover:text-red-500"}`}
+                  className={`flex items-center gap-1 text-xs font-semibold transition-all duration-200 ${likes[post.id] ? "text-red-500 scale-110" : "text-slate-400 hover:text-red-500"}`}
                 >
-                  ❤️ {post.likesCount || 0}
+                  <Heart size={14} fill={likes[post.id] ? "currentColor" : "none"} /> {post.likesCount || 0}
                 </button>
                 {post.email === user?.email && (
-                  <span className="text-xs text-slate-400 font-semibold">👎 {post.dislikesCount || 0}</span>
+                  <span className="flex items-center gap-1 text-xs text-slate-400 font-semibold">
+                    <ThumbsDown size={14} /> {post.dislikesCount || 0}
+                  </span>
                 )}
                 {post.email !== user?.email && (
                   <button
                     onClick={() => darDislike(post.id)}
-                    className={`text-xs font-semibold transition-all duration-200 ${dislikes[post.id] ? "text-slate-700 scale-110" : "text-slate-400 hover:text-slate-600"}`}
+                    className={`flex items-center gap-1 text-xs font-semibold transition-all duration-200 ${dislikes[post.id] ? "text-slate-700 scale-110" : "text-slate-400 hover:text-slate-600"}`}
                   >
-                    👎
+                    <ThumbsDown size={14} fill={dislikes[post.id] ? "currentColor" : "none"} />
                   </button>
                 )}
-                <button onClick={() => toggleComentarios(post.id)} className="text-xs text-slate-400 hover:text-blue-500 font-semibold transition">
-                  💬 {showComentarios[post.id] ? "Ocultar" : "Comentar"}
+                <button onClick={() => toggleComentarios(post.id)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-blue-500 font-semibold transition">
+                  <MessageCircle size={14} /> {showComentarios[post.id] ? "Ocultar" : "Comentar"}
                 </button>
                 {post.email !== user?.email && (
                   <button
                     onClick={() => reportarPost(post.id, post.autor, post.email)}
-                    className="text-xs text-slate-400 hover:text-orange-500 font-semibold transition ml-auto"
+                    className="flex items-center gap-1 text-xs text-slate-400 hover:text-orange-500 font-semibold transition ml-auto"
                   >
-                    🚩 Reportar
+                    <Flag size={14} /> Reportar
                   </button>
                 )}
               </div>
@@ -526,15 +531,15 @@ export default function Home() {
                         <div className="flex gap-2 mt-1">
                           <button
                             onClick={() => darLikeComentario(post.id, c.id)}
-                            className={`text-xs font-semibold transition ${likesComentarios[c.id] ? "text-red-500" : "text-slate-400 hover:text-red-500"}`}
+                            className={`flex items-center gap-1 text-xs font-semibold transition ${likesComentarios[c.id] ? "text-red-500" : "text-slate-400 hover:text-red-500"}`}
                           >
-                            ❤️ {c.likesCount || 0}
+                            <Heart size={12} fill={likesComentarios[c.id] ? "currentColor" : "none"} /> {c.likesCount || 0}
                           </button>
                           <button
                             onClick={() => darDislikeComentario(post.id, c.id)}
-                            className={`text-xs font-semibold transition ${dislikesComentarios[c.id] ? "text-slate-700" : "text-slate-400 hover:text-slate-600"}`}
+                            className={`flex items-center gap-1 text-xs font-semibold transition ${dislikesComentarios[c.id] ? "text-slate-700" : "text-slate-400 hover:text-slate-600"}`}
                           >
-                            👎 {c.dislikesCount || 0}
+                            <ThumbsDown size={12} fill={dislikesComentarios[c.id] ? "currentColor" : "none"} /> {c.dislikesCount || 0}
                           </button>
                         </div>
                       </div>
@@ -584,7 +589,9 @@ export default function Home() {
             {misGrupos.length === 0 && <p className="text-xs text-slate-400">No perteneces a ningún grupo.</p>}
             {misGrupos.map((grupo: any) => (
               <div key={grupo.id} className="flex items-center gap-2 mb-2 p-2 rounded-xl hover:bg-blue-50 cursor-pointer transition" onClick={() => router.push("/grupos")}>
-                <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">👥</div>
+                <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center">
+                  <Layers size={14} />
+                </div>
                 <p className="text-xs font-semibold text-slate-700">{grupo.nombre}</p>
               </div>
             ))}

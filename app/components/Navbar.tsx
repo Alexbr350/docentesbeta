@@ -5,6 +5,7 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, query, where, orderBy, updateDoc, doc } from "firebase/firestore";
 import ChatBubble from "./ChatBubble";
+import { Home, FolderOpen, Users2, Calendar, User, UserPlus, LayersIcon, GraduationCap, Bell, LogOut, Search } from "lucide-react";
 
 export default function Navbar({ paginaActual }: { paginaActual: string }) {
   const router = useRouter();
@@ -80,38 +81,52 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <input
-            type="text"
-            placeholder="🔍 Buscar..."
-            className="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-blue-500 w-40 placeholder-slate-500"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                const valor = (e.target as HTMLInputElement).value;
-                if (valor.trim()) router.push(`/?buscar=${encodeURIComponent(valor)}`);
-              }
-            }}
-          />
-          {["Feed", "Portafolio", "Comunidad", "Eventos", "Perfil", "Usuarios", "Grupos", "Maestro"].map((item) => (
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Buscar..."
+              className="bg-slate-800 text-slate-300 text-xs pl-8 pr-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-blue-500 w-40 placeholder-slate-500"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const valor = (e.target as HTMLInputElement).value;
+                  if (valor.trim()) router.push(`/?buscar=${encodeURIComponent(valor)}`);
+                }
+              }}
+            />
+          </div>
+          {[
+            { label: "Feed", icon: Home, color: "text-blue-400" },
+            { label: "Portafolio", icon: FolderOpen, color: "text-amber-400" },
+            { label: "Comunidad", icon: Users2, color: "text-purple-400" },
+            { label: "Eventos", icon: Calendar, color: "text-pink-400" },
+            { label: "Perfil", icon: User, color: "text-cyan-400" },
+            { label: "Usuarios", icon: UserPlus, color: "text-emerald-400" },
+            { label: "Grupos", icon: LayersIcon, color: "text-orange-400" },
+            { label: "Maestro", icon: GraduationCap, color: "text-red-400" },
+          ].map((item) => (
             <button
-              key={item}
-              onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
-              className={`text-xs font-medium px-3 py-1.5 rounded-lg transition ${item === paginaActual ? "text-white bg-slate-700" : "text-slate-400 hover:text-white hover:bg-slate-800"}`}
+              key={item.label}
+              onClick={() => item.label === "Feed" ? router.push("/") : router.push(`/${item.label.toLowerCase()}`)}
+              className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition ${item.label === paginaActual ? "text-white bg-slate-700" : "text-slate-400 hover:text-white hover:bg-slate-800"}`}
             >
-              {item}
+              <item.icon size={14} className={item.label === paginaActual ? "text-white" : item.color} />
+              {item.label}
             </button>
           ))}
           <button
             onClick={() => { setShowNotif(!showNotif); if (!showNotif) marcarLeidas(); }}
-            className="relative text-lg px-2 py-1 rounded-lg hover:bg-slate-800 transition"
+            className="relative p-2 rounded-lg hover:bg-slate-800 transition text-yellow-400"
           >
-            🔔
+            <Bell size={16} />
             {noLeidas > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
                 {noLeidas}
               </span>
             )}
           </button>
-          <button onClick={handleLogout} className="text-xs text-red-400 hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition">
+          <button onClick={handleLogout} className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition">
+            <LogOut size={14} />
             Salir
           </button>
         </div>
@@ -119,7 +134,7 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
 
       {showNotif && (
         <div className="fixed top-14 right-4 w-80 bg-white rounded-2xl border border-slate-200 shadow-2xl z-20 p-4">
-          <h3 className="text-sm font-bold text-gray-800 mb-3">🔔 Notificaciones</h3>
+          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1"><Bell size={16} className="text-yellow-500" /> Notificaciones</h3>
           {notificaciones.length === 0 && <p className="text-xs text-gray-400">No tienes notificaciones.</p>}
           {notificaciones.map((n) => (
             <div key={n.id} className={`mb-2 p-3 rounded-xl text-xs ${n.leida ? "bg-slate-50" : "bg-blue-50 border border-blue-100"}`}>
