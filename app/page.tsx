@@ -27,6 +27,7 @@ export default function Home() {
   const [dislikesComentarios, setDislikesComentarios] = useState<any>({});
   const [amigos, setAmigos] = useState<string[]>([]);
   const [misGrupos, setMisGrupos] = useState<any[]>([]);
+  const [proximoEvento, setProximoEvento] = useState<any>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -39,6 +40,7 @@ export default function Home() {
         cargarNotificaciones(currentUser.email || "");
         cargarAmigos(currentUser.email || "");
         cargarGrupos(currentUser.email || "");
+        cargarProximoEvento();
       }
     });
     return () => unsubscribe();
@@ -93,6 +95,14 @@ export default function Home() {
       setDislikes((prev: any) => ({ ...prev, [postId]: true }));
       setPosts(posts.map(p => p.id === postId ? { ...p, dislikesCount: (p.dislikesCount || 0) + 1 } : p));
     }
+  };
+
+  const cargarProximoEvento = async () => {
+    const hoy = new Date().toISOString().split("T")[0];
+    const snap = await getDocs(query(collection(db, "eventos"), orderBy("fechaEvento", "asc")));
+    const eventos = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const proximo = eventos.find((e: any) => e.fechaEvento >= hoy);
+    setProximoEvento(proximo || null);
   };
 
   const cargarPosts = async () => {
@@ -288,7 +298,7 @@ export default function Home() {
             onChange={(e) => setBusqueda(e.target.value)}
             className="bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-blue-500 w-40 placeholder-slate-500"
           />
-          {["Feed", "Portafolio", "Comunidad", "Perfil", "Usuarios"].map((item) => (
+          {["Feed", "Portafolio", "Comunidad", "Eventos", "Perfil", "Usuarios"].map((item) => (
             <button
               key={item}
               onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
@@ -356,7 +366,7 @@ export default function Home() {
             <div className="flex flex-col gap-0.5">
               {[
                 { label: "❓ Preguntas", path: "/comunidad" },
-                { label: "💡 Actividades", path: "/comunidad" },
+                { label: "📅 Eventos", path: "/eventos" },
               ].map((item) => (
                 <button key={item.label} onClick={() => router.push(item.path)}
                   className="text-left px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition font-medium">
@@ -368,6 +378,23 @@ export default function Home() {
         </div>
 
         <div className="col-span-2">
+          {proximoEvento && (
+            <div
+              onClick={() => router.push("/eventos")}
+              className="bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl p-4 mb-4 shadow-md cursor-pointer hover:shadow-lg transition flex items-center gap-3"
+            >
+              <div className="text-2xl">📅</div>
+              <div className="flex-1">
+                <p className="text-xs text-blue-100 font-semibold uppercase tracking-wide">Próximo evento</p>
+                <p className="text-sm font-bold text-white">{proximoEvento.titulo}</p>
+                <p className="text-xs text-blue-100 mt-0.5">
+                  {new Date(proximoEvento.fechaEvento + "T00:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+                </p>
+              </div>
+              <span className="text-xs text-white font-semibold">Ver →</span>
+            </div>
+          )}
+
           <div className="bg-white rounded-2xl p-4 mb-4 shadow-md">
             <div className="flex gap-3 mb-3">
               <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-extrabold flex-shrink-0 shadow">
@@ -403,7 +430,7 @@ export default function Home() {
                 <div className="flex items-center gap-2 mt-2">
                   <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl hover:border-blue-400 transition">
                     📎 Adjuntar
-                    <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx" className="hidden" onChange={(e) => setArchivoSeleccionado(e.target.files?.[0] || null)} />
+                    <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp" className="hidden" onChange={(e) => setArchivoSeleccionado(e.target.files?.[0] || null)} />
                   </label>
                   {archivoSeleccionado && <span className="text-xs text-blue-600 font-medium">✓ {archivoSeleccionado.name}</span>}
                   <div className="flex justify-end gap-2 ml-auto">
@@ -443,7 +470,13 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-sm text-slate-700 leading-relaxed mb-3">{post.contenido}</p>
-              {post.archivoUrl && (
+              {post.archivoUrl && /\.(jpg|jpeg|png|gif|webp)$/i.test(post.archivoNombre || "") ? (
+                <img
+                  src={post.archivoUrl}
+                  alt={post.archivoNombre}
+                  className="w-full rounded-xl mb-3 border border-slate-200 max-h-96 object-cover"
+                />
+              ) : post.archivoUrl && (
                 <a href={post.archivoUrl} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mb-3">
                   📎 {post.archivoNombre || "Ver archivo adjunto"}

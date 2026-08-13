@@ -56,6 +56,7 @@ function AddMaestroForm() {
     </div>
   );
 }
+
 function ReportesList() {
   const [reportes, setReportes] = useState<any[]>([]);
 
@@ -101,6 +102,129 @@ function ReportesList() {
     </div>
   );
 }
+
+function EventosList() {
+  const [eventos, setEventos] = useState<any[]>([]);
+  const [titulo, setTitulo] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+  const [fechaEvento, setFechaEvento] = useState("");
+  const [imagenEvento, setImagenEvento] = useState<File | null>(null);
+  const [creando, setCreando] = useState(false);
+
+  useEffect(() => {
+    cargarEventos();
+  }, []);
+
+  const cargarEventos = async () => {
+    const snap = await getDocs(query(collection(db, "eventos"), orderBy("fechaEvento", "asc")));
+    setEventos(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+  };
+
+  const crearEvento = async () => {
+    if (!titulo.trim() || !fechaEvento) return;
+    setCreando(true);
+    let imagenUrl = null;
+    let imagenNombre = null;
+    if (imagenEvento) {
+      const formData = new FormData();
+      formData.append("file", imagenEvento);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      imagenUrl = data.secure_url;
+      imagenNombre = imagenEvento.name;
+    }
+    await addDoc(collection(db, "eventos"), {
+      titulo,
+      descripcion,
+      fechaEvento,
+      fecha: serverTimestamp(),
+      ...(imagenUrl && { imagenUrl, imagenNombre }),
+    });
+    setTitulo("");
+    setDescripcion("");
+    setFechaEvento("");
+    setImagenEvento(null);
+    setCreando(false);
+    cargarEventos();
+  };
+
+  const eliminarEvento = async (id: string) => {
+    if (!confirm("¿Eliminar este evento?")) return;
+    await deleteDoc(doc(db, "eventos", id));
+    setEventos(eventos.filter((e) => e.id !== id));
+  };
+
+  return (
+    <div>
+      <div className="bg-white rounded-2xl p-5 mb-4 shadow-md">
+        <h3 className="text-sm font-extrabold text-gray-800 mb-4">📅 Nuevo evento</h3>
+        <input
+          type="text"
+          placeholder="Título del evento..."
+          value={titulo}
+          onChange={(e) => setTitulo(e.target.value)}
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 mb-3 focus:outline-none focus:border-blue-400"
+        />
+        <textarea
+          placeholder="Descripción del evento..."
+          value={descripcion}
+          onChange={(e) => setDescripcion(e.target.value)}
+          rows={3}
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 resize-none mb-3 focus:outline-none focus:border-blue-400"
+        />
+        <input
+          type="date"
+          value={fechaEvento}
+          onChange={(e) => setFechaEvento(e.target.value)}
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 mb-3 focus:outline-none focus:border-blue-400"
+        />
+        <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl hover:border-blue-400 transition mb-3 w-fit">
+          📎 Adjuntar imagen o PDF del evento
+          <input type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf" className="hidden" onChange={(e) => setImagenEvento(e.target.files?.[0] || null)} />
+        </label>
+        {imagenEvento && <p className="text-xs text-blue-600 font-medium mb-3">✓ {imagenEvento.name}</p>}
+        <button
+          onClick={crearEvento}
+          disabled={creando || !titulo.trim() || !fechaEvento}
+          className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow"
+        >
+          {creando ? "Creando..." : "Crear evento"}
+        </button>
+      </div>
+
+      {eventos.length === 0 && (
+        <div className="bg-white rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
+          No hay eventos todavía.
+        </div>
+      )}
+      {eventos.map((e) => (
+        <div key={e.id} className="bg-white rounded-2xl p-4 mb-3 shadow-md flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {e.imagenUrl && /\.pdf$/i.test(e.imagenNombre || "") ? (
+              <a href={e.imagenUrl} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-2xl flex-shrink-0">📄</a>
+            ) : e.imagenUrl && (
+              <img src={e.imagenUrl} alt={e.titulo} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
+            )}
+            <div>
+              <p className="text-sm font-bold text-gray-800">{e.titulo}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{e.descripcion}</p>
+              <p className="text-xs text-blue-600 font-semibold mt-1">
+                📅 {new Date(e.fechaEvento + "T00:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => eliminarEvento(e.id)}
+            className="text-xs text-red-400 hover:text-red-600 font-semibold"
+          >
+            Eliminar
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function MaestrosList() {
   const [maestros, setMaestros] = useState<any[]>([]);
 
@@ -219,11 +343,13 @@ export default function Admin() {
     setNuevoComentario((prev: any) => ({ ...prev, [postId]: "" }));
     await cargarComentarios(postId);
   };
-const eliminarPost = async (postId: string) => {
+
+  const eliminarPost = async (postId: string) => {
     if (!confirm("¿Seguro que quieres eliminar esta publicación?")) return;
     await deleteDoc(doc(db, "posts", postId));
     setPosts(posts.filter((p) => p.id !== postId));
   };
+
   const calificar = async (postId: string, postAutorEmail: string, calificacion: number) => {
     await updateDoc(doc(db, "posts", postId), { calificacion });
     await addDoc(collection(db, "notificaciones"), {
@@ -300,7 +426,6 @@ const eliminarPost = async (postId: string) => {
 
       <div className="max-w-5xl mx-auto px-4 py-6">
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
             { num: usuarios.length, label: "Practicantes", icon: "👥" },
@@ -315,20 +440,18 @@ const eliminarPost = async (postId: string) => {
           ))}
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-2 mb-5">
-          {["publicaciones", "practicantes", "maestros", "reportes"].map((v) => (
+          {["publicaciones", "practicantes", "maestros", "reportes", "eventos"].map((v) => (
             <button
               key={v}
               onClick={() => setVistaActual(v)}
               className={`text-sm px-5 py-2 rounded-xl border transition font-semibold ${vistaActual === v ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
             >
-              {v === "publicaciones" ? "📋 Publicaciones" : v === "practicantes" ? "👥 Practicantes" : v === "maestros" ? "👨‍🏫 Maestros" : "🚩 Reportes"}
+              {v === "publicaciones" ? "📋 Publicaciones" : v === "practicantes" ? "👥 Practicantes" : v === "maestros" ? "👨‍🏫 Maestros" : v === "reportes" ? "🚩 Reportes" : "📅 Eventos"}
             </button>
           ))}
         </div>
 
-        {/* Vista practicantes */}
         {vistaActual === "practicantes" && (
           <div>
             {usuarios.map((u) => (
@@ -353,7 +476,6 @@ const eliminarPost = async (postId: string) => {
           </div>
         )}
 
-        {/* Vista publicaciones */}
         {vistaActual === "publicaciones" && (
           <div>
             {posts.map((post) => (
@@ -375,7 +497,6 @@ const eliminarPost = async (postId: string) => {
 
                 <p className="text-sm text-slate-700 leading-relaxed mb-4">{post.contenido}</p>
 
-                {/* Calificación */}
                 <div className="bg-slate-50 rounded-xl p-3 mb-3">
                   <p className="text-xs font-bold text-slate-600 mb-2">⭐ Calificación</p>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -394,7 +515,7 @@ const eliminarPost = async (postId: string) => {
                   </div>
                 </div>
 
-               <div className="border-t border-slate-100 pt-3 flex gap-3">
+                <div className="border-t border-slate-100 pt-3 flex gap-3">
                   <button
                     onClick={() => toggleComentarios(post.id)}
                     className="text-xs text-slate-400 hover:text-blue-500 font-semibold transition"
@@ -444,9 +565,11 @@ const eliminarPost = async (postId: string) => {
             ))}
           </div>
         )}
-        {/* Vista reportes */}
+
         {vistaActual === "reportes" && <ReportesList />}
-        {/* Vista maestros */}
+
+        {vistaActual === "eventos" && <EventosList />}
+
         {vistaActual === "maestros" && (
           <div>
             <div className="bg-white rounded-2xl p-5 mb-4 shadow-md">
