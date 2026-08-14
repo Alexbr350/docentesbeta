@@ -5,6 +5,7 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import Navbar from "../components/Navbar";
 import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import { HelpCircle, MessageCircle, CheckCircle2, Send } from "lucide-react";
 
 export default function Comunidad() {
   const router = useRouter();
@@ -110,12 +111,11 @@ export default function Comunidad() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
 
-        {/* Header */}
         <div className="bg-slate-900 rounded-2xl p-6 mb-6 flex items-center justify-between shadow-xl">
           <div className="flex items-center gap-4">
-            <div className="text-4xl">🤝</div>
+            <HelpCircle size={32} className="text-purple-400" />
             <div>
-              <h2 className="text-lg font-extrabold text-white">Comunidad DocentesBeta</h2>
+              <h2 className="text-lg font-extrabold text-white">Comunidad ENSFA+</h2>
               <p className="text-sm text-slate-400 mt-0.5">Comparte dudas y ayuda a otros docentes</p>
             </div>
           </div>
@@ -127,10 +127,9 @@ export default function Comunidad() {
           </button>
         </div>
 
-        {/* Formulario */}
         {showForm && (
           <div className="bg-white rounded-2xl p-6 mb-6 shadow-lg border border-blue-100">
-            <h3 className="text-sm font-bold text-gray-800 mb-4">💬 Nueva pregunta</h3>
+            <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-1.5"><MessageCircle size={16} className="text-blue-600" /> Nueva pregunta</h3>
             <input
               type="text"
               placeholder="Título de tu pregunta..."
@@ -160,22 +159,20 @@ export default function Comunidad() {
           </div>
         )}
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-5">
           {[
-            { num: preguntas.length, label: "Total preguntas", icon: "❓" },
-            { num: preguntas.filter(p => p.resuelto).length, label: "Resueltas", icon: "✅" },
-            { num: preguntas.filter(p => !p.resuelto).length, label: "Sin resolver", icon: "⏳" },
+            { num: preguntas.length, label: "Total preguntas", icon: HelpCircle, color: "text-purple-500" },
+            { num: preguntas.filter(p => p.resuelto).length, label: "Resueltas", icon: CheckCircle2, color: "text-emerald-500" },
+            { num: preguntas.filter(p => !p.resuelto).length, label: "Sin resolver", icon: MessageCircle, color: "text-orange-500" },
           ].map((s) => (
             <div key={s.label} className="bg-white rounded-2xl p-4 text-center shadow-md">
-              <div className="text-2xl mb-1">{s.icon}</div>
+              <s.icon size={22} className={`mx-auto mb-1 ${s.color}`} />
               <div className="text-2xl font-extrabold text-gray-800">{s.num}</div>
               <div className="text-xs text-slate-400 mt-0.5 font-medium">{s.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Filtros */}
         <div className="flex gap-2 mb-5">
           {["Todas", "Sin resolver", "Resueltas"].map((f) => (
             <button
@@ -188,7 +185,6 @@ export default function Comunidad() {
           ))}
         </div>
 
-        {/* Preguntas */}
         {preguntasFiltradas.length === 0 && (
           <div className="bg-white rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
             No hay preguntas todavía. ¡Sé el primero en preguntar!
@@ -209,8 +205,8 @@ export default function Comunidad() {
                   </p>
                 </div>
               </div>
-              <span className={`text-xs px-3 py-1 rounded-full font-bold ${pregunta.resuelto ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>
-                {pregunta.resuelto ? "✅ Resuelto" : "⏳ Sin resolver"}
+              <span className={`flex items-center gap-1 text-xs px-3 py-1 rounded-full font-bold ${pregunta.resuelto ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>
+                {pregunta.resuelto ? <><CheckCircle2 size={12} /> Resuelto</> : "Sin resolver"}
               </span>
             </div>
 
@@ -220,16 +216,16 @@ export default function Comunidad() {
             <div className="flex gap-3 border-t border-slate-100 pt-3">
               <button
                 onClick={() => toggleRespuestas(pregunta.id)}
-                className="text-xs text-slate-400 hover:text-blue-500 font-semibold transition"
+                className="flex items-center gap-1 text-xs text-slate-400 hover:text-blue-500 font-semibold transition"
               >
-                💬 {showRespuestas[pregunta.id] ? "Ocultar respuestas" : "Ver respuestas"}
+                <MessageCircle size={14} /> {showRespuestas[pregunta.id] ? "Ocultar respuestas" : "Ver respuestas"}
               </button>
               {pregunta.email === user?.email && !pregunta.resuelto && (
                 <button
                   onClick={() => marcarResuelto(pregunta.id)}
-                  className="text-xs text-emerald-500 hover:text-emerald-700 font-semibold transition"
+                  className="flex items-center gap-1 text-xs text-emerald-500 hover:text-emerald-700 font-semibold transition"
                 >
-                  ✓ Marcar como resuelto
+                  <CheckCircle2 size={14} /> Marcar como resuelto
                 </button>
               )}
             </div>
@@ -261,9 +257,9 @@ export default function Comunidad() {
                   />
                   <button
                     onClick={() => responder(pregunta.id)}
-                    className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold"
+                    className="flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold"
                   >
-                    Responder
+                    <Send size={13} /> Responder
                   </button>
                 </div>
               </div>

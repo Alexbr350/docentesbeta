@@ -6,6 +6,8 @@ import { signOut } from "firebase/auth";
 import Navbar from "../components/Navbar";
 import { collection, getDocs, query, where, orderBy, deleteDoc, doc } from "firebase/firestore";
 import jsPDF from "jspdf";
+import { BookOpen, ClipboardList, PenLine, Paperclip, HelpCircle, FileDown, Trash2 } from "lucide-react";
+
 export default function Portafolio() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -84,6 +86,7 @@ export default function Portafolio() {
 
     pdf.save(`Portafolio_${user?.displayName || "practicante"}.pdf`);
   };
+
   const eliminar = async (id: string) => {
     if (!confirm("¿Seguro que quieres eliminar esta publicación?")) return;
     await deleteDoc(doc(db, "posts", id));
@@ -104,11 +107,11 @@ export default function Portafolio() {
   };
 
   const iconosTipo: any = {
-    "Diario": "📓",
-    "Planeación": "📋",
-    "Narrativa": "✍️",
-    "Extra": "📎",
-    "Pedir ayuda": "❓",
+    "Diario": BookOpen,
+    "Planeación": ClipboardList,
+    "Narrativa": PenLine,
+    "Extra": Paperclip,
+    "Pedir ayuda": HelpCircle,
   };
 
   const tipos = ["Todos", "Diario", "Planeación", "Narrativa", "Extra", "Pedir ayuda"];
@@ -126,11 +129,10 @@ export default function Portafolio() {
   return (
     <div className="min-h-screen bg-slate-100">
 
-     <Navbar paginaActual="Portafolio" />
+      <Navbar paginaActual="Portafolio" />
 
       <div className="max-w-5xl mx-auto px-4 py-6">
 
-        {/* Header perfil */}
         <div className="bg-slate-900 rounded-2xl p-6 mb-6 flex items-center gap-5 shadow-xl">
           <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-extrabold shadow-lg flex-shrink-0">
             {user?.displayName?.charAt(0).toUpperCase()}
@@ -146,80 +148,86 @@ export default function Portafolio() {
           <img src="/logo.png" alt="ENSFA" className="w-12 h-12 rounded-full opacity-60" />
           <button
             onClick={exportarPDF}
-            className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold shadow"
+            className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold shadow"
           >
-            📄 Exportar PDF
+            <FileDown size={14} /> Exportar PDF
           </button>
         </div>
 
-        {/* Estadísticas */}
         <div className="grid grid-cols-5 gap-3 mb-6">
-          {["Diario", "Planeación", "Narrativa", "Extra", "Pedir ayuda"].map((tipo) => (
-            <div key={tipo} className="bg-white rounded-2xl p-4 text-center shadow-md hover:shadow-lg transition">
-              <div className="text-2xl mb-1">{iconosTipo[tipo]}</div>
-              <div className="text-2xl font-extrabold text-gray-800">
-                {posts.filter((p) => p.tipo === tipo).length}
+          {["Diario", "Planeación", "Narrativa", "Extra", "Pedir ayuda"].map((tipo) => {
+            const Icono = iconosTipo[tipo];
+            return (
+              <div key={tipo} className="bg-white rounded-2xl p-4 text-center shadow-md hover:shadow-lg transition">
+                <Icono size={24} className="mx-auto mb-1 text-blue-600" />
+                <div className="text-2xl font-extrabold text-gray-800">
+                  {posts.filter((p) => p.tipo === tipo).length}
+                </div>
+                <div className="text-xs text-slate-400 mt-0.5 font-medium">{tipo}</div>
               </div>
-              <div className="text-xs text-slate-400 mt-0.5 font-medium">{tipo}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Filtros */}
         <div className="flex gap-2 flex-wrap mb-5">
-          {tipos.map((tipo) => (
-            <button
-              key={tipo}
-              onClick={() => setFiltro(tipo)}
-              className={`text-xs px-4 py-1.5 rounded-full border transition font-semibold ${filtro === tipo ? "bg-slate-900 text-white border-slate-900 shadow-md" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
-            >
-              {tipo !== "Todos" && iconosTipo[tipo]} {tipo} {tipo !== "Todos" && `(${posts.filter((p) => p.tipo === tipo).length})`}
-            </button>
-          ))}
+          {tipos.map((tipo) => {
+            const Icono = tipo !== "Todos" ? iconosTipo[tipo] : null;
+            return (
+              <button
+                key={tipo}
+                onClick={() => setFiltro(tipo)}
+                className={`flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-full border transition font-semibold ${filtro === tipo ? "bg-slate-900 text-white border-slate-900 shadow-md" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
+              >
+                {Icono && <Icono size={13} />} {tipo} {tipo !== "Todos" && `(${posts.filter((p) => p.tipo === tipo).length})`}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Publicaciones */}
         {postsFiltrados.length === 0 && (
           <div className="bg-white rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
             No tienes publicaciones de tipo "{filtro}" todavía.
           </div>
         )}
-        {postsFiltrados.map((post) => (
-          <div key={post.id} className="bg-white rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{iconosTipo[post.tipo]}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>
-                  {post.tipo}
-                </span>
+        {postsFiltrados.map((post) => {
+          const Icono = iconosTipo[post.tipo];
+          return (
+            <div key={post.id} className="bg-white rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {Icono && <Icono size={16} className="text-blue-600" />}
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>
+                    {post.tipo}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-400 font-medium">
+                    {post.fecha?.toDate?.()?.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+                  </span>
+                  <button
+                    onClick={() => eliminar(post.id)}
+                    className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-medium hover:bg-red-50 px-2 py-1 rounded-lg transition"
+                  >
+                    <Trash2 size={13} /> Eliminar
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-slate-400 font-medium">
-                  {post.fecha?.toDate?.()?.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
-                </span>
-                <button
-                  onClick={() => eliminar(post.id)}
-                  className="text-xs text-red-400 hover:text-red-600 font-medium hover:bg-red-50 px-2 py-1 rounded-lg transition"
-                >
-                  Eliminar
-                </button>
-              </div>
+              <p className="text-sm text-slate-700 leading-relaxed">{post.contenido}</p>
+              {post.archivoUrl && (
+                <a href={post.archivoUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mt-3">
+                  <Paperclip size={14} /> {post.archivoNombre || "Ver archivo adjunto"}
+                </a>
+              )}
+              {post.calificacion && (
+                <div className="flex items-center gap-2 mt-3 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2">
+                  <span className="text-xs font-bold text-blue-600">⭐ Calificación del evaluador:</span>
+                  <span className="text-lg font-extrabold text-blue-700">{post.calificacion}/10</span>
+                </div>
+              )}
             </div>
-           <p className="text-sm text-slate-700 leading-relaxed">{post.contenido}</p>
-{post.archivoUrl && (
-  <a href={post.archivoUrl} target="_blank" rel="noopener noreferrer"
-    className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mt-3">
-    📎 {post.archivoNombre || "Ver archivo adjunto"}
-  </a>
-)}
-{post.calificacion && (
-  <div className="flex items-center gap-2 mt-3 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2">
-    <span className="text-xs font-bold text-blue-600">⭐ Calificación del evaluador:</span>
-    <span className="text-lg font-extrabold text-blue-700">{post.calificacion}/10</span>
-  </div>
-)}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

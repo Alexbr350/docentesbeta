@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import Navbar from "../components/Navbar";
 
 const ADMINS: string[] = [
   "eira.vargas@ensfa.edu.mx",
@@ -400,29 +401,7 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <nav className="bg-slate-900 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-xl">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full" />
-          <div>
-            <p className="text-xs text-slate-400 leading-none">ENSFA · Panel Evaluador</p>
-            <h1 className="text-sm font-bold text-white leading-tight">ENSFA<span className="text-blue-400">+</span> <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full ml-1">Admin</span></h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {["Feed", "Portafolio", "Comunidad", "Perfil"].map((item) => (
-            <button
-              key={item}
-              onClick={() => item === "Feed" ? router.push("/") : router.push(`/${item.toLowerCase()}`)}
-              className="text-xs text-slate-400 hover:text-white font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition"
-            >
-              {item}
-            </button>
-          ))}
-          <span className="text-xs text-slate-500">|</span>
-          <span className="text-xs text-slate-400">{user?.email}</span>
-          <button onClick={handleLogout} className="text-xs text-red-400 hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition">Salir</button>
-        </div>
-      </nav>
+      <Navbar paginaActual="Admin" />
 
       <div className="max-w-5xl mx-auto px-4 py-6">
 
