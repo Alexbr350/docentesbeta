@@ -63,7 +63,7 @@ export default function Usuarios() {
       leida: false,
       fecha: serverTimestamp(),
     });
-    alert("¡Solicitud enviada!");
+    alert("Solicitud enviada!");
   };
 
   const rechazarSolicitud = async (solicitudId: string) => {
