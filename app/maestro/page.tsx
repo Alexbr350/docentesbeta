@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
+import { GraduationCap, Star, MessageCircle, Send, Users2 } from "lucide-react";
 
 export default function Maestro() {
   const router = useRouter();
@@ -22,7 +23,6 @@ export default function Maestro() {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (!currentUser) { router.push("/landing"); return; }
       
-      // Verificar si es maestro
       const maestrosSnap = await getDocs(query(collection(db, "maestros"), where("email", "==", currentUser.email)));
       if (maestrosSnap.empty) {
         setAccesoDenegado(true);
@@ -65,7 +65,7 @@ export default function Maestro() {
     await addDoc(collection(db, "notificaciones"), {
       para: postAutorEmail,
       de: user.displayName || user.email,
-      mensaje: `tu maestro calificó tu publicación con ${cal}/10 ⭐`,
+      mensaje: `tu maestro calificó tu publicación con ${cal}/10`,
       leida: false,
       fecha: serverTimestamp(),
     });
@@ -138,9 +138,8 @@ export default function Maestro() {
 
       <div className="max-w-5xl mx-auto px-4 py-6">
 
-        {/* Header */}
         <div className="bg-slate-900 rounded-2xl p-6 mb-6 flex items-center gap-4 shadow-xl">
-          <div className="text-4xl">👨‍🏫</div>
+          <GraduationCap size={32} className="text-red-400" />
           <div>
             <h2 className="text-lg font-extrabold text-white">Panel del Maestro</h2>
             <p className="text-sm text-slate-400">{user?.displayName} — {user?.email}</p>
@@ -149,10 +148,9 @@ export default function Maestro() {
 
         <div className="grid grid-cols-3 gap-5">
 
-          {/* Mis grupos */}
           <div className="col-span-1">
             <div className="bg-white rounded-2xl p-4 shadow-md">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mis grupos</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Users2 size={14} className="text-red-400" /> Mis grupos</p>
               {misGrupos.length === 0 && (
                 <div className="text-center py-4">
                   <p className="text-xs text-slate-400 mb-3">No tienes grupos todavía.</p>
@@ -174,7 +172,6 @@ export default function Maestro() {
             </div>
           </div>
 
-          {/* Publicaciones del grupo */}
           <div className="col-span-2">
             {!grupoSeleccionado && (
               <div className="bg-white rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
@@ -204,9 +201,8 @@ export default function Maestro() {
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed mb-4">{post.contenido}</p>
 
-                {/* Calificación */}
                 <div className="bg-slate-50 rounded-xl p-3 mb-3">
-                  <p className="text-xs font-bold text-slate-600 mb-2">⭐ Calificación</p>
+                  <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1"><Star size={13} className="text-amber-500" /> Calificación</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                       <button
@@ -224,8 +220,8 @@ export default function Maestro() {
                 </div>
 
                 <div className="border-t border-slate-100 pt-3">
-                  <button onClick={() => toggleComentarios(post.id)} className="text-xs text-slate-400 hover:text-green-500 font-semibold transition">
-                    💬 {showComentarios[post.id] ? "Ocultar" : "Comentar como maestro"}
+                  <button onClick={() => toggleComentarios(post.id)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-green-500 font-semibold transition">
+                    <MessageCircle size={14} /> {showComentarios[post.id] ? "Ocultar" : "Comentar como maestro"}
                   </button>
                 </div>
 
@@ -253,9 +249,9 @@ export default function Maestro() {
                       />
                       <button
                         onClick={() => publicarComentario(post.id, post.email)}
-                        className="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-xl font-semibold"
+                        className="flex items-center gap-1 text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-xl font-semibold"
                       >
-                        Enviar
+                        <Send size={13} /> Enviar
                       </button>
                     </div>
                   </div>
