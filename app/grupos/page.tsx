@@ -5,6 +5,7 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
+import { Layers, Plus, Users2, X } from "lucide-react";
 
 const ADMINS: string[] = ["eira.vargas@ensfa.edu.mx"];
 
@@ -19,7 +20,6 @@ export default function Grupos() {
   const [nombreGrupo, setNombreGrupo] = useState("");
   const [descripcionGrupo, setDescripcionGrupo] = useState("");
   const [creando, setCreando] = useState(false);
-  const [grupoSeleccionado, setGrupoSeleccionado] = useState<any>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -82,7 +82,7 @@ export default function Grupos() {
     await addDoc(collection(db, "notificaciones"), {
       para: email,
       de: user.displayName || user.email,
-      mensaje: "te agregó a un grupo 👥",
+      mensaje: "te agregó a un grupo",
       leida: false,
       fecha: serverTimestamp(),
     });
@@ -116,10 +116,9 @@ export default function Grupos() {
 
       <div className="max-w-5xl mx-auto px-4 py-6">
 
-        {/* Header */}
         <div className="bg-slate-900 rounded-2xl p-6 mb-6 flex items-center justify-between shadow-xl">
           <div className="flex items-center gap-4">
-            <div className="text-4xl">👥</div>
+            <Layers size={32} className="text-orange-400" />
             <div>
               <h2 className="text-lg font-extrabold text-white">Grupos</h2>
               <p className="text-sm text-slate-400 mt-0.5">Organiza practicantes en grupos</p>
@@ -127,16 +126,15 @@ export default function Grupos() {
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg transition"
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg transition"
           >
-            + Crear grupo
+            <Plus size={16} /> Crear grupo
           </button>
         </div>
 
-        {/* Formulario */}
         {showForm && (
           <div className="bg-white rounded-2xl p-6 mb-6 shadow-lg border border-blue-100">
-            <h3 className="text-sm font-bold text-gray-800 mb-4">👥 Nuevo grupo</h3>
+            <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-1.5"><Layers size={16} className="text-orange-500" /> Nuevo grupo</h3>
             <input
               type="text"
               placeholder="Nombre del grupo..."
@@ -149,7 +147,7 @@ export default function Grupos() {
               value={descripcionGrupo}
               onChange={(e) => setDescripcionGrupo(e.target.value)}
               rows={3}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 resize-none focus:outline-none focus:border-blue-400"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 resize-none mb-3 focus:outline-none focus:border-blue-400"
             />
             <div className="flex justify-end gap-2 mt-3">
               <button onClick={() => setShowForm(false)} className="text-sm text-slate-400 hover:text-slate-600 px-4 py-2">Cancelar</button>
@@ -164,7 +162,6 @@ export default function Grupos() {
           </div>
         )}
 
-        {/* Lista de grupos */}
         {grupos.length === 0 && (
           <div className="bg-white rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
             No hay grupos todavía. ¡Crea el primero!
@@ -179,12 +176,11 @@ export default function Grupos() {
                 <p className="text-xs text-slate-400 mt-0.5">{grupo.descripcion}</p>
                 <p className="text-xs text-slate-400">Creado por: {grupo.creadoPorNombre}</p>
               </div>
-              <span className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-semibold">
-                {grupo.miembros?.length || 0} miembros
+              <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-semibold">
+                <Users2 size={13} /> {grupo.miembros?.length || 0} miembros
               </span>
             </div>
 
-            {/* Miembros */}
             <div className="mb-4">
               <p className="text-xs font-bold text-slate-500 mb-2">Miembros:</p>
               {grupo.miembros?.length === 0 && <p className="text-xs text-slate-400">Sin miembros todavía.</p>}
@@ -201,15 +197,14 @@ export default function Grupos() {
                   </div>
                   <button
                     onClick={() => eliminarMiembro(grupo.id, m.email)}
-                    className="text-xs text-red-400 hover:text-red-600 font-semibold"
+                    className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-semibold"
                   >
-                    Quitar
+                    <X size={12} /> Quitar
                   </button>
                 </div>
               ))}
             </div>
 
-            {/* Agregar miembro */}
             <div>
               <p className="text-xs font-bold text-slate-500 mb-2">Agregar practicante:</p>
               <div className="flex flex-wrap gap-2">
@@ -219,9 +214,9 @@ export default function Grupos() {
                     <button
                       key={u.email}
                       onClick={() => agregarMiembro(grupo.id, u.email, u.nombre)}
-                      className="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 px-3 py-1.5 rounded-xl font-medium transition"
+                      className="flex items-center gap-1 text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 px-3 py-1.5 rounded-xl font-medium transition"
                     >
-                      + {u.nombre}
+                      <Plus size={12} /> {u.nombre}
                     </button>
                   ))}
               </div>

@@ -5,6 +5,7 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import Navbar from "../components/Navbar";
 import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { UserPlus, Users2, Check, X } from "lucide-react";
 
 export default function Usuarios() {
   const router = useRouter();
@@ -27,7 +28,6 @@ export default function Usuarios() {
   }, [router]);
 
   const cargarTodo = async (currentUser: any) => {
-    // Cargar usuarios únicos de posts
     const postsSnap = await getDocs(collection(db, "posts"));
     const emails = [...new Set(postsSnap.docs.map((d) => d.data().email))];
     const data = emails
@@ -39,11 +39,9 @@ export default function Usuarios() {
       }));
     setUsuarios(data);
 
-    // Cargar solicitudes
     const solSnap = await getDocs(query(collection(db, "solicitudes"), where("para", "==", currentUser.email)));
     setSolicitudes(solSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
 
-    // Cargar amigos
     const amigosSnap = await getDocs(query(collection(db, "amigos"), where("usuario", "==", currentUser.email)));
     setAmigos(amigosSnap.docs.map((d) => d.data().amigo));
 
@@ -61,7 +59,7 @@ export default function Usuarios() {
     await addDoc(collection(db, "notificaciones"), {
       para: paraEmail,
       de: user.displayName || user.email,
-      mensaje: "te envió una solicitud de amistad 🤝",
+      mensaje: "te envió una solicitud de amistad",
       leida: false,
       fecha: serverTimestamp(),
     });
@@ -72,6 +70,7 @@ export default function Usuarios() {
     await deleteDoc(doc(db, "solicitudes", solicitudId));
     setSolicitudes(solicitudes.filter((s) => s.id !== solicitudId));
   };
+
   const aceptarSolicitud = async (solicitud: any) => {
     await updateDoc(doc(db, "solicitudes", solicitud.id), { estado: "aceptada" });
     await addDoc(collection(db, "amigos"), { usuario: user.email, amigo: solicitud.de, fecha: serverTimestamp() });
@@ -79,7 +78,7 @@ export default function Usuarios() {
     await addDoc(collection(db, "notificaciones"), {
       para: solicitud.de,
       de: user.displayName || user.email,
-      mensaje: "aceptó tu solicitud de amistad 🎉",
+      mensaje: "aceptó tu solicitud de amistad",
       leida: false,
       fecha: serverTimestamp(),
     });
@@ -107,10 +106,9 @@ export default function Usuarios() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
 
-        {/* Solicitudes pendientes */}
         {solicitudes.length > 0 && (
           <div className="bg-white rounded-2xl p-5 mb-6 shadow-md">
-            <h2 className="text-sm font-extrabold text-gray-800 mb-4">🤝 Solicitudes de amistad</h2>
+            <h2 className="text-sm font-extrabold text-gray-800 mb-4 flex items-center gap-1.5"><UserPlus size={16} className="text-emerald-500" /> Solicitudes de amistad</h2>
             {solicitudes.map((sol) => (
               <div key={sol.id} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
                 <div className="flex items-center gap-3">
@@ -125,15 +123,15 @@ export default function Usuarios() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => aceptarSolicitud(sol)}
-                    className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl font-semibold"
+                    className="flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl font-semibold"
                   >
-                    Aceptar
+                    <Check size={13} /> Aceptar
                   </button>
                   <button
                     onClick={() => rechazarSolicitud(sol.id)}
-                    className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-xl font-semibold"
+                    className="flex items-center gap-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-xl font-semibold"
                   >
-                    Rechazar
+                    <X size={13} /> Rechazar
                   </button>
                 </div>
               </div>
@@ -141,9 +139,8 @@ export default function Usuarios() {
           </div>
         )}
 
-        {/* Lista de usuarios */}
         <div className="bg-white rounded-2xl p-5 shadow-md">
-          <h2 className="text-sm font-extrabold text-gray-800 mb-4">👥 Practicantes en DocentesBeta</h2>
+          <h2 className="text-sm font-extrabold text-gray-800 mb-4 flex items-center gap-1.5"><Users2 size={16} className="text-purple-500" /> Practicantes en ENSFA+</h2>
           {usuarios.length === 0 && (
             <p className="text-sm text-slate-400 text-center py-4">No hay otros practicantes todavía.</p>
           )}
@@ -161,13 +158,13 @@ export default function Usuarios() {
               </div>
               <div>
                 {amigos.includes(u.email) ? (
-                  <span className="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-xl font-semibold">✓ Amigos</span>
+                  <span className="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-xl font-semibold"><Check size={13} /> Amigos</span>
                 ) : (
                   <button
                     onClick={() => enviarSolicitud(u.email)}
-                    className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl font-semibold shadow"
+                    className="flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl font-semibold shadow"
                   >
-                    + Agregar
+                    <UserPlus size={13} /> Agregar
                   </button>
                 )}
               </div>
