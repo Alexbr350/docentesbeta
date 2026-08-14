@@ -7,6 +7,12 @@ import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, upda
 import { Heart, ThumbsDown, MessageCircle, Flag, Paperclip, Calendar, ArrowRight, Layers } from "lucide-react";
 import Navbar from "./components/Navbar";
 import Stories from "./components/Stories";
+import InsigniaVerificada, { esAdminOMaestro } from "./components/InsigniaVerificada";
+
+const ADMINS_LOCAL: string[] = [
+  "eira.vargas@ensfa.edu.mx",
+  "alejandro_br.his23u@ensfa.edu.mx",
+];
 
 export default function Home() {
   const router = useRouter();
@@ -31,6 +37,7 @@ export default function Home() {
   const [amigos, setAmigos] = useState<string[]>([]);
   const [misGrupos, setMisGrupos] = useState<any[]>([]);
   const [proximoEvento, setProximoEvento] = useState<any>(null);
+  const [maestrosEmails, setMaestrosEmails] = useState<string[]>([]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -44,10 +51,16 @@ export default function Home() {
         cargarAmigos(currentUser.email || "");
         cargarGrupos(currentUser.email || "");
         cargarProximoEvento();
+        cargarMaestros();
       }
     });
     return () => unsubscribe();
   }, [router]);
+
+  const cargarMaestros = async () => {
+    const snap = await getDocs(collection(db, "maestros"));
+    setMaestrosEmails(snap.docs.map((d) => d.data().email));
+  };
 
   const reportarPost = async (postId: string, autorNombre: string, autorEmail: string) => {
     const motivo = prompt("¿Por qué quieres reportar esta publicación? (motivo breve)");
@@ -294,7 +307,11 @@ export default function Home() {
             <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-extrabold mx-auto mb-3 shadow-lg">
               {user?.displayName?.charAt(0).toUpperCase()}
             </div>
-            <p className="text-sm font-bold text-gray-800">{user?.displayName || "Practicante"}</p>
+            <p className="text-sm font-bold text-gray-800 flex items-center justify-center gap-1">
+              {user?.displayName || "Practicante"}
+              {ADMINS_LOCAL.includes(user?.email) && <InsigniaVerificada tipo="admin" />}
+              {!ADMINS_LOCAL.includes(user?.email) && maestrosEmails.includes(user?.email) && <InsigniaVerificada tipo="maestro" />}
+            </p>
             <p className="text-xs text-gray-400 mt-0.5 truncate">{user?.email}</p>
             <span className="inline-block mt-2 text-xs bg-blue-50 text-blue-600 px-3 py-0.5 rounded-full font-medium">Practicante</span>
           </div>
@@ -413,7 +430,11 @@ export default function Home() {
                   {post.autor?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900">{post.autor}</p>
+                  <p className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                    {post.autor}
+                    {ADMINS_LOCAL.includes(post.email) && <InsigniaVerificada tipo="admin" />}
+                    {!ADMINS_LOCAL.includes(post.email) && maestrosEmails.includes(post.email) && <InsigniaVerificada tipo="maestro" />}
+                  </p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>{post.tipo}</span>
                   {post.fecha && (
                     <p className="text-xs text-slate-400 mt-0.5">
@@ -476,7 +497,11 @@ export default function Home() {
                         {c.autor?.charAt(0).toUpperCase()}
                       </div>
                       <div className="bg-slate-50 rounded-xl px-3 py-2 flex-1">
-                        <p className="text-xs font-bold text-gray-700">{c.autor}</p>
+                        <p className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                          {c.autor}
+                          {ADMINS_LOCAL.includes(c.email) && <InsigniaVerificada tipo="admin" size={11} />}
+                          {!ADMINS_LOCAL.includes(c.email) && maestrosEmails.includes(c.email) && <InsigniaVerificada tipo="maestro" size={11} />}
+                        </p>
                         <p className="text-xs text-slate-600">{c.texto}</p>
                         <div className="flex gap-2 mt-1">
                           <button
