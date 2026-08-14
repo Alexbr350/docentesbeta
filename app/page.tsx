@@ -6,6 +6,7 @@ import { signOut } from "firebase/auth";
 import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc, where, deleteDoc, setDoc } from "firebase/firestore";
 import { Heart, ThumbsDown, MessageCircle, Flag, Paperclip, Calendar, ArrowRight, Layers } from "lucide-react";
 import Navbar from "./components/Navbar";
+import Stories from "./components/Stories";
 
 export default function Home() {
   const router = useRouter();
@@ -327,6 +328,7 @@ export default function Home() {
         </div>
 
         <div className="col-span-2">
+          <Stories />
           {proximoEvento && (
             <div
               onClick={() => router.push("/eventos")}
