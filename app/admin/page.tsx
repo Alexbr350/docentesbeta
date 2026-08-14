@@ -5,7 +5,8 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
-import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon } from "lucide-react";
+import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 
 const ADMINS: string[] = [
   "eira.vargas@ensfa.edu.mx",
@@ -227,6 +228,106 @@ function EventosList() {
   );
 }
 
+function Dashboard({ posts, usuarios }: { posts: any[]; usuarios: any[] }) {
+  const coloresGrafica = ["#3b82f6", "#6366f1", "#f59e0b", "#06b6d4", "#ef4444"];
+
+  const datosPorTipo = ["Diario", "Planeación", "Narrativa", "Extra", "Pedir ayuda"].map((tipo) => ({
+    tipo,
+    cantidad: posts.filter((p) => p.tipo === tipo).length,
+  }));
+
+  const datosCalificaciones = [1,2,3,4,5,6,7,8,9,10].map((n) => ({
+    nota: n.toString(),
+    cantidad: posts.filter((p) => p.calificacion === n).length,
+  }));
+
+  const ultimos7dias = Array.from({ length: 7 }, (_, i) => {
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() - (6 - i));
+    const fechaStr = fecha.toLocaleDateString("es-MX", { weekday: "short" });
+    const postsDelDia = posts.filter((p) => {
+      const postFecha = p.fecha?.toDate?.();
+      if (!postFecha) return false;
+      return postFecha.toDateString() === fecha.toDateString();
+    });
+    return { dia: fechaStr, publicaciones: postsDelDia.length };
+  });
+
+  const publicacionesPorUsuario = usuarios
+    .map((u) => ({ nombre: u.nombre?.split(" ")[0] || u.email, publicaciones: u.publicaciones }))
+    .sort((a, b) => b.publicaciones - a.publicaciones)
+    .slice(0, 5);
+
+  return (
+    <div className="grid grid-cols-2 gap-5">
+      <div className="bg-white rounded-2xl p-5 shadow-md">
+        <h3 className="text-sm font-extrabold text-gray-800 mb-4">Publicaciones por tipo</h3>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={datosPorTipo}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+            <XAxis dataKey="tipo" tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+            <Tooltip />
+            <Bar dataKey="cantidad" radius={[6, 6, 0, 0]}>
+              {datosPorTipo.map((_, i) => (
+                <Cell key={i} fill={coloresGrafica[i % coloresGrafica.length]} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="bg-white rounded-2xl p-5 shadow-md">
+        <h3 className="text-sm font-extrabold text-gray-800 mb-4">Distribución de calificaciones</h3>
+        <ResponsiveContainer width="100%" height={220}>
+          <PieChart>
+            <Pie
+              data={datosCalificaciones.filter(d => d.cantidad > 0)}
+              dataKey="cantidad"
+              nameKey="nota"
+              cx="50%"
+              cy="50%"
+              outerRadius={80}
+              label={(entry) => entry.nota}
+            >
+              {datosCalificaciones.filter(d => d.cantidad > 0).map((_, i) => (
+                <Cell key={i} fill={coloresGrafica[i % coloresGrafica.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="bg-white rounded-2xl p-5 shadow-md">
+        <h3 className="text-sm font-extrabold text-gray-800 mb-4">Actividad últimos 7 días</h3>
+        <ResponsiveContainer width="100%" height={220}>
+          <LineChart data={ultimos7dias}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+            <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+            <Tooltip />
+            <Line type="monotone" dataKey="publicaciones" stroke="#3b82f6" strokeWidth={3} dot={{ fill: "#3b82f6", r: 4 }} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="bg-white rounded-2xl p-5 shadow-md">
+        <h3 className="text-sm font-extrabold text-gray-800 mb-4">Top 5 practicantes más activos</h3>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={publicacionesPorUsuario} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+            <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
+            <YAxis dataKey="nombre" type="category" tick={{ fontSize: 10 }} width={70} />
+            <Tooltip />
+            <Bar dataKey="publicaciones" fill="#6366f1" radius={[0, 6, 6, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
 function MaestrosList() {
   const [maestros, setMaestros] = useState<any[]>([]);
 
@@ -268,7 +369,7 @@ export default function Admin() {
   const [accesoDenegado, setAccesoDenegado] = useState(false);
   const [posts, setPosts] = useState<any[]>([]);
   const [usuarios, setUsuarios] = useState<any[]>([]);
-  const [vistaActual, setVistaActual] = useState("publicaciones");
+  const [vistaActual, setVistaActual] = useState("dashboard");
   const [comentarios, setComentarios] = useState<any>({});
   const [showComentarios, setShowComentarios] = useState<any>({});
   const [nuevoComentario, setNuevoComentario] = useState<any>({});
@@ -421,21 +522,24 @@ export default function Admin() {
         </div>
 
         <div className="flex gap-2 mb-5">
-          {["publicaciones", "practicantes", "maestros", "reportes", "eventos"].map((v) => (
+          {["dashboard", "publicaciones", "practicantes", "maestros", "reportes", "eventos"].map((v) => (
             <button
               key={v}
               onClick={() => setVistaActual(v)}
               className={`flex items-center gap-1.5 text-sm px-5 py-2 rounded-xl border transition font-semibold ${vistaActual === v ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
             >
+              {v === "dashboard" && <BarChart3 size={14} />}
               {v === "publicaciones" && <ClipboardList size={14} />}
               {v === "practicantes" && <Users2 size={14} />}
               {v === "maestros" && <GraduationCap size={14} />}
               {v === "reportes" && <Flag size={14} />}
               {v === "eventos" && <Calendar size={14} />}
-              {v.charAt(0).toUpperCase() + v.slice(1)}
+              {v === "dashboard" ? "Estadísticas" : v.charAt(0).toUpperCase() + v.slice(1)}
             </button>
           ))}
         </div>
+
+        {vistaActual === "dashboard" && <Dashboard posts={posts} usuarios={usuarios} />}
 
         {vistaActual === "practicantes" && (
           <div>
