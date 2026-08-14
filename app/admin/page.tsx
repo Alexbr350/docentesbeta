@@ -5,6 +5,7 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
+import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon } from "lucide-react";
 
 const ADMINS: string[] = [
   "eira.vargas@ensfa.edu.mx",
@@ -82,9 +83,9 @@ function ReportesList() {
       {reportes.map((r) => (
         <div key={r.id} className={`bg-white rounded-2xl p-5 mb-3 shadow-md border-l-4 ${r.estado === "revisado" ? "border-emerald-400" : "border-orange-400"}`}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-bold text-orange-600">🚩 Reporte de publicación</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${r.estado === "revisado" ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-600"}`}>
-              {r.estado === "revisado" ? "✅ Revisado" : "⏳ Pendiente"}
+            <span className="flex items-center gap-1 text-xs font-bold text-orange-600"><Flag size={13} /> Reporte de publicación</span>
+            <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold ${r.estado === "revisado" ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-600"}`}>
+              {r.estado === "revisado" ? <><CheckCircle2 size={12} /> Revisado</> : "Pendiente"}
             </span>
           </div>
           <p className="text-sm text-slate-700 mb-1"><span className="font-bold">Reportado:</span> {r.autorReportado} ({r.emailReportado})</p>
@@ -158,7 +159,7 @@ function EventosList() {
   return (
     <div>
       <div className="bg-white rounded-2xl p-5 mb-4 shadow-md">
-        <h3 className="text-sm font-extrabold text-gray-800 mb-4">📅 Nuevo evento</h3>
+        <h3 className="text-sm font-extrabold text-gray-800 mb-4 flex items-center gap-1.5"><Calendar size={16} className="text-pink-500" /> Nuevo evento</h3>
         <input
           type="text"
           placeholder="Título del evento..."
@@ -180,7 +181,7 @@ function EventosList() {
           className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 mb-3 focus:outline-none focus:border-blue-400"
         />
         <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl hover:border-blue-400 transition mb-3 w-fit">
-          📎 Adjuntar imagen o PDF del evento
+          <ImageIcon size={14} /> Adjuntar imagen o PDF del evento
           <input type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf" className="hidden" onChange={(e) => setImagenEvento(e.target.files?.[0] || null)} />
         </label>
         {imagenEvento && <p className="text-xs text-blue-600 font-medium mb-3">✓ {imagenEvento.name}</p>}
@@ -202,23 +203,23 @@ function EventosList() {
         <div key={e.id} className="bg-white rounded-2xl p-4 mb-3 shadow-md flex items-center justify-between">
           <div className="flex items-center gap-3">
             {e.imagenUrl && /\.pdf$/i.test(e.imagenNombre || "") ? (
-              <a href={e.imagenUrl} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-2xl flex-shrink-0">📄</a>
+              <a href={e.imagenUrl} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center flex-shrink-0"><FileIcon size={22} className="text-red-500" /></a>
             ) : e.imagenUrl && (
               <img src={e.imagenUrl} alt={e.titulo} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
             )}
             <div>
               <p className="text-sm font-bold text-gray-800">{e.titulo}</p>
               <p className="text-xs text-slate-500 mt-0.5">{e.descripcion}</p>
-              <p className="text-xs text-blue-600 font-semibold mt-1">
-                📅 {new Date(e.fechaEvento + "T00:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+              <p className="flex items-center gap-1 text-xs text-blue-600 font-semibold mt-1">
+                <Calendar size={12} /> {new Date(e.fechaEvento + "T00:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
               </p>
             </div>
           </div>
           <button
             onClick={() => eliminarEvento(e.id)}
-            className="text-xs text-red-400 hover:text-red-600 font-semibold"
+            className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-semibold"
           >
-            Eliminar
+            <Trash2 size={13} /> Eliminar
           </button>
         </div>
       ))}
@@ -253,7 +254,7 @@ function MaestrosList() {
               <p className="text-xs text-slate-400">{m.email}</p>
             </div>
           </div>
-          <span className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-semibold">👨‍🏫 Maestro</span>
+          <span className="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-semibold"><GraduationCap size={13} /> Maestro</span>
         </div>
       ))}
     </div>
@@ -356,7 +357,7 @@ export default function Admin() {
     await addDoc(collection(db, "notificaciones"), {
       para: postAutorEmail,
       de: user.displayName || user.email,
-      mensaje: `calificó tu publicación con ${calificacion}/10 ⭐`,
+      mensaje: `calificó tu publicación con ${calificacion}/10`,
       leida: false,
       fecha: serverTimestamp(),
     });
@@ -389,7 +390,7 @@ export default function Admin() {
   if (accesoDenegado) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="bg-slate-800 rounded-2xl border border-slate-700 p-10 text-center max-w-sm shadow-2xl">
-        <div className="text-5xl mb-4">🔒</div>
+        <ShieldAlert size={48} className="text-red-400 mx-auto mb-4" />
         <h2 className="text-lg font-extrabold text-white mb-2">Acceso denegado</h2>
         <p className="text-sm text-slate-400 mb-6">No tienes permisos para ver esta página.</p>
         <button onClick={() => router.push("/")} className="text-sm bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow">
@@ -407,12 +408,12 @@ export default function Admin() {
 
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
-            { num: usuarios.length, label: "Practicantes", icon: "👥" },
-            { num: posts.length, label: "Publicaciones totales", icon: "📋" },
-            { num: posts.filter(p => p.calificacion).length, label: "Calificadas", icon: "⭐" },
+            { num: usuarios.length, label: "Practicantes", icon: Users2 },
+            { num: posts.length, label: "Publicaciones totales", icon: ClipboardList },
+            { num: posts.filter(p => p.calificacion).length, label: "Calificadas", icon: Star },
           ].map((s) => (
             <div key={s.label} className="bg-slate-900 rounded-2xl p-5 text-center shadow-xl">
-              <div className="text-3xl mb-2">{s.icon}</div>
+              <s.icon size={26} className="mx-auto mb-2 text-blue-400" />
               <div className="text-3xl font-extrabold text-white">{s.num}</div>
               <div className="text-xs text-slate-400 mt-1 font-medium">{s.label}</div>
             </div>
@@ -424,9 +425,14 @@ export default function Admin() {
             <button
               key={v}
               onClick={() => setVistaActual(v)}
-              className={`text-sm px-5 py-2 rounded-xl border transition font-semibold ${vistaActual === v ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
+              className={`flex items-center gap-1.5 text-sm px-5 py-2 rounded-xl border transition font-semibold ${vistaActual === v ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
             >
-              {v === "publicaciones" ? "📋 Publicaciones" : v === "practicantes" ? "👥 Practicantes" : v === "maestros" ? "👨‍🏫 Maestros" : v === "reportes" ? "🚩 Reportes" : "📅 Eventos"}
+              {v === "publicaciones" && <ClipboardList size={14} />}
+              {v === "practicantes" && <Users2 size={14} />}
+              {v === "maestros" && <GraduationCap size={14} />}
+              {v === "reportes" && <Flag size={14} />}
+              {v === "eventos" && <Calendar size={14} />}
+              {v.charAt(0).toUpperCase() + v.slice(1)}
             </button>
           ))}
         </div>
@@ -477,7 +483,7 @@ export default function Admin() {
                 <p className="text-sm text-slate-700 leading-relaxed mb-4">{post.contenido}</p>
 
                 <div className="bg-slate-50 rounded-xl p-3 mb-3">
-                  <p className="text-xs font-bold text-slate-600 mb-2">⭐ Calificación</p>
+                  <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1"><Star size={13} className="text-amber-500" /> Calificación</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                       <button
@@ -497,15 +503,15 @@ export default function Admin() {
                 <div className="border-t border-slate-100 pt-3 flex gap-3">
                   <button
                     onClick={() => toggleComentarios(post.id)}
-                    className="text-xs text-slate-400 hover:text-blue-500 font-semibold transition"
+                    className="flex items-center gap-1 text-xs text-slate-400 hover:text-blue-500 font-semibold transition"
                   >
-                    💬 {showComentarios[post.id] ? "Ocultar" : "Comentar como evaluador"}
+                    <MessageCircle size={14} /> {showComentarios[post.id] ? "Ocultar" : "Comentar como evaluador"}
                   </button>
                   <button
                     onClick={() => eliminarPost(post.id)}
-                    className="text-xs text-red-400 hover:text-red-600 font-semibold transition"
+                    className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-semibold transition"
                   >
-                    🗑️ Eliminar publicación
+                    <Trash2 size={14} /> Eliminar publicación
                   </button>
                 </div>
 
@@ -533,9 +539,9 @@ export default function Admin() {
                       />
                       <button
                         onClick={() => publicarComentario(post.id, post.email)}
-                        className="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-xl font-semibold"
+                        className="flex items-center gap-1 text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-xl font-semibold"
                       >
-                        Enviar
+                        <Send size={13} /> Enviar
                       </button>
                     </div>
                   </div>
@@ -552,7 +558,7 @@ export default function Admin() {
         {vistaActual === "maestros" && (
           <div>
             <div className="bg-white rounded-2xl p-5 mb-4 shadow-md">
-              <h3 className="text-sm font-extrabold text-gray-800 mb-4">👨‍🏫 Gestionar Maestros</h3>
+              <h3 className="text-sm font-extrabold text-gray-800 mb-4 flex items-center gap-1.5"><GraduationCap size={16} className="text-green-600" /> Gestionar Maestros</h3>
               <p className="text-xs text-slate-500 mb-4">Agrega correos de maestros para que puedan calificar a sus grupos.</p>
               <AddMaestroForm />
             </div>

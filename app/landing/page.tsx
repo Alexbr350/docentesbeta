@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { BookOpen, ClipboardList, PenLine, Users2, BarChart3, Bell } from "lucide-react";
 
 export default function Landing() {
   const router = useRouter();
@@ -90,15 +91,15 @@ export default function Landing() {
           </div>
           <div className="grid grid-cols-3 gap-6">
             {[
-              { icon: "📓", titulo: "Diarios de práctica", desc: "Registra tus experiencias diarias y recibe retroalimentación de tu evaluador en tiempo real.", color: "bg-blue-50 border-blue-100" },
-              { icon: "📋", titulo: "Planeaciones", desc: "Sube y organiza tus planeaciones de clase en tu portafolio digital personal.", color: "bg-indigo-50 border-indigo-100" },
-              { icon: "✍️", titulo: "Narrativa pedagógica", desc: "Comparte tu narrativa y reflexiones sobre tu proceso de formación docente.", color: "bg-amber-50 border-amber-100" },
-              { icon: "🤝", titulo: "Comunidad", desc: "Conecta con otros practicantes, comparte actividades y resuelve dudas juntos.", color: "bg-emerald-50 border-emerald-100" },
-              { icon: "📊", titulo: "Portafolio digital", desc: "Tu evaluador puede ver todo tu trabajo organizado y calificarlo fácilmente.", color: "bg-purple-50 border-purple-100" },
-              { icon: "🔔", titulo: "Notificaciones", desc: "Recibe avisos instantáneos cuando tu evaluador comente tus publicaciones.", color: "bg-red-50 border-red-100" },
+              { icon: BookOpen, titulo: "Diarios de práctica", desc: "Registra tus experiencias diarias y recibe retroalimentación de tu evaluador en tiempo real.", color: "bg-blue-50 border-blue-100", iconColor: "text-blue-600" },
+              { icon: ClipboardList, titulo: "Planeaciones", desc: "Sube y organiza tus planeaciones de clase en tu portafolio digital personal.", color: "bg-indigo-50 border-indigo-100", iconColor: "text-indigo-600" },
+              { icon: PenLine, titulo: "Narrativa pedagógica", desc: "Comparte tu narrativa y reflexiones sobre tu proceso de formación docente.", color: "bg-amber-50 border-amber-100", iconColor: "text-amber-600" },
+              { icon: Users2, titulo: "Comunidad", desc: "Conecta con otros practicantes, comparte actividades y resuelve dudas juntos.", color: "bg-emerald-50 border-emerald-100", iconColor: "text-emerald-600" },
+              { icon: BarChart3, titulo: "Portafolio digital", desc: "Tu evaluador puede ver todo tu trabajo organizado y calificarlo fácilmente.", color: "bg-purple-50 border-purple-100", iconColor: "text-purple-600" },
+              { icon: Bell, titulo: "Notificaciones", desc: "Recibe avisos instantáneos cuando tu evaluador comente tus publicaciones.", color: "bg-red-50 border-red-100", iconColor: "text-red-600" },
             ].map((f) => (
               <div key={f.titulo} className={`rounded-2xl p-6 border ${f.color} hover:shadow-lg transition`}>
-                <div className="text-4xl mb-4">{f.icon}</div>
+                <f.icon size={32} className={`mb-4 ${f.iconColor}`} />
                 <h3 className="text-sm font-bold text-gray-800 mb-2">{f.titulo}</h3>
                 <p className="text-xs text-slate-500 leading-relaxed">{f.desc}</p>
               </div>
