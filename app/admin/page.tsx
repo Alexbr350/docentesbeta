@@ -288,7 +288,7 @@ function Dashboard({ posts, usuarios }: { posts: any[]; usuarios: any[] }) {
               cx="50%"
               cy="50%"
               outerRadius={80}
-              label={(entry) => entry.nota}
+              label={(entry: any) => entry.nota}
             >
               {datosCalificaciones.filter(d => d.cantidad > 0).map((_, i) => (
                 <Cell key={i} fill={coloresGrafica[i % coloresGrafica.length]} />
