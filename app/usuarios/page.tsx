@@ -101,22 +101,22 @@ export default function Usuarios() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
       <Navbar paginaActual="Usuarios" />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
 
         {solicitudes.length > 0 && (
-          <div className="bg-white rounded-2xl p-5 mb-6 shadow-md">
-            <h2 className="text-sm font-extrabold text-gray-800 mb-4 flex items-center gap-1.5"><UserPlus size={16} className="text-emerald-500" /> Solicitudes de amistad</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-6 shadow-md">
+            <h2 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-4 flex items-center gap-1.5"><UserPlus size={16} className="text-emerald-500" /> Solicitudes de amistad</h2>
             {solicitudes.map((sol) => (
-              <div key={sol.id} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+              <div key={sol.id} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-extrabold">
                     {sol.deNombre?.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-800">{sol.deNombre}</p>
+                    <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{sol.deNombre}</p>
                     <p className="text-xs text-slate-400">{sol.de}</p>
                   </div>
                 </div>
@@ -129,7 +129,7 @@ export default function Usuarios() {
                   </button>
                   <button
                     onClick={() => rechazarSolicitud(sol.id)}
-                    className="flex items-center gap-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-xl font-semibold"
+                    className="flex items-center gap-1 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-xl font-semibold"
                   >
                     <X size={13} /> Rechazar
                   </button>
@@ -139,19 +139,19 @@ export default function Usuarios() {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl p-5 shadow-md">
-          <h2 className="text-sm font-extrabold text-gray-800 mb-4 flex items-center gap-1.5"><Users2 size={16} className="text-purple-500" /> Practicantes en ENSFA+</h2>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-md">
+          <h2 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-4 flex items-center gap-1.5"><Users2 size={16} className="text-purple-500" /> Practicantes en ENSFA+</h2>
           {usuarios.length === 0 && (
             <p className="text-sm text-slate-400 text-center py-4">No hay otros practicantes todavía.</p>
           )}
           {usuarios.map((u) => (
-            <div key={u.email} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+            <div key={u.email} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow">
                   {u.nombre?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-800">{u.nombre}</p>
+                  <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{u.nombre}</p>
                   <p className="text-xs text-slate-400">{u.email}</p>
                   <p className="text-xs text-blue-500">{u.publicaciones} publicaciones</p>
                 </div>

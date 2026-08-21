@@ -111,7 +111,7 @@ export default function Grupos() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
       <Navbar paginaActual="Grupos" />
 
       <div className="max-w-5xl mx-auto px-4 py-6">
@@ -133,21 +133,21 @@ export default function Grupos() {
         </div>
 
         {showForm && (
-          <div className="bg-white rounded-2xl p-6 mb-6 shadow-lg border border-blue-100">
-            <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-1.5"><Layers size={16} className="text-orange-500" /> Nuevo grupo</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 mb-6 shadow-lg border border-blue-100">
+            <h3 className="text-sm font-bold text-gray-800 dark:text-slate-100 mb-4 flex items-center gap-1.5"><Layers size={16} className="text-orange-500" /> Nuevo grupo</h3>
             <input
               type="text"
               placeholder="Nombre del grupo..."
               value={nombreGrupo}
               onChange={(e) => setNombreGrupo(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 mb-3 focus:outline-none focus:border-blue-400"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 mb-3 focus:outline-none focus:border-blue-400"
             />
             <textarea
               placeholder="Descripción del grupo..."
               value={descripcionGrupo}
               onChange={(e) => setDescripcionGrupo(e.target.value)}
               rows={3}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 resize-none mb-3 focus:outline-none focus:border-blue-400"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-slate-300 resize-none mb-3 focus:outline-none focus:border-blue-400"
             />
             <div className="flex justify-end gap-2 mt-3">
               <button onClick={() => setShowForm(false)} className="text-sm text-slate-400 hover:text-slate-600 px-4 py-2">Cancelar</button>
@@ -163,16 +163,16 @@ export default function Grupos() {
         )}
 
         {grupos.length === 0 && (
-          <div className="bg-white rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
             No hay grupos todavía. ¡Crea el primero!
           </div>
         )}
 
         {grupos.map((grupo) => (
-          <div key={grupo.id} className="bg-white rounded-2xl p-5 mb-4 shadow-md">
+          <div key={grupo.id} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-md">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-sm font-extrabold text-gray-800">{grupo.nombre}</h3>
+                <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100">{grupo.nombre}</h3>
                 <p className="text-xs text-slate-400 mt-0.5">{grupo.descripcion}</p>
                 <p className="text-xs text-slate-400">Creado por: {grupo.creadoPorNombre}</p>
               </div>
@@ -182,16 +182,16 @@ export default function Grupos() {
             </div>
 
             <div className="mb-4">
-              <p className="text-xs font-bold text-slate-500 mb-2">Miembros:</p>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Miembros:</p>
               {grupo.miembros?.length === 0 && <p className="text-xs text-slate-400">Sin miembros todavía.</p>}
               {grupo.miembros?.map((m: any) => (
-                <div key={m.email} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+                <div key={m.email} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
                       {m.nombre?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-gray-700">{m.nombre}</p>
+                      <p className="text-xs font-bold text-gray-700 dark:text-slate-300">{m.nombre}</p>
                       <p className="text-xs text-slate-400">{m.email}</p>
                     </div>
                   </div>
@@ -206,7 +206,7 @@ export default function Grupos() {
             </div>
 
             <div>
-              <p className="text-xs font-bold text-slate-500 mb-2">Agregar practicante:</p>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Agregar practicante:</p>
               <div className="flex flex-wrap gap-2">
                 {usuarios
                   .filter(u => !grupo.miembros?.find((m: any) => m.email === u.email))
@@ -214,7 +214,7 @@ export default function Grupos() {
                     <button
                       key={u.email}
                       onClick={() => agregarMiembro(grupo.id, u.email, u.nombre)}
-                      className="flex items-center gap-1 text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 px-3 py-1.5 rounded-xl font-medium transition"
+                      className="flex items-center gap-1 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 hover:text-blue-600 text-slate-600 dark:text-slate-400 px-3 py-1.5 rounded-xl font-medium transition"
                     >
                       <Plus size={12} /> {u.nombre}
                     </button>

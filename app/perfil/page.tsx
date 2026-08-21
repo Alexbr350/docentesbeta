@@ -70,7 +70,7 @@ export default function Perfil() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
 
       <Navbar paginaActual="Perfil" />
 
@@ -99,9 +99,9 @@ export default function Perfil() {
           {tipos.map((tipo) => {
             const Icono = iconosTipo[tipo];
             return (
-              <div key={tipo} className="bg-white rounded-2xl p-4 text-center shadow-md hover:shadow-lg transition">
+              <div key={tipo} className="bg-white dark:bg-slate-900 rounded-2xl p-4 text-center shadow-md hover:shadow-lg transition">
                 <Icono size={22} className="mx-auto mb-1 text-blue-600" />
-                <div className="text-2xl font-extrabold text-gray-800">{posts.filter((p) => p.tipo === tipo).length}</div>
+                <div className="text-2xl font-extrabold text-gray-800 dark:text-slate-100">{posts.filter((p) => p.tipo === tipo).length}</div>
                 <div className="text-xs text-slate-400 mt-0.5 font-medium">{tipo}</div>
               </div>
             );
@@ -110,8 +110,8 @@ export default function Perfil() {
 
         <div className="grid grid-cols-2 gap-5">
 
-          <div className="bg-white rounded-2xl p-6 shadow-md">
-            <h3 className="text-sm font-extrabold text-gray-800 mb-5 flex items-center gap-1.5"><BarChart3 size={16} className="text-blue-600" /> Mi progreso</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-md">
+            <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-5 flex items-center gap-1.5"><BarChart3 size={16} className="text-blue-600" /> Mi progreso</h3>
             {["Diario", "Planeación", "Narrativa", "Extra"].map((tipo) => {
               const count = posts.filter((p) => p.tipo === tipo).length;
               const pct = Math.min((count / metas[tipo]) * 100, 100);
@@ -119,10 +119,10 @@ export default function Perfil() {
               return (
                 <div key={tipo} className="mb-4">
                   <div className="flex justify-between text-xs mb-1.5">
-                    <span className="font-bold text-slate-700 flex items-center gap-1"><Icono size={13} /> {tipo}</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1"><Icono size={13} /> {tipo}</span>
                     <span className="text-slate-400 font-medium">{count}/{metas[tipo]}</span>
                   </div>
-                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div className={`h-full ${barraColores[tipo]} rounded-full transition-all shadow-sm`} style={{ width: `${pct}%` }}></div>
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">{pct.toFixed(0)}% completado</p>
@@ -131,18 +131,18 @@ export default function Perfil() {
             })}
           </div>
 
-          <div className="bg-white rounded-2xl p-6 shadow-md">
-            <h3 className="text-sm font-extrabold text-gray-800 mb-5 flex items-center gap-1.5"><Newspaper size={16} className="text-blue-600" /> Últimas publicaciones</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-md">
+            <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-5 flex items-center gap-1.5"><Newspaper size={16} className="text-blue-600" /> Últimas publicaciones</h3>
             {posts.slice(0, 5).map((post) => {
               const Icono = iconosTipo[post.tipo];
               return (
-                <div key={post.id} className="flex items-start gap-3 mb-4 pb-4 border-b border-slate-100 last:border-0 last:mb-0 last:pb-0">
+                <div key={post.id} className="flex items-start gap-3 mb-4 pb-4 border-b border-slate-100 dark:border-slate-800 last:border-0 last:mb-0 last:pb-0">
                   <Icono size={18} className="flex-shrink-0 text-blue-600 mt-0.5" />
                   <div>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"}`}>
                       {post.tipo}
                     </span>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed line-clamp-2">{post.contenido}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed line-clamp-2">{post.contenido}</p>
                   </div>
                 </div>
               );

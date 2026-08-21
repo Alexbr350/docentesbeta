@@ -40,14 +40,14 @@ function AddMaestroForm() {
         placeholder="Nombre del maestro..."
         value={nombre}
         onChange={(e) => setNombre(e.target.value)}
-        className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-blue-400 flex-1"
+        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400 flex-1"
       />
       <input
         type="email"
         placeholder="Correo @ensfa.edu.mx..."
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:border-blue-400 flex-1"
+        className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:border-blue-400 flex-1"
       />
       <button
         onClick={agregar}
@@ -77,21 +77,21 @@ function ReportesList() {
   return (
     <div>
       {reportes.length === 0 && (
-        <div className="bg-white rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
           No hay reportes todavía.
         </div>
       )}
       {reportes.map((r) => (
-        <div key={r.id} className={`bg-white rounded-2xl p-5 mb-3 shadow-md border-l-4 ${r.estado === "revisado" ? "border-emerald-400" : "border-orange-400"}`}>
+        <div key={r.id} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md border-l-4 ${r.estado === "revisado" ? "border-emerald-400" : "border-orange-400"}`}>
           <div className="flex items-center justify-between mb-2">
             <span className="flex items-center gap-1 text-xs font-bold text-orange-600"><Flag size={13} /> Reporte de publicación</span>
             <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold ${r.estado === "revisado" ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-600"}`}>
               {r.estado === "revisado" ? <><CheckCircle2 size={12} /> Revisado</> : "Pendiente"}
             </span>
           </div>
-          <p className="text-sm text-slate-700 mb-1"><span className="font-bold">Reportado:</span> {r.autorReportado} ({r.emailReportado})</p>
-          <p className="text-sm text-slate-700 mb-1"><span className="font-bold">Reportado por:</span> {r.reportadoPor}</p>
-          <p className="text-sm text-slate-700 mb-3"><span className="font-bold">Motivo:</span> {r.motivo}</p>
+          <p className="text-sm text-slate-700 dark:text-slate-300 mb-1"><span className="font-bold">Reportado:</span> {r.autorReportado} ({r.emailReportado})</p>
+          <p className="text-sm text-slate-700 dark:text-slate-300 mb-1"><span className="font-bold">Reportado por:</span> {r.reportadoPor}</p>
+          <p className="text-sm text-slate-700 dark:text-slate-300 mb-3"><span className="font-bold">Motivo:</span> {r.motivo}</p>
           {r.estado !== "revisado" && (
             <button
               onClick={() => marcarRevisado(r.id)}
@@ -159,29 +159,29 @@ function EventosList() {
 
   return (
     <div>
-      <div className="bg-white rounded-2xl p-5 mb-4 shadow-md">
-        <h3 className="text-sm font-extrabold text-gray-800 mb-4 flex items-center gap-1.5"><Calendar size={16} className="text-pink-500" /> Nuevo evento</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-md">
+        <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-4 flex items-center gap-1.5"><Calendar size={16} className="text-pink-500" /> Nuevo evento</h3>
         <input
           type="text"
           placeholder="Título del evento..."
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 mb-3 focus:outline-none focus:border-blue-400"
+          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 mb-3 focus:outline-none focus:border-blue-400"
         />
         <textarea
           placeholder="Descripción del evento..."
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
           rows={3}
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 resize-none mb-3 focus:outline-none focus:border-blue-400"
+          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-slate-300 resize-none mb-3 focus:outline-none focus:border-blue-400"
         />
         <input
           type="date"
           value={fechaEvento}
           onChange={(e) => setFechaEvento(e.target.value)}
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 mb-3 focus:outline-none focus:border-blue-400"
+          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 mb-3 focus:outline-none focus:border-blue-400"
         />
-        <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl hover:border-blue-400 transition mb-3 w-fit">
+        <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl hover:border-blue-400 transition mb-3 w-fit">
           <ImageIcon size={14} /> Adjuntar imagen o PDF del evento
           <input type="file" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf" className="hidden" onChange={(e) => setImagenEvento(e.target.files?.[0] || null)} />
         </label>
@@ -196,12 +196,12 @@ function EventosList() {
       </div>
 
       {eventos.length === 0 && (
-        <div className="bg-white rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
           No hay eventos todavía.
         </div>
       )}
       {eventos.map((e) => (
-        <div key={e.id} className="bg-white rounded-2xl p-4 mb-3 shadow-md flex items-center justify-between">
+        <div key={e.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-3 shadow-md flex items-center justify-between">
           <div className="flex items-center gap-3">
             {e.imagenUrl && /\.pdf$/i.test(e.imagenNombre || "") ? (
               <a href={e.imagenUrl} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center flex-shrink-0"><FileIcon size={22} className="text-red-500" /></a>
@@ -209,8 +209,8 @@ function EventosList() {
               <img src={e.imagenUrl} alt={e.titulo} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
             )}
             <div>
-              <p className="text-sm font-bold text-gray-800">{e.titulo}</p>
-              <p className="text-xs text-slate-500 mt-0.5">{e.descripcion}</p>
+              <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{e.titulo}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{e.descripcion}</p>
               <p className="flex items-center gap-1 text-xs text-blue-600 font-semibold mt-1">
                 <Calendar size={12} /> {new Date(e.fechaEvento + "T00:00:00").toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
               </p>
@@ -260,8 +260,8 @@ function Dashboard({ posts, usuarios }: { posts: any[]; usuarios: any[] }) {
 
   return (
     <div className="grid grid-cols-2 gap-5">
-      <div className="bg-white rounded-2xl p-5 shadow-md">
-        <h3 className="text-sm font-extrabold text-gray-800 mb-4">Publicaciones por tipo</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-md">
+        <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-4">Publicaciones por tipo</h3>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={datosPorTipo}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -277,8 +277,8 @@ function Dashboard({ posts, usuarios }: { posts: any[]; usuarios: any[] }) {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white rounded-2xl p-5 shadow-md">
-        <h3 className="text-sm font-extrabold text-gray-800 mb-4">Distribución de calificaciones</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-md">
+        <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-4">Distribución de calificaciones</h3>
         <ResponsiveContainer width="100%" height={220}>
           <PieChart>
             <Pie
@@ -299,8 +299,8 @@ function Dashboard({ posts, usuarios }: { posts: any[]; usuarios: any[] }) {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white rounded-2xl p-5 shadow-md">
-        <h3 className="text-sm font-extrabold text-gray-800 mb-4">Actividad últimos 7 días</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-md">
+        <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-4">Actividad últimos 7 días</h3>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={ultimos7dias}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -312,8 +312,8 @@ function Dashboard({ posts, usuarios }: { posts: any[]; usuarios: any[] }) {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white rounded-2xl p-5 shadow-md">
-        <h3 className="text-sm font-extrabold text-gray-800 mb-4">Top 5 practicantes más activos</h3>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-md">
+        <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-4">Top 5 practicantes más activos</h3>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={publicacionesPorUsuario} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -340,18 +340,18 @@ function MaestrosList() {
   return (
     <div>
       {maestros.length === 0 && (
-        <div className="bg-white rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
           No hay maestros registrados todavía.
         </div>
       )}
       {maestros.map((m) => (
-        <div key={m.id} className="bg-white rounded-2xl p-4 mb-3 shadow-md flex items-center justify-between">
+        <div key={m.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-3 shadow-md flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-green-600 text-white flex items-center justify-center font-extrabold shadow">
               {m.nombre?.charAt(0).toUpperCase() || "M"}
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-800">{m.nombre || "Sin nombre"}</p>
+              <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{m.nombre || "Sin nombre"}</p>
               <p className="text-xs text-slate-400">{m.email}</p>
             </div>
           </div>
@@ -502,7 +502,7 @@ export default function Admin() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
       <Navbar paginaActual="Admin" />
 
       <div className="max-w-5xl mx-auto px-4 py-6">
@@ -526,7 +526,7 @@ export default function Admin() {
             <button
               key={v}
               onClick={() => setVistaActual(v)}
-              className={`flex items-center gap-1.5 text-sm px-5 py-2 rounded-xl border transition font-semibold ${vistaActual === v ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
+              className={`flex items-center gap-1.5 text-sm px-5 py-2 rounded-xl border transition font-semibold ${vistaActual === v ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 hover:border-slate-400"}`}
             >
               {v === "dashboard" && <BarChart3 size={14} />}
               {v === "publicaciones" && <ClipboardList size={14} />}
@@ -544,19 +544,19 @@ export default function Admin() {
         {vistaActual === "practicantes" && (
           <div>
             {usuarios.map((u) => (
-              <div key={u.email} className="bg-white rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
+              <div key={u.email} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-xl bg-slate-800 text-white flex items-center justify-center font-extrabold shadow">
                       {u.nombre?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-800">{u.nombre}</p>
+                      <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{u.nombre}</p>
                       <p className="text-xs text-slate-400">{u.email}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-extrabold text-gray-800">{u.publicaciones}</p>
+                    <p className="text-2xl font-extrabold text-gray-800 dark:text-slate-100">{u.publicaciones}</p>
                     <p className="text-xs text-slate-400 font-medium">publicaciones</p>
                   </div>
                 </div>
@@ -568,32 +568,32 @@ export default function Admin() {
         {vistaActual === "publicaciones" && (
           <div>
             {posts.map((post) => (
-              <div key={post.id} className="bg-white rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
+              <div key={post.id} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow">
                       {post.autor?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-800">{post.autor}</p>
+                      <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{post.autor}</p>
                       <p className="text-xs text-slate-400">{post.email}</p>
                     </div>
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"}`}>
                     {post.tipo}
                   </span>
                 </div>
 
-                <p className="text-sm text-slate-700 leading-relaxed mb-4">{post.contenido}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-4">{post.contenido}</p>
 
-                <div className="bg-slate-50 rounded-xl p-3 mb-3">
-                  <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1"><Star size={13} className="text-amber-500" /> Calificación</p>
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-3">
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1"><Star size={13} className="text-amber-500" /> Calificación</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                       <button
                         key={n}
                         onClick={() => calificar(post.id, post.email, n)}
-                        className={`w-8 h-8 rounded-lg text-xs font-extrabold transition shadow-sm ${calificaciones[post.id] === n ? "bg-blue-600 text-white shadow-md scale-110" : "bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-600 border border-slate-200"}`}
+                        className={`w-8 h-8 rounded-lg text-xs font-extrabold transition shadow-sm ${calificaciones[post.id] === n ? "bg-blue-600 text-white shadow-md scale-110" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 dark:border-slate-800"}`}
                       >
                         {n}
                       </button>
@@ -604,7 +604,7 @@ export default function Admin() {
                   </div>
                 </div>
 
-                <div className="border-t border-slate-100 pt-3 flex gap-3">
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex gap-3">
                   <button
                     onClick={() => toggleComentarios(post.id)}
                     className="flex items-center gap-1 text-xs text-slate-400 hover:text-blue-500 font-semibold transition"
@@ -620,15 +620,15 @@ export default function Admin() {
                 </div>
 
                 {showComentarios[post.id] && (
-                  <div className="mt-3 border-t border-slate-100 pt-3">
+                  <div className="mt-3 border-t border-slate-100 dark:border-slate-800 pt-3">
                     {comentarios[post.id]?.map((c: any) => (
                       <div key={c.id} className="flex gap-2 mb-2">
                         <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                           {c.autor?.charAt(0).toUpperCase()}
                         </div>
-                        <div className="bg-slate-50 rounded-xl px-3 py-2 flex-1">
-                          <p className="text-xs font-bold text-gray-700">{c.autor}</p>
-                          <p className="text-xs text-slate-600">{c.texto}</p>
+                        <div className="bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 flex-1">
+                          <p className="text-xs font-bold text-gray-700 dark:text-slate-300">{c.autor}</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">{c.texto}</p>
                         </div>
                       </div>
                     ))}
@@ -639,7 +639,7 @@ export default function Admin() {
                         value={nuevoComentario[post.id] || ""}
                         onChange={(e) => setNuevoComentario((prev: any) => ({ ...prev, [post.id]: e.target.value }))}
                         onKeyDown={(e) => e.key === "Enter" && publicarComentario(post.id, post.email)}
-                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-400"
+                        className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-400"
                       />
                       <button
                         onClick={() => publicarComentario(post.id, post.email)}
@@ -661,9 +661,9 @@ export default function Admin() {
 
         {vistaActual === "maestros" && (
           <div>
-            <div className="bg-white rounded-2xl p-5 mb-4 shadow-md">
-              <h3 className="text-sm font-extrabold text-gray-800 mb-4 flex items-center gap-1.5"><GraduationCap size={16} className="text-green-600" /> Gestionar Maestros</h3>
-              <p className="text-xs text-slate-500 mb-4">Agrega correos de maestros para que puedan calificar a sus grupos.</p>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-md">
+              <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-4 flex items-center gap-1.5"><GraduationCap size={16} className="text-green-600" /> Gestionar Maestros</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Agrega correos de maestros para que puedan calificar a sus grupos.</p>
               <AddMaestroForm />
             </div>
             <MaestrosList />

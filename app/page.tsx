@@ -303,19 +303,19 @@ export default function Home() {
       <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-4 gap-5">
 
         <div className="col-span-1">
-          <div className="bg-white rounded-2xl p-4 mb-4 text-center shadow-md">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 text-center shadow-md">
             <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-extrabold mx-auto mb-3 shadow-lg">
               {user?.displayName?.charAt(0).toUpperCase()}
             </div>
-            <p className="text-sm font-bold text-gray-800 flex items-center justify-center gap-1">
+            <p className="text-sm font-bold text-gray-800 dark:text-slate-100 flex items-center justify-center gap-1">
               {user?.displayName || "Practicante"}
               {ADMINS_LOCAL.includes(user?.email) && <InsigniaVerificada tipo="admin" />}
               {!ADMINS_LOCAL.includes(user?.email) && maestrosEmails.includes(user?.email) && <InsigniaVerificada tipo="maestro" />}
             </p>
-            <p className="text-xs text-gray-400 mt-0.5 truncate">{user?.email}</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 truncate">{user?.email}</p>
             <span className="inline-block mt-2 text-xs bg-blue-50 text-blue-600 px-3 py-0.5 rounded-full font-medium">Practicante</span>
           </div>
-          <div className="bg-white rounded-2xl p-4 shadow-md">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-md">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mi espacio</p>
             <div className="flex flex-col gap-0.5">
               {[
@@ -324,7 +324,7 @@ export default function Home() {
                 { label: "Perfil", path: "/perfil" },
               ].map((item) => (
                 <button key={item.label} onClick={() => router.push(item.path)}
-                  className="text-left px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition font-medium">
+                  className="text-left px-3 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition font-medium">
                   {item.label}
                 </button>
               ))}
@@ -336,7 +336,7 @@ export default function Home() {
                 { label: "Eventos", path: "/eventos" },
               ].map((item) => (
                 <button key={item.label} onClick={() => router.push(item.path)}
-                  className="text-left px-3 py-2 rounded-xl text-sm text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition font-medium">
+                  className="text-left px-3 py-2 rounded-xl text-sm text-slate-600 dark:text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition font-medium">
                   {item.label}
                 </button>
               ))}
@@ -365,13 +365,13 @@ export default function Home() {
             </div>
           )}
 
-          <div className="bg-white rounded-2xl p-4 mb-4 shadow-md">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 shadow-md">
             <div className="flex gap-3 mb-3">
               <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-extrabold flex-shrink-0 shadow">
                 {user?.displayName?.charAt(0).toUpperCase()}
               </div>
               <div
-                className="flex-1 bg-slate-50 rounded-xl px-4 py-2.5 text-sm text-slate-400 border border-slate-200 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition"
+                className="flex-1 bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 border border-slate-200 dark:border-slate-800 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition"
                 onClick={() => setShowComposer(true)}
               >
                 ¿Qué quieres publicar hoy?
@@ -382,7 +382,7 @@ export default function Home() {
                 <button
                   key={tipo}
                   onClick={() => { setTipoSeleccionado(tipo); setShowComposer(true); }}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition font-medium ${tipoSeleccionado === tipo && showComposer ? "border-blue-500 text-blue-600 bg-blue-50" : "border-slate-200 text-slate-500 hover:border-blue-400 hover:text-blue-600"}`}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition font-medium ${tipoSeleccionado === tipo && showComposer ? "border-blue-500 text-blue-600 bg-blue-50" : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600"}`}
                 >
                   {tipo}
                 </button>
@@ -391,14 +391,14 @@ export default function Home() {
             {showComposer && (
               <div className="mt-4">
                 <textarea
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-700 resize-none focus:outline-none focus:border-blue-400"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm text-slate-700 dark:text-slate-300 resize-none focus:outline-none focus:border-blue-400"
                   rows={4}
                   placeholder={`Escribe tu ${tipoSeleccionado.toLowerCase()} aquí...`}
                   value={contenido}
                   onChange={(e) => setContenido(e.target.value)}
                 />
                 <div className="flex items-center gap-2 mt-2">
-                  <label className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl hover:border-blue-400 transition">
+                  <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl hover:border-blue-400 transition">
                     <Paperclip size={14} /> Adjuntar
                     <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp" className="hidden" onChange={(e) => setArchivoSeleccionado(e.target.files?.[0] || null)} />
                   </label>
@@ -419,23 +419,23 @@ export default function Home() {
           </div>
 
           {postsFiltrados.length === 0 && (
-            <div className="bg-white rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-center text-slate-400 text-sm shadow-md">
               {busqueda ? `No se encontraron resultados para "${busqueda}"` : "Aún no hay publicaciones. ¡Sé el primero!"}
             </div>
           )}
           {postsFiltrados.map((post) => (
-            <div key={post.id} className="bg-white rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
+            <div key={post.id} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow">
                   {post.autor?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                  <p className="text-sm font-bold text-gray-900 dark:text-slate-100 flex items-center gap-1">
                     {post.autor}
                     {ADMINS_LOCAL.includes(post.email) && <InsigniaVerificada tipo="admin" />}
                     {!ADMINS_LOCAL.includes(post.email) && maestrosEmails.includes(post.email) && <InsigniaVerificada tipo="maestro" />}
                   </p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>{post.tipo}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"}`}>{post.tipo}</span>
                   {post.fecha && (
                     <p className="text-xs text-slate-400 mt-0.5">
                       {post.fecha?.toDate?.()?.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })} · {post.fecha?.toDate?.()?.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
@@ -443,20 +443,20 @@ export default function Home() {
                   )}
                 </div>
               </div>
-              <p className="text-sm text-slate-700 leading-relaxed mb-3">{post.contenido}</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">{post.contenido}</p>
               {post.archivoUrl && /\.(jpg|jpeg|png|gif|webp)$/i.test(post.archivoNombre || "") ? (
                 <img
                   src={post.archivoUrl}
                   alt={post.archivoNombre}
-                  className="w-full rounded-xl mb-3 border border-slate-200 max-h-96 object-cover"
+                  className="w-full rounded-xl mb-3 border border-slate-200 dark:border-slate-800 max-h-96 object-cover"
                 />
               ) : post.archivoUrl && (
                 <a href={post.archivoUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mb-3">
+                  className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mb-3">
                   <Paperclip size={14} /> {post.archivoNombre || "Ver archivo adjunto"}
                 </a>
               )}
-              <div className="flex gap-3 border-t border-slate-100 pt-3 items-center">
+              <div className="flex gap-3 border-t border-slate-100 dark:border-slate-800 pt-3 items-center">
                 <button
                   onClick={() => darLike(post.id, post.email)}
                   className={`flex items-center gap-1 text-xs font-semibold transition-all duration-200 ${likes[post.id] ? "text-red-500 scale-110" : "text-slate-400 hover:text-red-500"}`}
@@ -471,7 +471,7 @@ export default function Home() {
                 {post.email !== user?.email && (
                   <button
                     onClick={() => darDislike(post.id)}
-                    className={`flex items-center gap-1 text-xs font-semibold transition-all duration-200 ${dislikes[post.id] ? "text-slate-700 scale-110" : "text-slate-400 hover:text-slate-600"}`}
+                    className={`flex items-center gap-1 text-xs font-semibold transition-all duration-200 ${dislikes[post.id] ? "text-slate-700 dark:text-slate-300 scale-110" : "text-slate-400 hover:text-slate-600"}`}
                   >
                     <ThumbsDown size={14} fill={dislikes[post.id] ? "currentColor" : "none"} />
                   </button>
@@ -489,20 +489,20 @@ export default function Home() {
                 )}
               </div>
               {showComentarios[post.id] && (
-                <div className="mt-3 border-t border-slate-100 pt-3">
+                <div className="mt-3 border-t border-slate-100 dark:border-slate-800 pt-3">
                   {comentarios[post.id]?.length === 0 && <p className="text-xs text-slate-400 mb-3">Aún no hay comentarios.</p>}
                   {comentarios[post.id]?.map((c: any) => (
                     <div key={c.id} className="flex gap-2 mb-2">
                       <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                         {c.autor?.charAt(0).toUpperCase()}
                       </div>
-                      <div className="bg-slate-50 rounded-xl px-3 py-2 flex-1">
-                        <p className="text-xs font-bold text-gray-700 flex items-center gap-1">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 flex-1">
+                        <p className="text-xs font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1">
                           {c.autor}
                           {ADMINS_LOCAL.includes(c.email) && <InsigniaVerificada tipo="admin" size={11} />}
                           {!ADMINS_LOCAL.includes(c.email) && maestrosEmails.includes(c.email) && <InsigniaVerificada tipo="maestro" size={11} />}
                         </p>
-                        <p className="text-xs text-slate-600">{c.texto}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">{c.texto}</p>
                         <div className="flex gap-2 mt-1">
                           <button
                             onClick={() => darLikeComentario(post.id, c.id)}
@@ -512,7 +512,7 @@ export default function Home() {
                           </button>
                           <button
                             onClick={() => darDislikeComentario(post.id, c.id)}
-                            className={`flex items-center gap-1 text-xs font-semibold transition ${dislikesComentarios[c.id] ? "text-slate-700" : "text-slate-400 hover:text-slate-600"}`}
+                            className={`flex items-center gap-1 text-xs font-semibold transition ${dislikesComentarios[c.id] ? "text-slate-700 dark:text-slate-300" : "text-slate-400 hover:text-slate-600"}`}
                           >
                             <ThumbsDown size={12} fill={dislikesComentarios[c.id] ? "currentColor" : "none"} /> {c.dislikesCount || 0}
                           </button>
@@ -527,7 +527,7 @@ export default function Home() {
                       value={nuevoComentario[post.id] || ""}
                       onChange={(e) => setNuevoComentario((prev: any) => ({ ...prev, [post.id]: e.target.value }))}
                       onKeyDown={(e) => e.key === "Enter" && publicarComentario(post.id, post.email)}
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-400"
+                      className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-400"
                     />
                     <button onClick={() => publicarComentario(post.id, post.email)} className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold">
                       Enviar
@@ -540,7 +540,7 @@ export default function Home() {
         </div>
 
         <div className="col-span-1">
-          <div className="bg-white rounded-2xl p-4 shadow-md">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-md">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mi avance</p>
             {[
               { label: "Diarios", value: Math.min((posts.filter(p => p.email === user?.email && p.tipo === "Diario").length / 10) * 100, 100), color: "bg-blue-500" },
@@ -550,16 +550,16 @@ export default function Home() {
             ].map((item) => (
               <div key={item.label} className="mb-4">
                 <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-slate-700 font-semibold">{item.label}</span>
+                  <span className="text-slate-700 dark:text-slate-300 font-semibold">{item.label}</span>
                   <span className="text-slate-400">{item.value.toFixed(0)}%</span>
                 </div>
-                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div className={`h-full ${item.color} rounded-full shadow-sm`} style={{ width: `${item.value}%` }}></div>
                 </div>
               </div>
             ))}
           </div>
-          <div className="bg-white rounded-2xl p-4 mt-4 shadow-md">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 mt-4 shadow-md">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mis grupos</p>
             {misGrupos.length === 0 && <p className="text-xs text-slate-400">No perteneces a ningún grupo.</p>}
             {misGrupos.map((grupo: any) => (
@@ -567,7 +567,7 @@ export default function Home() {
                 <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center">
                   <Layers size={14} />
                 </div>
-                <p className="text-xs font-semibold text-slate-700">{grupo.nombre}</p>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{grupo.nombre}</p>
               </div>
             ))}
             <button onClick={() => router.push("/grupos")} className="text-xs text-blue-500 hover:text-blue-700 font-semibold mt-2">

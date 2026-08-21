@@ -96,7 +96,7 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
             <input
               type="text"
               placeholder="Buscar..."
@@ -153,13 +153,13 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
       </nav>
 
       {showNotif && (
-        <div className="fixed top-14 right-4 w-80 bg-white rounded-2xl border border-slate-200 shadow-2xl z-20 p-4">
-          <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-1"><Bell size={16} className="text-yellow-500" /> Notificaciones</h3>
-          {notificaciones.length === 0 && <p className="text-xs text-gray-400">No tienes notificaciones.</p>}
+        <div className="fixed top-14 right-4 w-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl z-20 p-4">
+          <h3 className="text-sm font-bold text-gray-800 dark:text-slate-100 mb-3 flex items-center gap-1"><Bell size={16} className="text-yellow-500" /> Notificaciones</h3>
+          {notificaciones.length === 0 && <p className="text-xs text-gray-400 dark:text-slate-500">No tienes notificaciones.</p>}
           {notificaciones.map((n) => (
-            <div key={n.id} className={`mb-2 p-3 rounded-xl text-xs ${n.leida ? "bg-slate-50" : "bg-blue-50 border border-blue-100"}`}>
-              <span className="font-bold text-gray-800">{n.de}</span>
-              <span className="text-gray-600"> {n.mensaje}</span>
+            <div key={n.id} className={`mb-2 p-3 rounded-xl text-xs ${n.leida ? "bg-slate-50 dark:bg-slate-800" : "bg-blue-50 border border-blue-100"}`}>
+              <span className="font-bold text-gray-800 dark:text-slate-100">{n.de}</span>
+              <span className="text-gray-600 dark:text-slate-400"> {n.mensaje}</span>
             </div>
           ))}
         </div>

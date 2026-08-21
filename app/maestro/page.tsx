@@ -133,7 +133,7 @@ export default function Maestro() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
       <Navbar paginaActual="Maestro" />
 
       <div className="max-w-5xl mx-auto px-4 py-6">
@@ -149,7 +149,7 @@ export default function Maestro() {
         <div className="grid grid-cols-3 gap-5">
 
           <div className="col-span-1">
-            <div className="bg-white rounded-2xl p-4 shadow-md">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-md">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Users2 size={14} className="text-red-400" /> Mis grupos</p>
               {misGrupos.length === 0 && (
                 <div className="text-center py-4">
@@ -163,9 +163,9 @@ export default function Maestro() {
                 <div
                   key={grupo.id}
                   onClick={() => cargarPostsDeGrupo(grupo)}
-                  className={`p-3 rounded-xl cursor-pointer transition mb-2 ${grupoSeleccionado?.id === grupo.id ? "bg-blue-50 border border-blue-200" : "hover:bg-slate-50 border border-slate-100"}`}
+                  className={`p-3 rounded-xl cursor-pointer transition mb-2 ${grupoSeleccionado?.id === grupo.id ? "bg-blue-50 border border-blue-200" : "hover:bg-slate-50 border border-slate-100 dark:border-slate-800"}`}
                 >
-                  <p className="text-sm font-bold text-gray-800">{grupo.nombre}</p>
+                  <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{grupo.nombre}</p>
                   <p className="text-xs text-slate-400">{grupo.miembros?.length || 0} alumnos</p>
                 </div>
               ))}
@@ -174,41 +174,41 @@ export default function Maestro() {
 
           <div className="col-span-2">
             {!grupoSeleccionado && (
-              <div className="bg-white rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
                 Selecciona un grupo para ver las publicaciones de tus alumnos.
               </div>
             )}
             {grupoSeleccionado && posts.length === 0 && (
-              <div className="bg-white rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
                 Los alumnos de este grupo aún no tienen publicaciones.
               </div>
             )}
             {posts.map((post) => (
-              <div key={post.id} className="bg-white rounded-2xl p-5 mb-3 shadow-md">
+              <div key={post.id} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold">
                       {post.autor?.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-800">{post.autor}</p>
+                      <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{post.autor}</p>
                       <p className="text-xs text-slate-400">{post.email}</p>
                     </div>
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"}`}>
                     {post.tipo}
                   </span>
                 </div>
-                <p className="text-sm text-slate-700 leading-relaxed mb-4">{post.contenido}</p>
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-4">{post.contenido}</p>
 
-                <div className="bg-slate-50 rounded-xl p-3 mb-3">
-                  <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1"><Star size={13} className="text-amber-500" /> Calificación</p>
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-3">
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1"><Star size={13} className="text-amber-500" /> Calificación</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                       <button
                         key={n}
                         onClick={() => calificar(post.id, post.email, n)}
-                        className={`w-8 h-8 rounded-lg text-xs font-extrabold transition ${calificaciones[post.id] === n ? "bg-green-600 text-white scale-110" : "bg-white text-slate-600 hover:bg-green-50 hover:text-green-600 border border-slate-200"}`}
+                        className={`w-8 h-8 rounded-lg text-xs font-extrabold transition ${calificaciones[post.id] === n ? "bg-green-600 text-white scale-110" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-green-50 hover:text-green-600 border border-slate-200 dark:border-slate-800"}`}
                       >
                         {n}
                       </button>
@@ -219,22 +219,22 @@ export default function Maestro() {
                   </div>
                 </div>
 
-                <div className="border-t border-slate-100 pt-3">
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-3">
                   <button onClick={() => toggleComentarios(post.id)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-green-500 font-semibold transition">
                     <MessageCircle size={14} /> {showComentarios[post.id] ? "Ocultar" : "Comentar como maestro"}
                   </button>
                 </div>
 
                 {showComentarios[post.id] && (
-                  <div className="mt-3 border-t border-slate-100 pt-3">
+                  <div className="mt-3 border-t border-slate-100 dark:border-slate-800 pt-3">
                     {comentarios[post.id]?.map((c: any) => (
                       <div key={c.id} className="flex gap-2 mb-2">
                         <div className="w-7 h-7 rounded-lg bg-green-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                           {c.autor?.charAt(0).toUpperCase()}
                         </div>
-                        <div className="bg-slate-50 rounded-xl px-3 py-2 flex-1">
-                          <p className="text-xs font-bold text-gray-700">{c.autor}</p>
-                          <p className="text-xs text-slate-600">{c.texto}</p>
+                        <div className="bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 flex-1">
+                          <p className="text-xs font-bold text-gray-700 dark:text-slate-300">{c.autor}</p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">{c.texto}</p>
                         </div>
                       </div>
                     ))}
@@ -245,7 +245,7 @@ export default function Maestro() {
                         value={nuevoComentario[post.id] || ""}
                         onChange={(e) => setNuevoComentario((prev: any) => ({ ...prev, [post.id]: e.target.value }))}
                         onKeyDown={(e) => e.key === "Enter" && publicarComentario(post.id, post.email)}
-                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-green-400"
+                        className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-green-400"
                       />
                       <button
                         onClick={() => publicarComentario(post.id, post.email)}

@@ -127,7 +127,7 @@ export default function Portafolio() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
 
       <Navbar paginaActual="Portafolio" />
 
@@ -158,9 +158,9 @@ export default function Portafolio() {
           {["Diario", "Planeación", "Narrativa", "Extra", "Pedir ayuda"].map((tipo) => {
             const Icono = iconosTipo[tipo];
             return (
-              <div key={tipo} className="bg-white rounded-2xl p-4 text-center shadow-md hover:shadow-lg transition">
+              <div key={tipo} className="bg-white dark:bg-slate-900 rounded-2xl p-4 text-center shadow-md hover:shadow-lg transition">
                 <Icono size={24} className="mx-auto mb-1 text-blue-600" />
-                <div className="text-2xl font-extrabold text-gray-800">
+                <div className="text-2xl font-extrabold text-gray-800 dark:text-slate-100">
                   {posts.filter((p) => p.tipo === tipo).length}
                 </div>
                 <div className="text-xs text-slate-400 mt-0.5 font-medium">{tipo}</div>
@@ -176,7 +176,7 @@ export default function Portafolio() {
               <button
                 key={tipo}
                 onClick={() => setFiltro(tipo)}
-                className={`flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-full border transition font-semibold ${filtro === tipo ? "bg-slate-900 text-white border-slate-900 shadow-md" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
+                className={`flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-full border transition font-semibold ${filtro === tipo ? "bg-slate-900 text-white border-slate-900 shadow-md" : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 hover:border-slate-400"}`}
               >
                 {Icono && <Icono size={13} />} {tipo} {tipo !== "Todos" && `(${posts.filter((p) => p.tipo === tipo).length})`}
               </button>
@@ -185,18 +185,18 @@ export default function Portafolio() {
         </div>
 
         {postsFiltrados.length === 0 && (
-          <div className="bg-white rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
             No tienes publicaciones de tipo "{filtro}" todavía.
           </div>
         )}
         {postsFiltrados.map((post) => {
           const Icono = iconosTipo[post.tipo];
           return (
-            <div key={post.id} className="bg-white rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
+            <div key={post.id} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   {Icono && <Icono size={16} className="text-blue-600" />}
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 text-slate-600"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"}`}>
                     {post.tipo}
                   </span>
                 </div>
@@ -212,10 +212,10 @@ export default function Portafolio() {
                   </button>
                 </div>
               </div>
-              <p className="text-sm text-slate-700 leading-relaxed">{post.contenido}</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{post.contenido}</p>
               {post.archivoUrl && (
                 <a href={post.archivoUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mt-3">
+                  className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mt-3">
                   <Paperclip size={14} /> {post.archivoNombre || "Ver archivo adjunto"}
                 </a>
               )}

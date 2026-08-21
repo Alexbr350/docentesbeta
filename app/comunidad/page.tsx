@@ -106,7 +106,7 @@ export default function Comunidad() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
       <Navbar paginaActual="Comunidad" />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
@@ -128,21 +128,21 @@ export default function Comunidad() {
         </div>
 
         {showForm && (
-          <div className="bg-white rounded-2xl p-6 mb-6 shadow-lg border border-blue-100">
-            <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-1.5"><MessageCircle size={16} className="text-blue-600" /> Nueva pregunta</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 mb-6 shadow-lg border border-blue-100">
+            <h3 className="text-sm font-bold text-gray-800 dark:text-slate-100 mb-4 flex items-center gap-1.5"><MessageCircle size={16} className="text-blue-600" /> Nueva pregunta</h3>
             <input
               type="text"
               placeholder="Título de tu pregunta..."
               value={titulo}
               onChange={(e) => setTitulo(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 mb-3 focus:outline-none focus:border-blue-400"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 mb-3 focus:outline-none focus:border-blue-400"
             />
             <textarea
               placeholder="Describe tu situación con más detalle..."
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               rows={4}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 resize-none focus:outline-none focus:border-blue-400"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-slate-300 resize-none focus:outline-none focus:border-blue-400"
             />
             <div className="flex justify-end gap-2 mt-3">
               <button onClick={() => { setShowForm(false); setTitulo(""); setDescripcion(""); }} className="text-sm text-slate-400 hover:text-slate-600 px-4 py-2">
@@ -165,9 +165,9 @@ export default function Comunidad() {
             { num: preguntas.filter(p => p.resuelto).length, label: "Resueltas", icon: CheckCircle2, color: "text-emerald-500" },
             { num: preguntas.filter(p => !p.resuelto).length, label: "Sin resolver", icon: MessageCircle, color: "text-orange-500" },
           ].map((s) => (
-            <div key={s.label} className="bg-white rounded-2xl p-4 text-center shadow-md">
+            <div key={s.label} className="bg-white dark:bg-slate-900 rounded-2xl p-4 text-center shadow-md">
               <s.icon size={22} className={`mx-auto mb-1 ${s.color}`} />
-              <div className="text-2xl font-extrabold text-gray-800">{s.num}</div>
+              <div className="text-2xl font-extrabold text-gray-800 dark:text-slate-100">{s.num}</div>
               <div className="text-xs text-slate-400 mt-0.5 font-medium">{s.label}</div>
             </div>
           ))}
@@ -178,7 +178,7 @@ export default function Comunidad() {
             <button
               key={f}
               onClick={() => setFiltro(f)}
-              className={`text-xs px-4 py-1.5 rounded-full border transition font-semibold ${filtro === f ? "bg-slate-900 text-white border-slate-900 shadow-md" : "border-slate-200 text-slate-500 bg-white hover:border-slate-400"}`}
+              className={`text-xs px-4 py-1.5 rounded-full border transition font-semibold ${filtro === f ? "bg-slate-900 text-white border-slate-900 shadow-md" : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 hover:border-slate-400"}`}
             >
               {f}
             </button>
@@ -186,20 +186,20 @@ export default function Comunidad() {
         </div>
 
         {preguntasFiltradas.length === 0 && (
-          <div className="bg-white rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
             No hay preguntas todavía. ¡Sé el primero en preguntar!
           </div>
         )}
 
         {preguntasFiltradas.map((pregunta) => (
-          <div key={pregunta.id} className={`bg-white rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition border-l-4 ${pregunta.resuelto ? "border-emerald-400" : "border-red-400"}`}>
+          <div key={pregunta.id} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition border-l-4 ${pregunta.resuelto ? "border-emerald-400" : "border-red-400"}`}>
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow">
                   {pregunta.autor?.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900">{pregunta.autor}</p>
+                  <p className="text-sm font-bold text-gray-900 dark:text-slate-100">{pregunta.autor}</p>
                   <p className="text-xs text-slate-400">
                     {pregunta.fecha?.toDate?.()?.toLocaleDateString("es-MX", { day: "numeric", month: "long" })}
                   </p>
@@ -210,10 +210,10 @@ export default function Comunidad() {
               </span>
             </div>
 
-            <h3 className="text-sm font-bold text-gray-800 mb-2">{pregunta.titulo}</h3>
-            <p className="text-sm text-slate-600 leading-relaxed mb-3">{pregunta.descripcion}</p>
+            <h3 className="text-sm font-bold text-gray-800 dark:text-slate-100 mb-2">{pregunta.titulo}</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-3">{pregunta.descripcion}</p>
 
-            <div className="flex gap-3 border-t border-slate-100 pt-3">
+            <div className="flex gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
               <button
                 onClick={() => toggleRespuestas(pregunta.id)}
                 className="flex items-center gap-1 text-xs text-slate-400 hover:text-blue-500 font-semibold transition"
@@ -231,7 +231,7 @@ export default function Comunidad() {
             </div>
 
             {showRespuestas[pregunta.id] && (
-              <div className="mt-3 border-t border-slate-100 pt-3">
+              <div className="mt-3 border-t border-slate-100 dark:border-slate-800 pt-3">
                 {respuestas[pregunta.id]?.length === 0 && (
                   <p className="text-xs text-slate-400 mb-3">Aún no hay respuestas. ¡Sé el primero en ayudar!</p>
                 )}
@@ -240,9 +240,9 @@ export default function Comunidad() {
                     <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
                       {r.autor?.charAt(0).toUpperCase()}
                     </div>
-                    <div className="bg-slate-50 rounded-xl px-3 py-2 flex-1">
-                      <p className="text-xs font-bold text-gray-700">{r.autor}</p>
-                      <p className="text-xs text-slate-600">{r.texto}</p>
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 flex-1">
+                      <p className="text-xs font-bold text-gray-700 dark:text-slate-300">{r.autor}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">{r.texto}</p>
                     </div>
                   </div>
                 ))}
@@ -253,7 +253,7 @@ export default function Comunidad() {
                     value={nuevaRespuesta[pregunta.id] || ""}
                     onChange={(e) => setNuevaRespuesta((prev: any) => ({ ...prev, [pregunta.id]: e.target.value }))}
                     onKeyDown={(e) => e.key === "Enter" && responder(pregunta.id)}
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-400"
+                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-400"
                   />
                   <button
                     onClick={() => responder(pregunta.id)}

@@ -247,7 +247,7 @@ export default function Stories() {
           ) : (
             <button
               onClick={() => setShowUpload(true)}
-              className="w-16 h-16 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 flex items-center justify-center hover:border-blue-400 transition"
+              className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center hover:border-blue-400 transition"
             >
               <Plus size={22} className="text-slate-400" />
             </button>
@@ -278,9 +278,9 @@ export default function Stories() {
       {/* Modal de subir historia */}
       {showUpload && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-extrabold text-gray-800">Subir historia</h3>
+              <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100">Subir historia</h3>
               <button onClick={() => { setShowUpload(false); setArchivoSeleccionado(null); }}><X size={18} className="text-slate-400" /></button>
             </div>
 
@@ -300,7 +300,7 @@ export default function Stories() {
                 </label>
               </div>
             ) : (
-              <div className="mb-4 rounded-xl overflow-hidden bg-slate-100 flex items-center justify-center" style={{ maxHeight: "260px" }}>
+              <div className="mb-4 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center" style={{ maxHeight: "260px" }}>
                 {archivoSeleccionado.type.startsWith("video/") ? (
                   <video src={URL.createObjectURL(archivoSeleccionado)} controls className="w-full max-h-64" />
                 ) : (
@@ -314,7 +314,7 @@ export default function Stories() {
               {archivoSeleccionado && (
                 <button
                   onClick={() => setArchivoSeleccionado(null)}
-                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold py-2.5 rounded-xl"
+                  className="flex-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-semibold py-2.5 rounded-xl"
                 >
                   Cambiar
                 </button>

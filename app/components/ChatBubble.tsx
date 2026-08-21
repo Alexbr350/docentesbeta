@@ -78,7 +78,7 @@ export default function ChatBubble() {
 
       {/* Panel de chat */}
       {abierto && (
-        <div className="fixed bottom-24 right-6 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 z-40 flex flex-col overflow-hidden" style={{ height: "480px" }}>
+        <div className="fixed bottom-24 right-6 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 z-40 flex flex-col overflow-hidden" style={{ height: "480px" }}>
           
           {!amigoSeleccionado && (
             <>
@@ -98,7 +98,7 @@ export default function ChatBubble() {
                     <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
                       {amigo.nombre?.charAt(0).toUpperCase()}
                     </div>
-                    <p className="text-sm font-semibold text-slate-700 truncate">{amigo.nombre}</p>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate">{amigo.nombre}</p>
                   </div>
                 ))}
               </div>
@@ -120,20 +120,20 @@ export default function ChatBubble() {
                 )}
                 {mensajes.map((m) => (
                   <div key={m.id} className={`flex ${m.de === user?.email ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[75%] px-3 py-1.5 rounded-xl text-xs ${m.de === user?.email ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}>
+                    <div className={`max-w-[75%] px-3 py-1.5 rounded-xl text-xs ${m.de === user?.email ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"}`}>
                       {m.texto}
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="p-2 border-t border-slate-100 flex gap-2">
+              <div className="p-2 border-t border-slate-100 dark:border-slate-800 flex gap-2">
                 <input
                   type="text"
                   placeholder="Escribe un mensaje..."
                   value={nuevoMensaje}
                   onChange={(e) => setNuevoMensaje(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && enviarMensaje()}
-                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400"
+                  className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400"
                 />
                 <button onClick={enviarMensaje} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold">
                   Enviar
