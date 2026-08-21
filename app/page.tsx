@@ -8,6 +8,7 @@ import { Heart, ThumbsDown, MessageCircle, Flag, Paperclip, Calendar, ArrowRight
 import Navbar from "./components/Navbar";
 import Stories from "./components/Stories";
 import InsigniaVerificada, { esAdminOMaestro } from "./components/InsigniaVerificada";
+import Tendencias from "./components/Tendencias";
 
 const ADMINS_LOCAL: string[] = [
   "eira.vargas@ensfa.edu.mx",
@@ -574,6 +575,7 @@ export default function Home() {
               Ver todos →
             </button>
           </div>
+          <Tendencias />
           <div className="bg-slate-900 rounded-2xl p-4 mt-4 shadow-md text-center">
             <img src="/logo.png" alt="ENSFA" className="w-12 h-12 rounded-full mx-auto mb-2 opacity-90" />
             <p className="text-xs font-bold text-white">ENSFA</p>
