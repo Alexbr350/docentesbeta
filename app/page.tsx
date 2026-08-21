@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "./firebase";
 import { signOut } from "firebase/auth";
 import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc, where, deleteDoc, setDoc } from "firebase/firestore";
-import { Heart, ThumbsDown, MessageCircle, Flag, Paperclip, Calendar, ArrowRight, Layers } from "lucide-react";
+import { Heart, ThumbsDown, MessageCircle, Flag, Paperclip, Calendar, ArrowRight, Layers, Repeat2 } from "lucide-react";
 import Navbar from "./components/Navbar";
 import Stories from "./components/Stories";
 import InsigniaVerificada, { esAdminOMaestro } from "./components/InsigniaVerificada";
@@ -78,6 +78,34 @@ export default function Home() {
       fecha: serverTimestamp(),
     });
     alert("Reporte enviado al evaluador. Gracias por ayudarnos a mantener la comunidad segura.");
+  };
+
+  const compartirPost = async (post: any) => {
+    const comentario = prompt("Agrega un comentario para compartir esta publicación (opcional):");
+    if (comentario === null) return;
+    await addDoc(collection(db, "posts"), {
+      tipo: "Compartido",
+      contenido: comentario.trim(),
+      autor: user.displayName || user.email,
+      email: user.email,
+      fecha: serverTimestamp(),
+      repostOriginal: {
+        autor: post.autor,
+        contenido: post.contenido || "",
+        tipo: post.tipo,
+        postId: post.id,
+      },
+    });
+    if (post.email !== user.email) {
+      await addDoc(collection(db, "notificaciones"), {
+        para: post.email,
+        de: user.displayName || user.email,
+        mensaje: "compartió tu publicación",
+        leida: false,
+        fecha: serverTimestamp(),
+      });
+    }
+    cargarPosts();
   };
 
   const darLike = async (postId: string, postAutorEmail: string) => {
@@ -271,6 +299,7 @@ export default function Home() {
     "Extra": "bg-cyan-100 text-cyan-700",
     "Pedir ayuda": "bg-red-100 text-red-700",
     "Actividad": "bg-emerald-100 text-emerald-700",
+    "Compartido": "bg-teal-100 text-teal-700",
   };
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
@@ -444,18 +473,39 @@ export default function Home() {
                   )}
                 </div>
               </div>
-              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">{post.contenido}</p>
-              {post.archivoUrl && /\.(jpg|jpeg|png|gif|webp)$/i.test(post.archivoNombre || "") ? (
-                <img
-                  src={post.archivoUrl}
-                  alt={post.archivoNombre}
-                  className="w-full rounded-xl mb-3 border border-slate-200 dark:border-slate-800 max-h-96 object-cover"
-                />
-              ) : post.archivoUrl && (
-                <a href={post.archivoUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mb-3">
-                  <Paperclip size={14} /> {post.archivoNombre || "Ver archivo adjunto"}
-                </a>
+              {post.tipo === "Compartido" ? (
+                <div className="mb-3">
+                  {post.contenido && (
+                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">{post.contenido}</p>
+                  )}
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-3 bg-slate-50 dark:bg-slate-800">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-1.5">
+                      <Repeat2 size={12} /> Publicación original de {post.repostOriginal?.autor || "un usuario"}
+                    </p>
+                    {post.repostOriginal?.tipo && (
+                      <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-semibold mb-1.5 ${coloresTipo[post.repostOriginal.tipo] || "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400"}`}>
+                        {post.repostOriginal.tipo}
+                      </span>
+                    )}
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{post.repostOriginal?.contenido}</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">{post.contenido}</p>
+                  {post.archivoUrl && /\.(jpg|jpeg|png|gif|webp)$/i.test(post.archivoNombre || "") ? (
+                    <img
+                      src={post.archivoUrl}
+                      alt={post.archivoNombre}
+                      className="w-full rounded-xl mb-3 border border-slate-200 dark:border-slate-800 max-h-96 object-cover"
+                    />
+                  ) : post.archivoUrl && (
+                    <a href={post.archivoUrl} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition mb-3">
+                      <Paperclip size={14} /> {post.archivoNombre || "Ver archivo adjunto"}
+                    </a>
+                  )}
+                </>
               )}
               <div className="flex gap-3 border-t border-slate-100 dark:border-slate-800 pt-3 items-center">
                 <button
@@ -479,6 +529,9 @@ export default function Home() {
                 )}
                 <button onClick={() => toggleComentarios(post.id)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-blue-500 font-semibold transition">
                   <MessageCircle size={14} /> {showComentarios[post.id] ? "Ocultar" : "Comentar"}
+                </button>
+                <button onClick={() => compartirPost(post)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-emerald-500 font-semibold transition">
+                  <Repeat2 size={14} /> Compartir
                 </button>
                 {post.email !== user?.email && (
                   <button

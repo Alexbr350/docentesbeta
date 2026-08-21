@@ -6,6 +6,7 @@ import { signOut } from "firebase/auth";
 import Navbar from "../components/Navbar";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { BookOpen, ClipboardList, PenLine, Paperclip, HelpCircle, BarChart3, Newspaper } from "lucide-react";
+import Insignias from "../components/Insignias";
 
 export default function Perfil() {
   const router = useRouter();
@@ -153,6 +154,11 @@ export default function Perfil() {
           </div>
 
         </div>
+
+        <div className="mt-5">
+          <Insignias posts={posts} email={user?.email} nombre={user?.displayName} />
+        </div>
+
       </div>
     </div>
   );
