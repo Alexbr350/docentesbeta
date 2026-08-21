@@ -5,15 +5,22 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, query, where, orderBy, updateDoc, doc } from "firebase/firestore";
 import ChatBubble from "./ChatBubble";
-import { Home, FolderOpen, Users2, Calendar, User, UserPlus, LayersIcon, GraduationCap, Bell, LogOut, Search } from "lucide-react";
+import { Home, FolderOpen, Users2, Calendar, User, UserPlus, LayersIcon, GraduationCap, Bell, LogOut, Search, Sun, Moon } from "lucide-react";
 
 export default function Navbar({ paginaActual }: { paginaActual: string }) {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [notificaciones, setNotificaciones] = useState<any[]>([]);
   const [showNotif, setShowNotif] = useState(false);
+  const [modoOscuro, setModoOscuro] = useState(false);
   const notifRef = useRef<any[]>([]);
   const emailRef = useRef<string>("");
+
+  useEffect(() => {
+    const guardado = localStorage.getItem("modoOscuro") === "true";
+    setModoOscuro(guardado);
+    if (guardado) document.documentElement.classList.add("dark");
+  }, []);
 
   useEffect(() => {
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
@@ -66,6 +73,13 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
   const handleLogout = async () => {
     await signOut(auth);
     router.push("/landing");
+  };
+
+  const toggleTema = () => {
+    const nuevo = !modoOscuro;
+    setModoOscuro(nuevo);
+    localStorage.setItem("modoOscuro", String(nuevo));
+    document.documentElement.classList.toggle("dark", nuevo);
   };
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
@@ -124,6 +138,12 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
                 {noLeidas}
               </span>
             )}
+          </button>
+          <button
+            onClick={toggleTema}
+            className="p-2 rounded-lg hover:bg-slate-800 transition text-slate-300"
+          >
+            {modoOscuro ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <button onClick={handleLogout} className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 font-medium px-3 py-1.5 rounded-lg hover:bg-slate-800 transition">
             <LogOut size={14} />
