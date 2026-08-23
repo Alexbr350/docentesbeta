@@ -3,8 +3,11 @@ import { useEffect, useState, useRef } from "react";
 import { auth, db } from "../firebase";
 import { collection, getDocs, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc } from "firebase/firestore";
 import { Plus, X, Send, Heart, Trash2, Camera, Video, Upload, Circle } from "lucide-react";
+import ModalConfirmar from "./ModalConfirmar";
+import { useToast } from "./Toast";
 
 export default function Stories() {
+  const { mostrarToast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [stories, setStories] = useState<any[]>([]);
   const [showUpload, setShowUpload] = useState(false);
@@ -22,6 +25,7 @@ export default function Stories() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -53,7 +57,7 @@ export default function Stories() {
         if (videoRef.current) videoRef.current.srcObject = stream;
       }, 100);
     } catch (err) {
-      alert("No se pudo acceder a la cámara. Verifica los permisos.");
+      mostrarToast("No se pudo acceder a la cámara. Verifica los permisos.", "error");
     }
   };
 
@@ -197,7 +201,7 @@ export default function Stories() {
   const eliminarStory = async () => {
     if (!grupoSeleccionado) return;
     const story = grupoSeleccionado[indiceActual];
-    if (!confirm("¿Eliminar esta historia?")) return;
+    setConfirmarEliminar(false);
     await deleteDoc(doc(db, "stories", story.id));
     if (grupoSeleccionado.length === 1) {
       cerrarVisor();
@@ -415,7 +419,7 @@ export default function Stories() {
             {grupoSeleccionado[indiceActual].email === user?.email ? (
               <div className="flex justify-center mt-5 relative z-20">
                 <button
-                  onClick={eliminarStory}
+                  onClick={() => setConfirmarEliminar(true)}
                   className="group w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-red-500 border border-white/20 hover:border-red-500 rounded-full backdrop-blur-md transition-all duration-300 shadow-lg hover:scale-110 active:scale-95"
                 >
                   <Trash2 size={17} className="text-red-400 group-hover:text-white transition-all duration-300 group-hover:rotate-6" />
@@ -444,6 +448,14 @@ export default function Stories() {
           </div>
         </div>
       )}
+
+      <ModalConfirmar
+        visible={confirmarEliminar}
+        mensaje="¿Eliminar esta historia?"
+        destructivo
+        onConfirmar={eliminarStory}
+        onCancelar={() => setConfirmarEliminar(false)}
+      />
     </>
   );
 }

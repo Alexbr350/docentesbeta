@@ -7,6 +7,8 @@ import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, upda
 import Navbar from "../components/Navbar";
 import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import ModalConfirmar from "../components/ModalConfirmar";
+import { useToast } from "../components/Toast";
 
 const ADMINS: string[] = [
   "eira.vargas@ensfa.edu.mx",
@@ -15,6 +17,7 @@ const ADMINS: string[] = [
 const MAESTROS: string[] = [];
 
 function AddMaestroForm() {
+  const { mostrarToast } = useToast();
   const [email, setEmail] = useState("");
   const [nombre, setNombre] = useState("");
   const [agregando, setAgregando] = useState(false);
@@ -30,7 +33,7 @@ function AddMaestroForm() {
     setEmail("");
     setNombre("");
     setAgregando(false);
-    alert("¡Maestro agregado!");
+    mostrarToast("¡Maestro agregado!");
   };
 
   return (
@@ -113,6 +116,7 @@ function EventosList() {
   const [fechaEvento, setFechaEvento] = useState("");
   const [imagenEvento, setImagenEvento] = useState<File | null>(null);
   const [creando, setCreando] = useState(false);
+  const [eventoAEliminar, setEventoAEliminar] = useState<string | null>(null);
 
   useEffect(() => {
     cargarEventos();
@@ -152,7 +156,7 @@ function EventosList() {
   };
 
   const eliminarEvento = async (id: string) => {
-    if (!confirm("¿Eliminar este evento?")) return;
+    setEventoAEliminar(null);
     await deleteDoc(doc(db, "eventos", id));
     setEventos(eventos.filter((e) => e.id !== id));
   };
@@ -217,13 +221,21 @@ function EventosList() {
             </div>
           </div>
           <button
-            onClick={() => eliminarEvento(e.id)}
+            onClick={() => setEventoAEliminar(e.id)}
             className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-semibold"
           >
             <Trash2 size={13} /> Eliminar
           </button>
         </div>
       ))}
+
+      <ModalConfirmar
+        visible={!!eventoAEliminar}
+        mensaje="¿Eliminar este evento?"
+        destructivo
+        onConfirmar={() => eventoAEliminar && eliminarEvento(eventoAEliminar)}
+        onCancelar={() => setEventoAEliminar(null)}
+      />
     </div>
   );
 }
@@ -374,6 +386,7 @@ export default function Admin() {
   const [showComentarios, setShowComentarios] = useState<any>({});
   const [nuevoComentario, setNuevoComentario] = useState<any>({});
   const [calificaciones, setCalificaciones] = useState<any>({});
+  const [postAEliminar, setPostAEliminar] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -448,7 +461,7 @@ export default function Admin() {
   };
 
   const eliminarPost = async (postId: string) => {
-    if (!confirm("¿Seguro que quieres eliminar esta publicación?")) return;
+    setPostAEliminar(null);
     await deleteDoc(doc(db, "posts", postId));
     setPosts(posts.filter((p) => p.id !== postId));
   };
@@ -612,7 +625,7 @@ export default function Admin() {
                     <MessageCircle size={14} /> {showComentarios[post.id] ? "Ocultar" : "Comentar como evaluador"}
                   </button>
                   <button
-                    onClick={() => eliminarPost(post.id)}
+                    onClick={() => setPostAEliminar(post.id)}
                     className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-semibold transition"
                   >
                     <Trash2 size={14} /> Eliminar publicación
@@ -670,6 +683,14 @@ export default function Admin() {
           </div>
         )}
       </div>
+
+      <ModalConfirmar
+        visible={!!postAEliminar}
+        mensaje="¿Seguro que quieres eliminar esta publicación?"
+        destructivo
+        onConfirmar={() => postAEliminar && eliminarPost(postAEliminar)}
+        onCancelar={() => setPostAEliminar(null)}
+      />
     </div>
   );
 }

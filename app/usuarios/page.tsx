@@ -6,8 +6,10 @@ import { signOut } from "firebase/auth";
 import Navbar from "../components/Navbar";
 import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import { UserPlus, Users2, Check, X } from "lucide-react";
+import { useToast } from "../components/Toast";
 
 export default function Usuarios() {
+  const { mostrarToast } = useToast();
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [usuarios, setUsuarios] = useState<any[]>([]);
@@ -63,7 +65,7 @@ export default function Usuarios() {
       leida: false,
       fecha: serverTimestamp(),
     });
-    alert("Solicitud enviada!");
+    mostrarToast("Solicitud enviada!");
   };
 
   const rechazarSolicitud = async (solicitudId: string) => {

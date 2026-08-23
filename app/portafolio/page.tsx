@@ -7,12 +7,14 @@ import Navbar from "../components/Navbar";
 import { collection, getDocs, query, where, orderBy, deleteDoc, doc } from "firebase/firestore";
 import jsPDF from "jspdf";
 import { BookOpen, ClipboardList, PenLine, Paperclip, HelpCircle, FileDown, Trash2 } from "lucide-react";
+import ModalConfirmar from "../components/ModalConfirmar";
 
 export default function Portafolio() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [postAEliminar, setPostAEliminar] = useState<string | null>(null);
   const [filtro, setFiltro] = useState("Todos");
 
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function Portafolio() {
   };
 
   const eliminar = async (id: string) => {
-    if (!confirm("¿Seguro que quieres eliminar esta publicación?")) return;
+    setPostAEliminar(null);
     await deleteDoc(doc(db, "posts", id));
     setPosts(posts.filter((p) => p.id !== id));
   };
@@ -205,7 +207,7 @@ export default function Portafolio() {
                     {post.fecha?.toDate?.()?.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
                   </span>
                   <button
-                    onClick={() => eliminar(post.id)}
+                    onClick={() => setPostAEliminar(post.id)}
                     className="flex items-center gap-1 text-xs text-red-400 hover:text-red-600 font-medium hover:bg-red-50 px-2 py-1 rounded-lg transition"
                   >
                     <Trash2 size={13} /> Eliminar
@@ -229,6 +231,14 @@ export default function Portafolio() {
           );
         })}
       </div>
+
+      <ModalConfirmar
+        visible={!!postAEliminar}
+        mensaje="¿Seguro que quieres eliminar esta publicación?"
+        destructivo
+        onConfirmar={() => postAEliminar && eliminar(postAEliminar)}
+        onCancelar={() => setPostAEliminar(null)}
+      />
     </div>
   );
 }

@@ -9,6 +9,8 @@ import Navbar from "./components/Navbar";
 import Stories from "./components/Stories";
 import InsigniaVerificada, { esAdminOMaestro } from "./components/InsigniaVerificada";
 import Tendencias from "./components/Tendencias";
+import ModalInput from "./components/ModalInput";
+import { useToast } from "./components/Toast";
 
 const ADMINS_LOCAL: string[] = [
   "eira.vargas@ensfa.edu.mx",
@@ -39,6 +41,9 @@ export default function Home() {
   const [misGrupos, setMisGrupos] = useState<any[]>([]);
   const [proximoEvento, setProximoEvento] = useState<any>(null);
   const [maestrosEmails, setMaestrosEmails] = useState<string[]>([]);
+  const [modalReportar, setModalReportar] = useState<{ postId: string; autorNombre: string; autorEmail: string } | null>(null);
+  const [modalCompartir, setModalCompartir] = useState<any>(null);
+  const { mostrarToast } = useToast();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -63,9 +68,14 @@ export default function Home() {
     setMaestrosEmails(snap.docs.map((d) => d.data().email));
   };
 
-  const reportarPost = async (postId: string, autorNombre: string, autorEmail: string) => {
-    const motivo = prompt("¿Por qué quieres reportar esta publicación? (motivo breve)");
-    if (!motivo?.trim()) return;
+  const reportarPost = (postId: string, autorNombre: string, autorEmail: string) => {
+    setModalReportar({ postId, autorNombre, autorEmail });
+  };
+
+  const confirmarReportar = async (motivo: string) => {
+    if (!modalReportar) return;
+    const { postId, autorNombre, autorEmail } = modalReportar;
+    setModalReportar(null);
     await addDoc(collection(db, "reportes"), {
       tipo: "publicacion",
       postId,
@@ -77,15 +87,21 @@ export default function Home() {
       estado: "pendiente",
       fecha: serverTimestamp(),
     });
-    alert("Reporte enviado al evaluador. Gracias por ayudarnos a mantener la comunidad segura.");
+    mostrarToast("Reporte enviado al evaluador. Gracias por ayudarnos a mantener la comunidad segura.");
   };
 
-  const compartirPost = async (post: any) => {
-    const comentario = prompt("Agrega un comentario para compartir esta publicación (opcional):");
-    if (comentario === null) return;
+  const compartirPost = (post: any) => {
+    setModalCompartir(post);
+  };
+
+  const confirmarCompartir = async (comentarioTexto: string) => {
+    if (!modalCompartir) return;
+    const post = modalCompartir;
+    const comentario = comentarioTexto.trim();
+    setModalCompartir(null);
     await addDoc(collection(db, "posts"), {
       tipo: "Compartido",
-      contenido: comentario.trim(),
+      contenido: comentario,
       autor: user.displayName || user.email,
       email: user.email,
       fecha: serverTimestamp(),
@@ -637,6 +653,26 @@ export default function Home() {
         </div>
 
       </div>
+
+      <ModalInput
+        visible={!!modalReportar}
+        titulo="Reportar publicación"
+        placeholder="¿Por qué quieres reportar esta publicación? (motivo breve)"
+        textoConfirmar="Enviar reporte"
+        onConfirmar={confirmarReportar}
+        onCancelar={() => setModalReportar(null)}
+      />
+
+      <ModalInput
+        visible={!!modalCompartir}
+        titulo="Compartir publicación"
+        placeholder="Agrega un comentario (opcional)..."
+        textoConfirmar="Compartir"
+        requerido={false}
+        onConfirmar={confirmarCompartir}
+        onCancelar={() => setModalCompartir(null)}
+      />
+
     </div>
   );
 }

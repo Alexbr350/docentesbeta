@@ -2,9 +2,11 @@
 import { auth, provider } from "../firebase";
 import { signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { useToast } from "../components/Toast";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { mostrarToast } = useToast();
 
   const handleLogin = async () => {
     try {
@@ -14,11 +16,11 @@ export default function LoginPage() {
         router.push("/");
       } else {
         await auth.signOut();
-        alert("Solo puedes ingresar con un correo @ensfa.edu.mx");
+        mostrarToast("Solo puedes ingresar con un correo @ensfa.edu.mx", "error");
       }
     } catch (error) {
       console.error(error);
-      alert("Error al iniciar sesión, intenta de nuevo");
+      mostrarToast("Error al iniciar sesión, intenta de nuevo", "error");
     }
   };
 
