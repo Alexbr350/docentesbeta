@@ -34,8 +34,8 @@ export default function ModalInput({
   const deshabilitado = requerido && !texto.trim();
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-xl">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-xl animate-fade-in-up">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100">{titulo}</h3>
           <button onClick={onCancelar}>
@@ -67,13 +67,13 @@ export default function ModalInput({
         )}
 
         <div className="flex justify-end gap-2 mt-4">
-          <button onClick={onCancelar} className="text-sm text-slate-400 hover:text-slate-600 px-4 py-2">
+          <button onClick={onCancelar} className="text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-400 px-4 py-2">
             Cancelar
           </button>
           <button
             onClick={() => onConfirmar(texto)}
             disabled={deshabilitado}
-            className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow"
+            className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow transition active:scale-95"
           >
             {textoConfirmar}
           </button>

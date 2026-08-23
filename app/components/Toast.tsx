@@ -25,10 +25,9 @@ function ToastCard({ toast }: { toast: ToastItem }) {
 
   return (
     <div
-      className={`flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-300 ${
+      className={`flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-300 w-full sm:w-80 sm:max-w-[320px] ${
         mostrar ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"
       }`}
-      style={{ maxWidth: "320px" }}
     >
       {toast.tipo === "error" ? (
         <XCircle size={18} className="text-red-500 flex-shrink-0" />
@@ -58,7 +57,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ mostrarToast }}>
       {children}
-      <div className="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 items-end pointer-events-none">
+      <div className="fixed bottom-6 left-4 right-4 sm:left-auto sm:right-6 z-[100] flex flex-col gap-2 items-stretch sm:items-end pointer-events-none">
         {toasts.map((t) => (
           <div key={t.id} className="pointer-events-auto">
             <ToastCard toast={t} />

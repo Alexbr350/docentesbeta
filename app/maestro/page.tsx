@@ -103,11 +103,11 @@ export default function Maestro() {
   };
 
   const coloresTipo: any = {
-    "Diario": "bg-blue-100 text-blue-700",
-    "Planeación": "bg-indigo-100 text-indigo-700",
-    "Narrativa": "bg-amber-100 text-amber-700",
-    "Extra": "bg-cyan-100 text-cyan-700",
-    "Pedir ayuda": "bg-red-100 text-red-700",
+    "Diario": "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400",
+    "Planeación": "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400",
+    "Narrativa": "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400",
+    "Extra": "bg-cyan-100 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-400",
+    "Pedir ayuda": "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400",
   };
 
   if (loading) return (
@@ -133,7 +133,7 @@ export default function Maestro() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors animate-fade-in">
       <Navbar paginaActual="Maestro" />
 
       <div className="max-w-5xl mx-auto px-4 py-6">
@@ -146,7 +146,7 @@ export default function Maestro() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
 
           <div className="col-span-1">
             <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-md">
@@ -154,7 +154,7 @@ export default function Maestro() {
               {misGrupos.length === 0 && (
                 <div className="text-center py-4">
                   <p className="text-xs text-slate-400 mb-3">No tienes grupos todavía.</p>
-                  <button onClick={() => router.push("/grupos")} className="text-xs bg-blue-600 text-white px-3 py-2 rounded-xl font-semibold">
+                  <button onClick={() => router.push("/grupos")} className="text-xs bg-blue-600 text-white px-3 py-2 rounded-xl font-semibold transition active:scale-95">
                     Crear grupo
                   </button>
                 </div>
@@ -163,7 +163,7 @@ export default function Maestro() {
                 <div
                   key={grupo.id}
                   onClick={() => cargarPostsDeGrupo(grupo)}
-                  className={`p-3 rounded-xl cursor-pointer transition mb-2 ${grupoSeleccionado?.id === grupo.id ? "bg-blue-50 border border-blue-200" : "hover:bg-slate-50 border border-slate-100 dark:border-slate-800"}`}
+                  className={`p-3 rounded-xl cursor-pointer transition mb-2 ${grupoSeleccionado?.id === grupo.id ? "bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/40" : "hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800"}`}
                 >
                   <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{grupo.nombre}</p>
                   <p className="text-xs text-slate-400">{grupo.miembros?.length || 0} alumnos</p>
@@ -172,7 +172,7 @@ export default function Maestro() {
             </div>
           </div>
 
-          <div className="col-span-2">
+          <div className="col-span-1 md:col-span-2">
             {!grupoSeleccionado && (
               <div className="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
                 Selecciona un grupo para ver las publicaciones de tus alumnos.
@@ -249,7 +249,7 @@ export default function Maestro() {
                       />
                       <button
                         onClick={() => publicarComentario(post.id, post.email)}
-                        className="flex items-center gap-1 text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-xl font-semibold"
+                        className="flex items-center gap-1 text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-xl font-semibold transition active:scale-95"
                       >
                         <Send size={13} /> Enviar
                       </button>

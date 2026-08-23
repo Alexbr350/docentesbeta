@@ -256,7 +256,7 @@ export default function Stories() {
               <Plus size={22} className="text-slate-400" />
             </button>
           )}
-          <span className="text-xs text-slate-500 font-medium">Tu historia</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Tu historia</span>
         </div>
 
         {autores.filter((email) => email !== user?.email).map((email) => {
@@ -273,7 +273,7 @@ export default function Stories() {
                   <img src={primera.imagenUrl} alt={primera.autor} className="w-full h-full rounded-full object-cover border-2 border-white" />
                 )}
               </button>
-              <span className="text-xs text-slate-500 font-medium truncate w-16 text-center">{primera.autor?.split(" ")[0]}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate w-16 text-center">{primera.autor?.split(" ")[0]}</span>
             </div>
           );
         })}
@@ -285,21 +285,21 @@ export default function Stories() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100">Subir historia</h3>
-              <button onClick={() => { setShowUpload(false); setArchivoSeleccionado(null); }}><X size={18} className="text-slate-400" /></button>
+              <button onClick={() => { setShowUpload(false); setArchivoSeleccionado(null); }} className="p-1 -m-1"><X size={18} className="text-slate-400" /></button>
             </div>
 
             {!archivoSeleccionado ? (
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <button
                   onClick={abrirCamara}
-                  className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl p-6 hover:border-blue-400 transition"
+                  className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 hover:border-blue-400 transition"
                 >
                   <Camera size={22} className="text-slate-400" />
-                  <span className="text-xs text-slate-500 text-center">Usar cámara</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 text-center">Usar cámara</span>
                 </button>
-                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl p-6 cursor-pointer hover:border-blue-400 transition">
+                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-6 cursor-pointer hover:border-blue-400 transition">
                   <Upload size={22} className="text-slate-400" />
-                  <span className="text-xs text-slate-500 text-center">Subir archivo</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 text-center">Subir archivo</span>
                   <input type="file" accept="image/*,video/mp4,video/quicktime,video/webm" className="hidden" onChange={(e) => setArchivoSeleccionado(e.target.files?.[0] || null)} />
                 </label>
               </div>
@@ -326,7 +326,7 @@ export default function Stories() {
               <button
                 onClick={subirStory}
                 disabled={!archivoSeleccionado || subiendo}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50 transition active:scale-95"
               >
                 {subiendo ? "Subiendo..." : "Publicar historia"}
               </button>
@@ -338,10 +338,10 @@ export default function Stories() {
       {/* Modal de cámara en vivo */}
       {modoCamara && (
         <div className="fixed inset-0 bg-black z-[60] flex flex-col items-center justify-center">
-          <button onClick={cerrarCamara} className="absolute top-6 right-4 text-white z-10">
+          <button onClick={cerrarCamara} className="absolute top-6 right-4 text-white z-10 p-2">
             <X size={28} />
           </button>
-          <video ref={videoRef} autoPlay playsInline muted className="w-full max-w-md rounded-xl" />
+          <video ref={videoRef} autoPlay playsInline muted className="w-[calc(100%-2rem)] md:w-full max-w-md rounded-xl" />
           <div className="flex items-center gap-6 mt-8">
             <button
               onClick={tomarFoto}
@@ -386,7 +386,7 @@ export default function Stories() {
             ))}
           </div>
 
-          <button onClick={cerrarVisor} className="absolute top-8 right-4 text-white z-20">
+          <button onClick={cerrarVisor} className="absolute top-8 right-4 text-white z-20 p-2">
             <X size={28} />
           </button>
 

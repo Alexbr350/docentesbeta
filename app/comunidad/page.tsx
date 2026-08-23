@@ -106,12 +106,12 @@ export default function Comunidad() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors animate-fade-in">
       <Navbar paginaActual="Comunidad" />
 
       <div className="max-w-4xl mx-auto px-4 py-6">
 
-        <div className="bg-slate-900 rounded-2xl p-6 mb-6 flex items-center justify-between shadow-xl">
+        <div className="bg-slate-900 rounded-2xl p-6 mb-6 flex flex-wrap items-center justify-between gap-3 shadow-xl">
           <div className="flex items-center gap-4">
             <HelpCircle size={32} className="text-purple-400" />
             <div>
@@ -121,7 +121,7 @@ export default function Comunidad() {
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg transition"
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg transition active:scale-95"
           >
             + Hacer una pregunta
           </button>
@@ -151,7 +151,7 @@ export default function Comunidad() {
               <button
                 onClick={publicar}
                 disabled={publicando || !titulo.trim() || !descripcion.trim()}
-                className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow"
+                className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow transition active:scale-95"
               >
                 {publicando ? "Publicando..." : "Publicar pregunta"}
               </button>
@@ -159,7 +159,7 @@ export default function Comunidad() {
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3 mb-5">
           {[
             { num: preguntas.length, label: "Total preguntas", icon: HelpCircle, color: "text-purple-500" },
             { num: preguntas.filter(p => p.resuelto).length, label: "Resueltas", icon: CheckCircle2, color: "text-emerald-500" },
@@ -173,7 +173,7 @@ export default function Comunidad() {
           ))}
         </div>
 
-        <div className="flex gap-2 mb-5">
+        <div className="flex flex-wrap gap-2 mb-5">
           {["Todas", "Sin resolver", "Resueltas"].map((f) => (
             <button
               key={f}
@@ -193,7 +193,7 @@ export default function Comunidad() {
 
         {preguntasFiltradas.map((pregunta) => (
           <div key={pregunta.id} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition border-l-4 ${pregunta.resuelto ? "border-emerald-400" : "border-red-400"}`}>
-            <div className="flex items-start justify-between mb-3">
+            <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow">
                   {pregunta.autor?.charAt(0).toUpperCase()}
@@ -205,7 +205,7 @@ export default function Comunidad() {
                   </p>
                 </div>
               </div>
-              <span className={`flex items-center gap-1 text-xs px-3 py-1 rounded-full font-bold ${pregunta.resuelto ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>
+              <span className={`flex items-center gap-1 text-xs px-3 py-1 rounded-full font-bold ${pregunta.resuelto ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400" : "bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400"}`}>
                 {pregunta.resuelto ? <><CheckCircle2 size={12} /> Resuelto</> : "Sin resolver"}
               </span>
             </div>
@@ -213,7 +213,7 @@ export default function Comunidad() {
             <h3 className="text-sm font-bold text-gray-800 dark:text-slate-100 mb-2">{pregunta.titulo}</h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed mb-3">{pregunta.descripcion}</p>
 
-            <div className="flex gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
+            <div className="flex flex-wrap gap-3 border-t border-slate-100 dark:border-slate-800 pt-3">
               <button
                 onClick={() => toggleRespuestas(pregunta.id)}
                 className="flex items-center gap-1 text-xs text-slate-400 hover:text-blue-500 font-semibold transition"
@@ -257,7 +257,7 @@ export default function Comunidad() {
                   />
                   <button
                     onClick={() => responder(pregunta.id)}
-                    className="flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold"
+                    className="flex items-center gap-1 text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold transition active:scale-95"
                   >
                     <Send size={13} /> Responder
                   </button>

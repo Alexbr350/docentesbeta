@@ -101,11 +101,11 @@ export default function Portafolio() {
   };
 
   const coloresTipo: any = {
-    "Diario": "bg-blue-100 text-blue-700",
-    "Planeación": "bg-indigo-100 text-indigo-700",
-    "Narrativa": "bg-amber-100 text-amber-700",
-    "Extra": "bg-cyan-100 text-cyan-700",
-    "Pedir ayuda": "bg-red-100 text-red-700",
+    "Diario": "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400",
+    "Planeación": "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400",
+    "Narrativa": "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400",
+    "Extra": "bg-cyan-100 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-400",
+    "Pedir ayuda": "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400",
   };
 
   const iconosTipo: any = {
@@ -129,13 +129,13 @@ export default function Portafolio() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors animate-fade-in">
 
       <Navbar paginaActual="Portafolio" />
 
       <div className="max-w-5xl mx-auto px-4 py-6">
 
-        <div className="bg-slate-900 rounded-2xl p-6 mb-6 flex items-center gap-5 shadow-xl">
+        <div className="bg-slate-900 rounded-2xl p-6 mb-6 flex flex-wrap items-center gap-5 shadow-xl">
           <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-2xl font-extrabold shadow-lg flex-shrink-0">
             {user?.displayName?.charAt(0).toUpperCase()}
           </div>
@@ -150,13 +150,13 @@ export default function Portafolio() {
           <img src="/logo.png" alt="ENSFA" className="w-12 h-12 rounded-full opacity-60" />
           <button
             onClick={exportarPDF}
-            className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold shadow"
+            className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold shadow transition active:scale-95"
           >
             <FileDown size={14} /> Exportar PDF
           </button>
         </div>
 
-        <div className="grid grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mb-6">
           {["Diario", "Planeación", "Narrativa", "Extra", "Pedir ayuda"].map((tipo) => {
             const Icono = iconosTipo[tipo];
             return (
@@ -195,7 +195,7 @@ export default function Portafolio() {
           const Icono = iconosTipo[post.tipo];
           return (
             <div key={post.id} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
                   {Icono && <Icono size={16} className="text-blue-600" />}
                   <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"}`}>

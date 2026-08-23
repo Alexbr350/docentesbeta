@@ -1,31 +1,81 @@
 "use client";
+import { useEffect, useState } from "react";
 import { auth, provider } from "../firebase";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useToast } from "../components/Toast";
+import SplashScreen from "../components/SplashScreen";
 
 export default function LoginPage() {
   const router = useRouter();
   const { mostrarToast } = useToast();
+  const [mostrarSplash, setMostrarSplash] = useState(false);
+
+  useEffect(() => {
+    const guardado = localStorage.getItem("modoOscuro") === "true";
+    if (guardado) document.documentElement.classList.add("dark");
+  }, []);
+
+  // Por si el navegador bloqueó el popup y tuvimos que caer a signInWithRedirect:
+  // al volver de Google, Firebase entrega el resultado aquí.
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          procesarUsuario(result.user.email || "");
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        mostrarToast("Error al iniciar sesión, intenta de nuevo", "error");
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const procesarUsuario = async (email: string) => {
+    if (email.endsWith("@ensfa.edu.mx")) {
+      setMostrarSplash(true);
+    } else {
+      await auth.signOut();
+      mostrarToast("Solo puedes ingresar con un correo @ensfa.edu.mx", "error");
+    }
+  };
 
   const handleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
-      const email = result.user.email || "";
-      if (email.endsWith("@ensfa.edu.mx")) {
-        router.push("/");
-      } else {
-        await auth.signOut();
-        mostrarToast("Solo puedes ingresar con un correo @ensfa.edu.mx", "error");
+      await procesarUsuario(result.user.email || "");
+    } catch (error: any) {
+      if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
+        // El usuario cerró la ventana, no es un error real
+        return;
       }
-    } catch (error) {
+      if (error?.code === "auth/popup-blocked" || error?.code === "auth/operation-not-supported-in-this-environment") {
+        // El navegador bloqueó el popup: caemos a signInWithRedirect (redirige la página completa a Google y regresa)
+        try {
+          await signInWithRedirect(auth, provider);
+        } catch (redirectError) {
+          console.error(redirectError);
+          mostrarToast("Error al iniciar sesión, intenta de nuevo", "error");
+        }
+        return;
+      }
       console.error(error);
       mostrarToast("Error al iniciar sesión, intenta de nuevo", "error");
     }
   };
 
+  const finalizarSplash = () => {
+    sessionStorage.setItem("splashMostrado", "true");
+    router.push("/");
+  };
+
+  if (mostrarSplash) {
+    return <SplashScreen onFinish={finalizarSplash} />;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 dark:from-slate-950 dark:to-slate-900 transition-colors animate-fade-in">
       <div className="w-full max-w-md px-8">
 
         {/* Logo */}
@@ -33,19 +83,19 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <span className="text-white text-2xl font-bold">D</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800">ENSFA+</h1>
-          <p className="text-gray-500 mt-2 text-sm">Plataforma para practicantes docentes</p>
-          <p className="text-xs text-blue-500 mt-1">Escuela Normal Superior de...</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100">ENSFA+</h1>
+          <p className="text-gray-500 dark:text-slate-400 mt-2 text-sm">Plataforma para practicantes docentes</p>
+          <p className="text-xs text-blue-500 dark:text-blue-400 mt-1">Escuela Normal Superior de...</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-3xl shadow-xl p-8">
-          <h2 className="text-lg font-semibold text-gray-800 mb-2">Iniciar sesión</h2>
-          <p className="text-sm text-gray-400 mb-6">Usa tu correo institucional <span className="text-blue-500 font-medium">@ensfa.edu.mx</span></p>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-8">
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-slate-100 mb-2">Iniciar sesión</h2>
+          <p className="text-sm text-gray-400 dark:text-slate-500 mb-6">Usa tu correo institucional <span className="text-blue-500 dark:text-blue-400 font-medium">@ensfa.edu.mx</span></p>
 
           <button
             onClick={handleLogin}
-            className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3.5 px-6 rounded-2xl transition shadow-md hover:shadow-lg"
+            className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3.5 px-6 rounded-2xl transition shadow-md hover:shadow-lg active:scale-95"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#fff"/>
@@ -56,12 +106,12 @@ export default function LoginPage() {
             Continuar con Google
           </button>
 
-          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400">Solo usuarios con correo <span className="font-medium">@ensfa.edu.mx</span> pueden acceder</p>
+          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-slate-800 text-center">
+            <p className="text-xs text-gray-400 dark:text-slate-500">Solo usuarios con correo <span className="font-medium">@ensfa.edu.mx</span> pueden acceder</p>
           </div>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">DocentesBeta v1.0 — Beta</p>
+        <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-6">DocentesBeta v1.0 — Beta</p>
       </div>
     </div>
   );

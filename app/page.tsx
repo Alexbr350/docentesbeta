@@ -9,8 +9,10 @@ import Navbar from "./components/Navbar";
 import Stories from "./components/Stories";
 import InsigniaVerificada, { esAdminOMaestro } from "./components/InsigniaVerificada";
 import Tendencias from "./components/Tendencias";
+import AmigosSugeridos from "./components/AmigosSugeridos";
 import ModalInput from "./components/ModalInput";
 import { useToast } from "./components/Toast";
+import SplashScreen from "./components/SplashScreen";
 
 const ADMINS_LOCAL: string[] = [
   "eira.vargas@ensfa.edu.mx",
@@ -57,8 +59,10 @@ export default function Home() {
   const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
   const [likes, setLikes] = useState<any>({});
   const [dislikes, setDislikes] = useState<any>({});
+  const [likeJustPopped, setLikeJustPopped] = useState<Record<string, boolean>>({});
   const [likesComentarios, setLikesComentarios] = useState<any>({});
   const [dislikesComentarios, setDislikesComentarios] = useState<any>({});
+  const [likeComentarioJustPopped, setLikeComentarioJustPopped] = useState<Record<string, boolean>>({});
   const [amigos, setAmigos] = useState<string[]>([]);
   const [misGrupos, setMisGrupos] = useState<any[]>([]);
   const [proximoEvento, setProximoEvento] = useState<any>(null);
@@ -68,9 +72,21 @@ export default function Home() {
   const [privacidad, setPrivacidad] = useState<string>("publico");
   const [showPrivacidadMenu, setShowPrivacidadMenu] = useState(false);
   const [visiblePara, setVisiblePara] = useState<string[]>([]);
+  const [perfilesFotos, setPerfilesFotos] = useState<Record<string, string>>({});
+  const [mostrarSplash, setMostrarSplash] = useState(false);
   const { mostrarToast } = useToast();
 
   const nombreAmigo = (email: string) => posts.find((p) => p.email === email)?.autor || email;
+
+  useEffect(() => {
+    const yaVisto = sessionStorage.getItem("splashMostrado") === "true";
+    if (!yaVisto) setMostrarSplash(true);
+  }, []);
+
+  const finalizarSplash = () => {
+    sessionStorage.setItem("splashMostrado", "true");
+    setMostrarSplash(false);
+  };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -85,6 +101,7 @@ export default function Home() {
         cargarGrupos(currentUser.email || "");
         cargarProximoEvento();
         cargarMaestros();
+        cargarPerfiles();
       }
     });
     return () => unsubscribe();
@@ -93,6 +110,16 @@ export default function Home() {
   const cargarMaestros = async () => {
     const snap = await getDocs(collection(db, "maestros"));
     setMaestrosEmails(snap.docs.map((d) => d.data().email));
+  };
+
+  const cargarPerfiles = async () => {
+    const snap = await getDocs(collection(db, "perfiles"));
+    const mapa: Record<string, string> = {};
+    snap.docs.forEach((d) => {
+      const data: any = d.data();
+      if (data.fotoUrl) mapa[d.id] = data.fotoUrl;
+    });
+    setPerfilesFotos(mapa);
   };
 
   const reportarPost = (postId: string, autorNombre: string, autorEmail: string) => {
@@ -159,6 +186,8 @@ export default function Home() {
     } else {
       await setDoc(likeRef, { email: user.email, fecha: serverTimestamp() });
       setLikes((prev: any) => ({ ...prev, [postId]: true }));
+      setLikeJustPopped((prev) => ({ ...prev, [postId]: true }));
+      setTimeout(() => setLikeJustPopped((prev) => ({ ...prev, [postId]: false })), 400);
       if (postAutorEmail !== user.email) {
         await addDoc(collection(db, "notificaciones"), {
           para: postAutorEmail,
@@ -242,6 +271,8 @@ export default function Home() {
     } else {
       await setDoc(likeRef, { email: user.email, fecha: serverTimestamp() });
       setLikesComentarios((prev: any) => ({ ...prev, [comentarioId]: true }));
+      setLikeComentarioJustPopped((prev) => ({ ...prev, [comentarioId]: true }));
+      setTimeout(() => setLikeComentarioJustPopped((prev) => ({ ...prev, [comentarioId]: false })), 400);
     }
     await cargarComentarios(postId);
   };
@@ -341,13 +372,13 @@ export default function Home() {
   };
 
   const coloresTipo: any = {
-    "Diario": "bg-blue-100 text-blue-700",
-    "Planeación": "bg-indigo-100 text-indigo-700",
-    "Narrativa": "bg-amber-100 text-amber-700",
-    "Extra": "bg-cyan-100 text-cyan-700",
-    "Pedir ayuda": "bg-red-100 text-red-700",
-    "Actividad": "bg-emerald-100 text-emerald-700",
-    "Compartido": "bg-teal-100 text-teal-700",
+    "Diario": "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400",
+    "Planeación": "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400",
+    "Narrativa": "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400",
+    "Extra": "bg-cyan-100 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-400",
+    "Pedir ayuda": "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400",
+    "Actividad": "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400",
+    "Compartido": "bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400",
   };
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
@@ -373,6 +404,10 @@ export default function Home() {
       return bEsAmigo - aEsAmigo;
     });
 
+  if (mostrarSplash) {
+    return <SplashScreen onFinish={finalizarSplash} />;
+  }
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
@@ -383,16 +418,20 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors animate-fade-in">
 
       <Navbar paginaActual="Feed" />
 
-      <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-4 gap-5">
+      <div className="max-w-5xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-4 gap-5">
 
-        <div className="col-span-1">
+        <div className="col-span-1 order-2 md:order-1">
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 text-center shadow-md">
-            <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-extrabold mx-auto mb-3 shadow-lg">
-              {user?.displayName?.charAt(0).toUpperCase()}
+            <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-extrabold mx-auto mb-3 shadow-lg overflow-hidden">
+              {perfilesFotos[user?.email || ""] ? (
+                <img src={perfilesFotos[user?.email || ""]} alt="" className="w-full h-full object-cover" />
+              ) : (
+                user?.displayName?.charAt(0).toUpperCase()
+              )}
             </div>
             <p className="text-sm font-bold text-gray-800 dark:text-slate-100 flex items-center justify-center gap-1">
               {user?.displayName || "Practicante"}
@@ -400,7 +439,7 @@ export default function Home() {
               {!ADMINS_LOCAL.includes(user?.email) && maestrosEmails.includes(user?.email) && <InsigniaVerificada tipo="maestro" />}
             </p>
             <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 truncate">{user?.email}</p>
-            <span className="inline-block mt-2 text-xs bg-blue-50 text-blue-600 px-3 py-0.5 rounded-full font-medium">Practicante</span>
+            <span className="inline-block mt-2 text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-3 py-0.5 rounded-full font-medium">Practicante</span>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-md">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mi espacio</p>
@@ -431,7 +470,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="col-span-2">
+        <div className="col-span-1 md:col-span-2 order-1 md:order-2">
           <Stories />
           {proximoEvento && (
             <div
@@ -454,8 +493,12 @@ export default function Home() {
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 shadow-md">
             <div className="flex gap-3 mb-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-extrabold flex-shrink-0 shadow">
-                {user?.displayName?.charAt(0).toUpperCase()}
+              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-extrabold flex-shrink-0 shadow overflow-hidden">
+                {perfilesFotos[user?.email || ""] ? (
+                  <img src={perfilesFotos[user?.email || ""]} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  user?.displayName?.charAt(0).toUpperCase()
+                )}
               </div>
               <div
                 className="flex-1 bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-400 border border-slate-200 dark:border-slate-800 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition"
@@ -469,7 +512,7 @@ export default function Home() {
                 <button
                   key={tipo}
                   onClick={() => { setTipoSeleccionado(tipo); setShowComposer(true); }}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition font-medium ${tipoSeleccionado === tipo && showComposer ? "border-blue-500 text-blue-600 bg-blue-50" : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600"}`}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition font-medium ${tipoSeleccionado === tipo && showComposer ? "border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40" : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-600"}`}
                 >
                   {tipo}
                 </button>
@@ -505,7 +548,7 @@ export default function Home() {
                       <ChevronDown size={12} />
                     </button>
                     {showPrivacidadMenu && (
-                      <div className="absolute z-10 top-full mt-1 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5">
+                      <div className="absolute z-10 top-full mt-1 left-0 w-64 max-w-[80vw] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5">
                         {OPCIONES_PRIVACIDAD.map((valor) => {
                           const op = PRIVACIDAD_INFO[valor];
                           const Icono = op.icono;
@@ -539,14 +582,14 @@ export default function Home() {
                         setVisiblePara([]);
                         setShowPrivacidadMenu(false);
                       }}
-                      className="text-sm text-slate-400 hover:text-slate-600 px-4 py-2"
+                      className="text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-400 px-4 py-2"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={publicar}
                       disabled={publicando || !contenido.trim()}
-                      className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow"
+                      className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow transition active:scale-95"
                     >
                       {publicando ? "Publicando..." : "Publicar"}
                     </button>
@@ -583,11 +626,19 @@ export default function Home() {
               {busqueda ? `No se encontraron resultados para "${busqueda}"` : "Aún no hay publicaciones. ¡Sé el primero!"}
             </div>
           )}
-          {postsFiltrados.map((post) => (
-            <div key={post.id} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
+          {postsFiltrados.map((post, index) => (
+            <div
+              key={post.id}
+              className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition animate-fade-in-up"
+              style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
+            >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow">
-                  {post.autor?.charAt(0).toUpperCase()}
+                <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow overflow-hidden">
+                  {perfilesFotos[post.email] ? (
+                    <img src={perfilesFotos[post.email]} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    post.autor?.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-bold text-gray-900 dark:text-slate-100 flex items-center gap-1">
@@ -643,7 +694,12 @@ export default function Home() {
                   onClick={() => darLike(post.id, post.email)}
                   className={`flex items-center gap-1 text-xs font-semibold transition-all duration-200 ${likes[post.id] ? "text-red-500 scale-110" : "text-slate-400 hover:text-red-500"}`}
                 >
-                  <Heart size={14} fill={likes[post.id] ? "currentColor" : "none"} /> {post.likesCount || 0}
+                  <Heart
+                    size={14}
+                    fill={likes[post.id] ? "currentColor" : "none"}
+                    className={likeJustPopped[post.id] ? "animate-heart-pop" : ""}
+                  />{" "}
+                  {post.likesCount || 0}
                 </button>
                 {post.email === user?.email && (
                   <span className="flex items-center gap-1 text-xs text-slate-400 font-semibold">
@@ -653,7 +709,7 @@ export default function Home() {
                 {post.email !== user?.email && (
                   <button
                     onClick={() => darDislike(post.id)}
-                    className={`flex items-center gap-1 text-xs font-semibold transition-all duration-200 ${dislikes[post.id] ? "text-slate-700 dark:text-slate-300 scale-110" : "text-slate-400 hover:text-slate-600"}`}
+                    className={`flex items-center gap-1 text-xs font-semibold transition-all duration-200 ${dislikes[post.id] ? "text-slate-700 dark:text-slate-300 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-400"}`}
                   >
                     <ThumbsDown size={14} fill={dislikes[post.id] ? "currentColor" : "none"} />
                   </button>
@@ -680,8 +736,12 @@ export default function Home() {
                   {comentarios[post.id]?.length === 0 && <p className="text-xs text-slate-400 mb-3">Aún no hay comentarios.</p>}
                   {comentarios[post.id]?.map((c: any) => (
                     <div key={c.id} className="flex gap-2 mb-2">
-                      <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                        {c.autor?.charAt(0).toUpperCase()}
+                      <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 overflow-hidden">
+                        {perfilesFotos[c.email] ? (
+                          <img src={perfilesFotos[c.email]} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          c.autor?.charAt(0).toUpperCase()
+                        )}
                       </div>
                       <div className="bg-slate-50 dark:bg-slate-800 rounded-xl px-3 py-2 flex-1">
                         <p className="text-xs font-bold text-gray-700 dark:text-slate-300 flex items-center gap-1">
@@ -695,11 +755,16 @@ export default function Home() {
                             onClick={() => darLikeComentario(post.id, c.id)}
                             className={`flex items-center gap-1 text-xs font-semibold transition ${likesComentarios[c.id] ? "text-red-500" : "text-slate-400 hover:text-red-500"}`}
                           >
-                            <Heart size={12} fill={likesComentarios[c.id] ? "currentColor" : "none"} /> {c.likesCount || 0}
+                            <Heart
+                              size={12}
+                              fill={likesComentarios[c.id] ? "currentColor" : "none"}
+                              className={likeComentarioJustPopped[c.id] ? "animate-heart-pop" : ""}
+                            />{" "}
+                            {c.likesCount || 0}
                           </button>
                           <button
                             onClick={() => darDislikeComentario(post.id, c.id)}
-                            className={`flex items-center gap-1 text-xs font-semibold transition ${dislikesComentarios[c.id] ? "text-slate-700 dark:text-slate-300" : "text-slate-400 hover:text-slate-600"}`}
+                            className={`flex items-center gap-1 text-xs font-semibold transition ${dislikesComentarios[c.id] ? "text-slate-700 dark:text-slate-300" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-400"}`}
                           >
                             <ThumbsDown size={12} fill={dislikesComentarios[c.id] ? "currentColor" : "none"} /> {c.dislikesCount || 0}
                           </button>
@@ -716,7 +781,7 @@ export default function Home() {
                       onKeyDown={(e) => e.key === "Enter" && publicarComentario(post.id, post.email)}
                       className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-400"
                     />
-                    <button onClick={() => publicarComentario(post.id, post.email)} className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold">
+                    <button onClick={() => publicarComentario(post.id, post.email)} className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold transition active:scale-95">
                       Enviar
                     </button>
                   </div>
@@ -726,7 +791,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="col-span-1">
+        <div className="col-span-1 order-3">
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-md">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mi avance</p>
             {[
@@ -762,6 +827,7 @@ export default function Home() {
             </button>
           </div>
           <Tendencias />
+          <AmigosSugeridos compacto />
           <div className="bg-slate-900 rounded-2xl p-4 mt-4 shadow-md text-center">
             <img src="/logo.png" alt="ENSFA" className="w-12 h-12 rounded-full mx-auto mb-2 opacity-90" />
             <p className="text-xs font-bold text-white">ENSFA</p>

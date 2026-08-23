@@ -5,7 +5,8 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, query, where, orderBy, updateDoc, doc } from "firebase/firestore";
 import ChatBubble from "./ChatBubble";
-import { Home, FolderOpen, Users2, Calendar, User, UserPlus, LayersIcon, GraduationCap, Bell, LogOut, Search, Sun, Moon } from "lucide-react";
+import BusquedaGlobal from "./BusquedaGlobal";
+import { Home, FolderOpen, Users2, Calendar, User, UserPlus, LayersIcon, GraduationCap, Bell, LogOut, Sun, Moon, Menu, X } from "lucide-react";
 
 export default function Navbar({ paginaActual }: { paginaActual: string }) {
   const router = useRouter();
@@ -13,8 +14,11 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
   const [notificaciones, setNotificaciones] = useState<any[]>([]);
   const [showNotif, setShowNotif] = useState(false);
   const [modoOscuro, setModoOscuro] = useState(false);
+  const [campanaVibrando, setCampanaVibrando] = useState(false);
+  const [menuAbierto, setMenuAbierto] = useState(false);
   const notifRef = useRef<any[]>([]);
   const emailRef = useRef<string>("");
+  const primeraCargaRef = useRef(true);
 
   useEffect(() => {
     const guardado = localStorage.getItem("modoOscuro") === "true";
@@ -46,6 +50,13 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
 
     const noLeidasAntes = notifRef.current.filter((n: any) => !n.leida).length;
     const noLeidasAhora = nuevas.filter((n: any) => !n.leida).length;
+
+    if (!primeraCargaRef.current && noLeidasAhora > noLeidasAntes) {
+      setCampanaVibrando(true);
+      setTimeout(() => setCampanaVibrando(false), 500);
+    }
+    primeraCargaRef.current = false;
+
     if (noLeidasAhora > noLeidasAntes && typeof Notification !== "undefined" && Notification.permission === "granted") {
       const ultimaNoLeida: any = nuevas.find((n: any) => !n.leida);
       if (ultimaNoLeida) {
@@ -84,9 +95,25 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
 
+  const NAV_ITEMS = [
+    { label: "Feed", icon: Home, color: "text-blue-400" },
+    { label: "Portafolio", icon: FolderOpen, color: "text-amber-400" },
+    { label: "Comunidad", icon: Users2, color: "text-purple-400" },
+    { label: "Eventos", icon: Calendar, color: "text-pink-400" },
+    { label: "Perfil", icon: User, color: "text-cyan-400" },
+    { label: "Usuarios", icon: UserPlus, color: "text-emerald-400" },
+    { label: "Grupos", icon: LayersIcon, color: "text-orange-400" },
+    { label: "Maestro", icon: GraduationCap, color: "text-red-400" },
+  ];
+
+  const irA = (label: string) => {
+    router.push(label === "Feed" ? "/" : `/${label.toLowerCase()}`);
+    setMenuAbierto(false);
+  };
+
   return (
     <>
-      <nav className="bg-slate-900 px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-xl">
+      <nav className="bg-slate-900 px-4 md:px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-xl">
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full" />
           <div>
@@ -94,34 +121,14 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
             <h1 className="text-sm font-bold text-white leading-tight">ENSFA<span className="text-blue-400">+</span></h1>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar..."
-              className="bg-slate-800 text-slate-300 text-xs pl-8 pr-3 py-1.5 rounded-xl border border-slate-700 focus:outline-none focus:border-blue-500 w-40 placeholder-slate-500"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  const valor = (e.target as HTMLInputElement).value;
-                  if (valor.trim()) router.push(`/?buscar=${encodeURIComponent(valor)}`);
-                }
-              }}
-            />
-          </div>
-          {[
-            { label: "Feed", icon: Home, color: "text-blue-400" },
-            { label: "Portafolio", icon: FolderOpen, color: "text-amber-400" },
-            { label: "Comunidad", icon: Users2, color: "text-purple-400" },
-            { label: "Eventos", icon: Calendar, color: "text-pink-400" },
-            { label: "Perfil", icon: User, color: "text-cyan-400" },
-            { label: "Usuarios", icon: UserPlus, color: "text-emerald-400" },
-            { label: "Grupos", icon: LayersIcon, color: "text-orange-400" },
-            { label: "Maestro", icon: GraduationCap, color: "text-red-400" },
-          ].map((item) => (
+
+        {/* Navegación de escritorio */}
+        <div className="hidden md:flex items-center gap-2">
+          <BusquedaGlobal />
+          {NAV_ITEMS.map((item) => (
             <button
               key={item.label}
-              onClick={() => item.label === "Feed" ? router.push("/") : router.push(`/${item.label.toLowerCase()}`)}
+              onClick={() => irA(item.label)}
               className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-lg transition ${item.label === paginaActual ? "text-white bg-slate-700" : "text-slate-400 hover:text-white hover:bg-slate-800"}`}
             >
               <item.icon size={14} className={item.label === paginaActual ? "text-white" : item.color} />
@@ -130,9 +137,9 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
           ))}
           <button
             onClick={() => { setShowNotif(!showNotif); if (!showNotif) marcarLeidas(); }}
-            className="relative p-2 rounded-lg hover:bg-slate-800 transition text-yellow-400"
+            className="relative p-2 rounded-lg hover:bg-slate-800 transition active:scale-95 text-yellow-400"
           >
-            <Bell size={16} />
+            <Bell size={16} className={campanaVibrando ? "animate-wiggle" : ""} />
             {noLeidas > 0 && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
                 {noLeidas}
@@ -150,14 +157,85 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
             Salir
           </button>
         </div>
+
+        {/* Navegación móvil: campana + botón de menú */}
+        <div className="flex md:hidden items-center gap-1">
+          <button
+            onClick={() => { setShowNotif(!showNotif); if (!showNotif) marcarLeidas(); }}
+            className="relative p-2 rounded-lg hover:bg-slate-800 transition active:scale-95 text-yellow-400"
+          >
+            <Bell size={18} className={campanaVibrando ? "animate-wiggle" : ""} />
+            {noLeidas > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                {noLeidas}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setMenuAbierto(true)}
+            className="p-2 rounded-lg hover:bg-slate-800 transition active:scale-95 text-slate-200"
+            aria-label="Abrir menú"
+          >
+            <Menu size={22} />
+          </button>
+        </div>
       </nav>
 
+      {/* Drawer lateral móvil */}
+      {menuAbierto && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={() => setMenuAbierto(false)} />
+          <div className="absolute top-0 right-0 h-full w-72 max-w-[85vw] bg-slate-900 shadow-2xl flex flex-col p-4 overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-white font-bold text-sm">Menú</h2>
+              <button onClick={() => setMenuAbierto(false)} className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 active:scale-95 transition" aria-label="Cerrar menú">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <BusquedaGlobal alCerrarMenu={() => setMenuAbierto(false)} />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              {NAV_ITEMS.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => irA(item.label)}
+                  className={`flex items-center gap-3 text-sm font-medium px-3 py-3 rounded-lg transition ${item.label === paginaActual ? "text-white bg-slate-700" : "text-slate-300 hover:text-white hover:bg-slate-800"}`}
+                >
+                  <item.icon size={18} className={item.label === paginaActual ? "text-white" : item.color} />
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-slate-800 flex flex-col gap-2">
+              <button
+                onClick={toggleTema}
+                className="flex items-center gap-3 text-sm font-medium px-3 py-3 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
+              >
+                {modoOscuro ? <Sun size={18} /> : <Moon size={18} />}
+                {modoOscuro ? "Modo claro" : "Modo oscuro"}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 text-sm text-red-400 hover:text-red-300 font-medium px-3 py-3 rounded-lg hover:bg-slate-800 transition"
+              >
+                <LogOut size={18} />
+                Salir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showNotif && (
-        <div className="fixed top-14 right-4 w-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl z-20 p-4">
+        <div className="fixed top-14 right-2 md:right-4 w-80 max-w-[calc(100vw-1rem)] bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl z-20 p-4">
           <h3 className="text-sm font-bold text-gray-800 dark:text-slate-100 mb-3 flex items-center gap-1"><Bell size={16} className="text-yellow-500" /> Notificaciones</h3>
           {notificaciones.length === 0 && <p className="text-xs text-gray-400 dark:text-slate-500">No tienes notificaciones.</p>}
           {notificaciones.map((n) => (
-            <div key={n.id} className={`mb-2 p-3 rounded-xl text-xs ${n.leida ? "bg-slate-50 dark:bg-slate-800" : "bg-blue-50 border border-blue-100"}`}>
+            <div key={n.id} className={`mb-2 p-3 rounded-xl text-xs ${n.leida ? "bg-slate-50 dark:bg-slate-800" : "bg-blue-50 border border-blue-100 dark:bg-blue-950/40 dark:border-blue-900/40"}`}>
               <span className="font-bold text-gray-800 dark:text-slate-100">{n.de}</span>
               <span className="text-gray-600 dark:text-slate-400"> {n.mensaje}</span>
             </div>

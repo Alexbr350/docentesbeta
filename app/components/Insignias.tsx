@@ -65,8 +65,47 @@ function calcularInsignias(posts: any[]) {
   ];
 }
 
+function ConfettiBurst() {
+  const [particulas] = useState(() => {
+    const colores = ["#3b82f6", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899"];
+    return Array.from({ length: 12 }, (_, i) => {
+      const angulo = (i / 12) * Math.PI * 2 + (Math.random() * 0.4 - 0.2);
+      const distancia = 26 + Math.random() * 20;
+      return {
+        id: i,
+        tx: Math.cos(angulo) * distancia,
+        ty: Math.sin(angulo) * distancia,
+        tr: Math.random() * 360 - 180,
+        color: colores[i % colores.length],
+        delay: Math.random() * 80,
+      };
+    });
+  });
+
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      {particulas.map((p) => (
+        <span
+          key={p.id}
+          className="absolute top-1/2 left-1/2 w-1.5 h-1.5 rounded-sm animate-confetti"
+          style={
+            {
+              backgroundColor: p.color,
+              "--tx": `${p.tx}px`,
+              "--ty": `${p.ty}px`,
+              "--tr": `${p.tr}deg`,
+              animationDelay: `${p.delay}ms`,
+            } as any
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function Insignias({ posts, email, nombre }: { posts: any[]; email?: string; nombre?: string }) {
   const [insignias, setInsignias] = useState(() => calcularInsignias([]));
+  const [confettiActivo, setConfettiActivo] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const nuevas = calcularInsignias(posts);
@@ -84,6 +123,23 @@ export default function Insignias({ posts, email, nombre }: { posts: any[]; emai
     const nuevasDesbloqueadas = idsDesbloqueadasAhora.filter((id) => !previas.includes(id));
 
     if (nuevasDesbloqueadas.length > 0) {
+      // El confetti solo se muestra si ya existía un registro previo (evita que se disparen
+      // varias insignias a la vez en la primerísima sincronización de un usuario existente)
+      if (snap.exists()) {
+        setConfettiActivo((prev) => {
+          const nuevo = { ...prev };
+          nuevasDesbloqueadas.forEach((id) => { nuevo[id] = true; });
+          return nuevo;
+        });
+        setTimeout(() => {
+          setConfettiActivo((prev) => {
+            const nuevo = { ...prev };
+            nuevasDesbloqueadas.forEach((id) => { nuevo[id] = false; });
+            return nuevo;
+          });
+        }, 900);
+      }
+
       for (const id of nuevasDesbloqueadas) {
         const insignia = nuevas.find((i) => i.id === id);
         await addDoc(collection(db, "notificaciones"), {
@@ -106,19 +162,20 @@ export default function Insignias({ posts, email, nombre }: { posts: any[]; emai
       <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-5 flex items-center gap-1.5">
         <Award size={16} className="text-amber-500" /> Insignias
       </h3>
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
         {insignias.map((ins) => {
           const Icono = ins.desbloqueada ? ins.icono : Lock;
           return (
             <div
               key={ins.id}
               title={ins.descripcion}
-              className={`rounded-xl p-3 text-center border transition ${
+              className={`relative rounded-xl p-3 text-center border transition ${
                 ins.desbloqueada
                   ? `${ins.fondo} border-transparent`
                   : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 opacity-60"
               }`}
             >
+              {confettiActivo[ins.id] && <ConfettiBurst />}
               <Icono size={20} className={`mx-auto mb-1.5 ${ins.desbloqueada ? ins.color : "text-slate-400 dark:text-slate-500"}`} />
               <p className={`text-xs font-semibold leading-tight ${ins.desbloqueada ? "text-slate-700 dark:text-slate-200" : "text-slate-400 dark:text-slate-500"}`}>
                 {ins.nombre}

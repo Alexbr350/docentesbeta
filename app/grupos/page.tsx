@@ -111,12 +111,12 @@ export default function Grupos() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors animate-fade-in">
       <Navbar paginaActual="Grupos" />
 
       <div className="max-w-5xl mx-auto px-4 py-6">
 
-        <div className="bg-slate-900 rounded-2xl p-6 mb-6 flex items-center justify-between shadow-xl">
+        <div className="bg-slate-900 rounded-2xl p-6 mb-6 flex flex-wrap items-center justify-between gap-4 shadow-xl">
           <div className="flex items-center gap-4">
             <Layers size={32} className="text-orange-400" />
             <div>
@@ -126,14 +126,14 @@ export default function Grupos() {
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg transition"
+            className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-lg transition active:scale-95"
           >
             <Plus size={16} /> Crear grupo
           </button>
         </div>
 
         {showForm && (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 mb-6 shadow-lg border border-blue-100">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 mb-6 shadow-lg border border-blue-100 dark:border-blue-900/40">
             <h3 className="text-sm font-bold text-gray-800 dark:text-slate-100 mb-4 flex items-center gap-1.5"><Layers size={16} className="text-orange-500" /> Nuevo grupo</h3>
             <input
               type="text"
@@ -154,7 +154,7 @@ export default function Grupos() {
               <button
                 onClick={crearGrupo}
                 disabled={creando || !nombreGrupo.trim()}
-                className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow"
+                className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow transition active:scale-95"
               >
                 {creando ? "Creando..." : "Crear grupo"}
               </button>
@@ -170,13 +170,13 @@ export default function Grupos() {
 
         {grupos.map((grupo) => (
           <div key={grupo.id} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-md">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <div>
                 <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100">{grupo.nombre}</h3>
                 <p className="text-xs text-slate-400 mt-0.5">{grupo.descripcion}</p>
                 <p className="text-xs text-slate-400">Creado por: {grupo.creadoPorNombre}</p>
               </div>
-              <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-semibold">
+              <span className="flex items-center gap-1 text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full font-semibold">
                 <Users2 size={13} /> {grupo.miembros?.length || 0} miembros
               </span>
             </div>
@@ -185,7 +185,7 @@ export default function Grupos() {
               <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Miembros:</p>
               {grupo.miembros?.length === 0 && <p className="text-xs text-slate-400">Sin miembros todavía.</p>}
               {grupo.miembros?.map((m: any) => (
-                <div key={m.email} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                <div key={m.email} className="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
                       {m.nombre?.charAt(0).toUpperCase()}

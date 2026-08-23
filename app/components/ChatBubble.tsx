@@ -71,14 +71,14 @@ export default function ChatBubble() {
       {/* Burbuja flotante */}
       <button
         onClick={() => setAbierto(!abierto)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl z-40 transition"
+        className="fixed bottom-6 right-4 md:right-6 w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl z-40 transition active:scale-95"
       >
         💬
       </button>
 
       {/* Panel de chat */}
       {abierto && (
-        <div className="fixed bottom-24 right-6 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 z-40 flex flex-col overflow-hidden" style={{ height: "480px" }}>
+        <div className="fixed bottom-24 right-4 left-4 md:left-auto md:right-6 w-auto md:w-80 max-w-full md:max-w-none bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 z-40 flex flex-col overflow-hidden" style={{ height: "480px", maxHeight: "70vh" }}>
           
           {!amigoSeleccionado && (
             <>
@@ -93,7 +93,7 @@ export default function ChatBubble() {
                   <div
                     key={amigo.email}
                     onClick={() => abrirChat(amigo)}
-                    className="flex items-center gap-2 p-2 rounded-xl cursor-pointer hover:bg-slate-50 transition"
+                    className="flex items-center gap-2 p-2 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                   >
                     <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
                       {amigo.nombre?.charAt(0).toUpperCase()}
@@ -135,7 +135,7 @@ export default function ChatBubble() {
                   onKeyDown={(e) => e.key === "Enter" && enviarMensaje()}
                   className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400"
                 />
-                <button onClick={enviarMensaje} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold">
+                <button onClick={enviarMensaje} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95">
                   Enviar
                 </button>
               </div>

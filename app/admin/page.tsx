@@ -55,7 +55,7 @@ function AddMaestroForm() {
       <button
         onClick={agregar}
         disabled={agregando || !email.trim()}
-        className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl disabled:opacity-50 font-semibold"
+        className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl disabled:opacity-50 font-semibold transition active:scale-95"
       >
         {agregando ? "Agregando..." : "Agregar maestro"}
       </button>
@@ -88,7 +88,7 @@ function ReportesList() {
         <div key={r.id} className={`bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md border-l-4 ${r.estado === "revisado" ? "border-emerald-400" : "border-orange-400"}`}>
           <div className="flex items-center justify-between mb-2">
             <span className="flex items-center gap-1 text-xs font-bold text-orange-600"><Flag size={13} /> Reporte de publicación</span>
-            <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold ${r.estado === "revisado" ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-600"}`}>
+            <span className={`flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold ${r.estado === "revisado" ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400" : "bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400"}`}>
               {r.estado === "revisado" ? <><CheckCircle2 size={12} /> Revisado</> : "Pendiente"}
             </span>
           </div>
@@ -98,7 +98,7 @@ function ReportesList() {
           {r.estado !== "revisado" && (
             <button
               onClick={() => marcarRevisado(r.id)}
-              className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl font-semibold"
+              className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl font-semibold transition active:scale-95"
             >
               Marcar como revisado
             </button>
@@ -193,7 +193,7 @@ function EventosList() {
         <button
           onClick={crearEvento}
           disabled={creando || !titulo.trim() || !fechaEvento}
-          className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow"
+          className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl disabled:opacity-50 font-semibold shadow transition active:scale-95"
         >
           {creando ? "Creando..." : "Crear evento"}
         </button>
@@ -208,7 +208,7 @@ function EventosList() {
         <div key={e.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-3 shadow-md flex items-center justify-between">
           <div className="flex items-center gap-3">
             {e.imagenUrl && /\.pdf$/i.test(e.imagenNombre || "") ? (
-              <a href={e.imagenUrl} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center flex-shrink-0"><FileIcon size={22} className="text-red-500" /></a>
+              <a href={e.imagenUrl} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/40 flex items-center justify-center flex-shrink-0"><FileIcon size={22} className="text-red-500" /></a>
             ) : e.imagenUrl && (
               <img src={e.imagenUrl} alt={e.titulo} className="w-14 h-14 rounded-xl object-cover flex-shrink-0" />
             )}
@@ -271,7 +271,7 @@ function Dashboard({ posts, usuarios }: { posts: any[]; usuarios: any[] }) {
     .slice(0, 5);
 
   return (
-    <div className="grid grid-cols-2 gap-5">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-md">
         <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-4">Publicaciones por tipo</h3>
         <ResponsiveContainer width="100%" height={220}>
@@ -367,7 +367,7 @@ function MaestrosList() {
               <p className="text-xs text-slate-400">{m.email}</p>
             </div>
           </div>
-          <span className="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-semibold"><GraduationCap size={13} /> Maestro</span>
+          <span className="flex items-center gap-1 text-xs bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400 px-3 py-1 rounded-full font-semibold"><GraduationCap size={13} /> Maestro</span>
         </div>
       ))}
     </div>
@@ -485,11 +485,11 @@ export default function Admin() {
   };
 
   const coloresTipo: any = {
-    "Diario": "bg-blue-100 text-blue-700",
-    "Planeación": "bg-indigo-100 text-indigo-700",
-    "Narrativa": "bg-amber-100 text-amber-700",
-    "Extra": "bg-cyan-100 text-cyan-700",
-    "Pedir ayuda": "bg-red-100 text-red-700",
+    "Diario": "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400",
+    "Planeación": "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400",
+    "Narrativa": "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400",
+    "Extra": "bg-cyan-100 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-400",
+    "Pedir ayuda": "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400",
   };
 
   if (loading) return (
@@ -515,12 +515,12 @@ export default function Admin() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 transition-colors animate-fade-in">
       <Navbar paginaActual="Admin" />
 
       <div className="max-w-5xl mx-auto px-4 py-6">
 
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           {[
             { num: usuarios.length, label: "Practicantes", icon: Users2 },
             { num: posts.length, label: "Publicaciones totales", icon: ClipboardList },
@@ -534,12 +534,12 @@ export default function Admin() {
           ))}
         </div>
 
-        <div className="flex gap-2 mb-5">
+        <div className="flex gap-2 mb-5 overflow-x-auto flex-nowrap pb-1">
           {["dashboard", "publicaciones", "practicantes", "maestros", "reportes", "eventos"].map((v) => (
             <button
               key={v}
               onClick={() => setVistaActual(v)}
-              className={`flex items-center gap-1.5 text-sm px-5 py-2 rounded-xl border transition font-semibold ${vistaActual === v ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 hover:border-slate-400"}`}
+              className={`flex items-center gap-1.5 text-sm px-5 py-2 rounded-xl border transition font-semibold flex-shrink-0 ${vistaActual === v ? "bg-slate-900 text-white border-slate-900 shadow-lg" : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 hover:border-slate-400"}`}
             >
               {v === "dashboard" && <BarChart3 size={14} />}
               {v === "publicaciones" && <ClipboardList size={14} />}
@@ -601,20 +601,20 @@ export default function Admin() {
 
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-3">
                   <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1"><Star size={13} className="text-amber-500" /> Calificación</p>
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
                     {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                       <button
                         key={n}
                         onClick={() => calificar(post.id, post.email, n)}
-                        className={`w-8 h-8 rounded-lg text-xs font-extrabold transition shadow-sm ${calificaciones[post.id] === n ? "bg-blue-600 text-white shadow-md scale-110" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 dark:border-slate-800"}`}
+                        className={`w-full h-8 rounded-lg text-xs font-extrabold transition shadow-sm ${calificaciones[post.id] === n ? "bg-blue-600 text-white shadow-md scale-110" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-blue-50 hover:text-blue-600 border border-slate-200 dark:border-slate-800"}`}
                       >
                         {n}
                       </button>
                     ))}
-                    {calificaciones[post.id] && (
-                      <span className="ml-2 text-sm font-extrabold text-blue-600">{calificaciones[post.id]}/10 ✓</span>
-                    )}
                   </div>
+                  {calificaciones[post.id] && (
+                    <span className="mt-2 inline-block text-sm font-extrabold text-blue-600">{calificaciones[post.id]}/10 ✓</span>
+                  )}
                 </div>
 
                 <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex gap-3">
@@ -656,7 +656,7 @@ export default function Admin() {
                       />
                       <button
                         onClick={() => publicarComentario(post.id, post.email)}
-                        className="flex items-center gap-1 text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-xl font-semibold"
+                        className="flex items-center gap-1 text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-xl font-semibold transition active:scale-95"
                       >
                         <Send size={13} /> Enviar
                       </button>
