@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "./firebase";
 import { signOut } from "firebase/auth";
 import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc, where, deleteDoc, setDoc } from "firebase/firestore";
-import { Heart, ThumbsDown, MessageCircle, Flag, Paperclip, Calendar, ArrowRight, Layers, Repeat2 } from "lucide-react";
+import { Heart, ThumbsDown, MessageCircle, Flag, Paperclip, Calendar, ArrowRight, Layers, Repeat2, Globe, Users2, UserCheck, Lock, ChevronDown } from "lucide-react";
 import Navbar from "./components/Navbar";
 import Stories from "./components/Stories";
 import InsigniaVerificada, { esAdminOMaestro } from "./components/InsigniaVerificada";
@@ -16,6 +16,28 @@ const ADMINS_LOCAL: string[] = [
   "eira.vargas@ensfa.edu.mx",
   "alejandro_br.his23u@ensfa.edu.mx",
 ];
+
+const PRIVACIDAD_INFO: Record<string, { label: string; desc: string; icono: any }> = {
+  publico: { label: "Público", desc: "Todos en la plataforma", icono: Globe },
+  amigos: { label: "Solo amigos", desc: "Solo tus amigos", icono: Users2 },
+  especifico: { label: "Personas específicas", desc: "Eliges quién puede verlo", icono: UserCheck },
+  privado: { label: "Privado", desc: "Solo tú", icono: Lock },
+};
+
+const OPCIONES_PRIVACIDAD = ["publico", "amigos", "especifico", "privado"] as const;
+
+function IconoPrivacidad({ valor }: { valor?: string }) {
+  if (!valor || valor === "publico") return null;
+  const info = PRIVACIDAD_INFO[valor];
+  if (!info) return null;
+  const Icono = info.icono;
+  return (
+    <span title={info.label} className="inline-flex items-center gap-1">
+      <span>·</span>
+      <Icono size={11} />
+    </span>
+  );
+}
 
 export default function Home() {
   const router = useRouter();
@@ -43,7 +65,12 @@ export default function Home() {
   const [maestrosEmails, setMaestrosEmails] = useState<string[]>([]);
   const [modalReportar, setModalReportar] = useState<{ postId: string; autorNombre: string; autorEmail: string } | null>(null);
   const [modalCompartir, setModalCompartir] = useState<any>(null);
+  const [privacidad, setPrivacidad] = useState<string>("publico");
+  const [showPrivacidadMenu, setShowPrivacidadMenu] = useState(false);
+  const [visiblePara, setVisiblePara] = useState<string[]>([]);
   const { mostrarToast } = useToast();
+
+  const nombreAmigo = (email: string) => posts.find((p) => p.email === email)?.autor || email;
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -278,12 +305,17 @@ export default function Home() {
       autor: user.displayName || user.email,
       email: user.email,
       fecha: serverTimestamp(),
+      privacidad,
+      ...(privacidad === "especifico" && { visiblePara }),
       ...(archivoUrl && { archivoUrl, archivoNombre }),
     });
     setContenido("");
     setArchivoSeleccionado(null);
     setShowComposer(false);
     setPublicando(false);
+    setPrivacidad("publico");
+    setVisiblePara([]);
+    setShowPrivacidadMenu(false);
     cargarPosts();
   };
 
@@ -321,6 +353,15 @@ export default function Home() {
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
 
   const postsFiltrados = posts
+    .filter((post) => {
+      if (post.email === user?.email) return true;
+      const nivel = post.privacidad || "publico";
+      if (nivel === "publico") return true;
+      if (nivel === "amigos") return amigos.includes(post.email);
+      if (nivel === "especifico") return (post.visiblePara || []).includes(user?.email);
+      if (nivel === "privado") return false;
+      return true;
+    })
     .filter((post) =>
       post.contenido?.toLowerCase().includes(busqueda.toLowerCase()) ||
       post.autor?.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -443,14 +484,65 @@ export default function Home() {
                   value={contenido}
                   onChange={(e) => setContenido(e.target.value)}
                 />
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl hover:border-blue-400 transition">
                     <Paperclip size={14} /> Adjuntar
                     <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp" className="hidden" onChange={(e) => setArchivoSeleccionado(e.target.files?.[0] || null)} />
                   </label>
                   {archivoSeleccionado && <span className="text-xs text-blue-600 font-medium">✓ {archivoSeleccionado.name}</span>}
+
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowPrivacidadMenu((v) => !v)}
+                      className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl hover:border-blue-400 transition"
+                    >
+                      {(() => {
+                        const Icono = PRIVACIDAD_INFO[privacidad].icono;
+                        return <Icono size={14} />;
+                      })()}
+                      {PRIVACIDAD_INFO[privacidad].label}
+                      <ChevronDown size={12} />
+                    </button>
+                    {showPrivacidadMenu && (
+                      <div className="absolute z-10 top-full mt-1 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-1.5">
+                        {OPCIONES_PRIVACIDAD.map((valor) => {
+                          const op = PRIVACIDAD_INFO[valor];
+                          const Icono = op.icono;
+                          const activo = privacidad === valor;
+                          return (
+                            <button
+                              key={valor}
+                              type="button"
+                              onClick={() => { setPrivacidad(valor); setShowPrivacidadMenu(false); }}
+                              className={`w-full flex items-start gap-2 text-left px-3 py-2 rounded-lg transition ${activo ? "bg-blue-50 dark:bg-blue-950/40" : "hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+                            >
+                              <Icono size={15} className={`mt-0.5 flex-shrink-0 ${activo ? "text-blue-600 dark:text-blue-400" : "text-slate-400"}`} />
+                              <span>
+                                <span className={`block text-xs font-semibold ${activo ? "text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-300"}`}>{op.label}</span>
+                                <span className="block text-[11px] text-slate-400">{op.desc}</span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex justify-end gap-2 ml-auto">
-                    <button onClick={() => { setShowComposer(false); setContenido(""); setArchivoSeleccionado(null); }} className="text-sm text-slate-400 hover:text-slate-600 px-4 py-2">Cancelar</button>
+                    <button
+                      onClick={() => {
+                        setShowComposer(false);
+                        setContenido("");
+                        setArchivoSeleccionado(null);
+                        setPrivacidad("publico");
+                        setVisiblePara([]);
+                        setShowPrivacidadMenu(false);
+                      }}
+                      className="text-sm text-slate-400 hover:text-slate-600 px-4 py-2"
+                    >
+                      Cancelar
+                    </button>
                     <button
                       onClick={publicar}
                       disabled={publicando || !contenido.trim()}
@@ -460,6 +552,28 @@ export default function Home() {
                     </button>
                   </div>
                 </div>
+
+                {privacidad === "especifico" && (
+                  <div className="mt-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl p-3 max-h-40 overflow-y-auto">
+                    {amigos.length === 0 && (
+                      <p className="text-xs text-slate-400">Agrega amigos para poder compartir con personas específicas.</p>
+                    )}
+                    {amigos.map((emailAmigo) => (
+                      <label key={emailAmigo} className="flex items-center gap-2 py-1 text-xs text-slate-600 dark:text-slate-300 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={visiblePara.includes(emailAmigo)}
+                          onChange={(e) => {
+                            setVisiblePara((prev) =>
+                              e.target.checked ? [...prev, emailAmigo] : prev.filter((em) => em !== emailAmigo)
+                            );
+                          }}
+                        />
+                        {nombreAmigo(emailAmigo)}
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -483,8 +597,9 @@ export default function Home() {
                   </p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${coloresTipo[post.tipo] || "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"}`}>{post.tipo}</span>
                   {post.fecha && (
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
                       {post.fecha?.toDate?.()?.toLocaleDateString("es-MX", { day: "numeric", month: "short", year: "numeric" })} · {post.fecha?.toDate?.()?.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}
+                      <IconoPrivacidad valor={post.privacidad} />
                     </p>
                   )}
                 </div>
@@ -546,9 +661,11 @@ export default function Home() {
                 <button onClick={() => toggleComentarios(post.id)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-blue-500 font-semibold transition">
                   <MessageCircle size={14} /> {showComentarios[post.id] ? "Ocultar" : "Comentar"}
                 </button>
-                <button onClick={() => compartirPost(post)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-emerald-500 font-semibold transition">
-                  <Repeat2 size={14} /> Compartir
-                </button>
+                {(post.privacidad || "publico") === "publico" && (
+                  <button onClick={() => compartirPost(post)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-emerald-500 font-semibold transition">
+                    <Repeat2 size={14} /> Compartir
+                  </button>
+                )}
                 {post.email !== user?.email && (
                   <button
                     onClick={() => reportarPost(post.id, post.autor, post.email)}
