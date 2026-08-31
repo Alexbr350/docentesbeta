@@ -5,16 +5,83 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
-import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3 } from "lucide-react";
+import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3, Presentation, FileDown, Sparkles } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import jsPDF from "jspdf";
 import ModalConfirmar from "../components/ModalConfirmar";
+import ModalSugerenciaIA from "../components/ModalSugerenciaIA";
 import { useToast } from "../components/Toast";
+import { ADMINS } from "../lib/admins";
 
-const ADMINS: string[] = [
-  "eira.vargas@ensfa.edu.mx",
-  "alejandro_br.his23u@ensfa.edu.mx",
-];
 const MAESTROS: string[] = [];
+
+// Convierte una imagen servida por la app (ej. /logo.png) a base64 para poder
+// insertarla en el PDF con pdf.addImage().
+function cargarImagenComoBase64(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    fetch(url)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      })
+      .catch(reject);
+  });
+}
+
+type ColumnaTabla = { titulo: string; ancho: number };
+
+// Dibuja una tabla simple (encabezado + filas con banda alterna) en el PDF,
+// redibujando el encabezado cada vez que el contenido salta de página.
+// Devuelve el nuevo cursor Y para seguir escribiendo debajo de la tabla.
+function dibujarTabla(pdf: jsPDF, columnas: ColumnaTabla[], filas: string[][], yInicio: number, margenIzq = 20): number {
+  let y = yInicio;
+  const alturaFila = 7;
+  const anchoTotal = columnas.reduce((s, c) => s + c.ancho, 0);
+
+  const dibujarEncabezado = () => {
+    pdf.setFillColor(15, 23, 42);
+    pdf.rect(margenIzq, y - 5, anchoTotal, alturaFila, "F");
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(8.5);
+    pdf.setTextColor(255, 255, 255);
+    let x = margenIzq + 2;
+    columnas.forEach((c) => {
+      pdf.text(c.titulo, x, y);
+      x += c.ancho;
+    });
+    pdf.setTextColor(30, 30, 30);
+    y += alturaFila;
+  };
+
+  dibujarEncabezado();
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(8.5);
+
+  filas.forEach((fila, i) => {
+    if (y > 275) {
+      pdf.addPage();
+      y = 20;
+      dibujarEncabezado();
+    }
+    if (i % 2 === 0) {
+      pdf.setFillColor(248, 250, 252);
+      pdf.rect(margenIzq, y - 5, anchoTotal, alturaFila, "F");
+    }
+    let x = margenIzq + 2;
+    fila.forEach((valor, j) => {
+      const anchoCol = columnas[j].ancho;
+      const texto = pdf.splitTextToSize(valor || "", anchoCol - 3)[0] || "";
+      pdf.text(texto, x, y);
+      x += anchoCol;
+    });
+    y += alturaFila;
+  });
+
+  return y + 4;
+}
 
 function AddMaestroForm() {
   const { mostrarToast } = useToast();
@@ -387,6 +454,8 @@ export default function Admin() {
   const [nuevoComentario, setNuevoComentario] = useState<any>({});
   const [calificaciones, setCalificaciones] = useState<any>({});
   const [postAEliminar, setPostAEliminar] = useState<string | null>(null);
+  const [postParaSugerenciaIA, setPostParaSugerenciaIA] = useState<any>(null);
+  const [generandoReporte, setGenerandoReporte] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -484,6 +553,161 @@ export default function Admin() {
     router.push("/landing");
   };
 
+  const exportarReporteInstitucional = async () => {
+    setGenerandoReporte(true);
+    try {
+      const logoBase64 = await cargarImagenComoBase64("/logo.png").catch(() => null);
+      const pdf = new jsPDF();
+      const fechaGeneracion = new Date();
+      const fechaLegible = fechaGeneracion.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+
+      // ---------- Portada ----------
+      if (logoBase64) {
+        pdf.addImage(logoBase64, "PNG", 85, 45, 40, 40);
+      }
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(22);
+      pdf.text("Reporte Institucional", 105, 105, { align: "center" });
+      pdf.setTextColor(37, 99, 235);
+      pdf.setFontSize(16);
+      pdf.text("ENSFA+", 105, 116, { align: "center" });
+      pdf.setTextColor(0, 0, 0);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(11);
+      pdf.text("Escuela Normal Superior Federal de Aguascalientes", 105, 135, { align: "center" });
+      pdf.text('"Profr. José Santos Valdés"', 105, 142, { align: "center" });
+
+      pdf.setFontSize(9);
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(`Generado el ${fechaLegible}`, 105, 155, { align: "center" });
+      pdf.setTextColor(0, 0, 0);
+
+      // ---------- Resumen general ----------
+      pdf.addPage();
+      let y = 25;
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(16);
+      pdf.text("Resumen general", 20, y);
+      y += 10;
+
+      const postsCalificados = posts.filter((p) => p.calificacion);
+      const promedioGeneral = postsCalificados.length > 0
+        ? postsCalificados.reduce((s, p) => s + p.calificacion, 0) / postsCalificados.length
+        : 0;
+
+      const resumen = [
+        { label: "Total de practicantes", valor: String(usuarios.length) },
+        { label: "Total de publicaciones", valor: String(posts.length) },
+        { label: "Publicaciones calificadas", valor: String(postsCalificados.length) },
+        { label: "Calificación promedio general", valor: postsCalificados.length > 0 ? `${promedioGeneral.toFixed(1)}/10` : "Sin calificaciones" },
+      ];
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(11);
+      resumen.forEach((r) => {
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`${r.label}:`, 20, y);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(r.valor, 95, y);
+        y += 8;
+      });
+      y += 6;
+
+      // ---------- Publicaciones por tipo ----------
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(14);
+      pdf.text("Publicaciones por tipo", 20, y);
+      y += 10;
+
+      const tiposReporte = ["Diario", "Planeación", "Narrativa", "Extra", "Pedir ayuda"];
+      const filasTipo = tiposReporte.map((tipo) => [tipo, String(posts.filter((p) => p.tipo === tipo).length)]);
+
+      y = dibujarTabla(pdf, [
+        { titulo: "Tipo de publicación", ancho: 120 },
+        { titulo: "Cantidad", ancho: 50 },
+      ], filasTipo, y);
+      y += 8;
+
+      // ---------- Actividad reciente (últimos 7 días) ----------
+      if (y > 245) { pdf.addPage(); y = 25; }
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(14);
+      pdf.text("Actividad reciente (últimos 7 días)", 20, y);
+      y += 10;
+
+      const ultimos7diasReporte = Array.from({ length: 7 }, (_, i) => {
+        const fecha = new Date();
+        fecha.setDate(fecha.getDate() - (6 - i));
+        const postsDelDia = posts.filter((p) => {
+          const pf = p.fecha?.toDate?.();
+          return pf && pf.toDateString() === fecha.toDateString();
+        });
+        return {
+          fecha: fecha.toLocaleDateString("es-MX", { weekday: "long", day: "numeric", month: "short" }),
+          cantidad: postsDelDia.length,
+        };
+      });
+      const totalSemana = ultimos7diasReporte.reduce((s, d) => s + d.cantidad, 0);
+
+      y = dibujarTabla(pdf, [
+        { titulo: "Día", ancho: 120 },
+        { titulo: "Publicaciones", ancho: 50 },
+      ], ultimos7diasReporte.map((d) => [d.fecha, String(d.cantidad)]), y);
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(10);
+      pdf.text(`Total de la semana: ${totalSemana} publicaciones`, 20, y);
+      y += 12;
+
+      // ---------- Tabla de practicantes ----------
+      if (y > 240) { pdf.addPage(); y = 25; }
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(14);
+      pdf.text(`Practicantes (${usuarios.length})`, 20, y);
+      y += 10;
+
+      const filasPracticantes = usuarios
+        .slice()
+        .sort((a, b) => (b.publicaciones || 0) - (a.publicaciones || 0))
+        .map((u) => {
+          const postsCalificadosDeUsuario = posts.filter((p) => p.email === u.email && p.calificacion);
+          const promedioIndividual = postsCalificadosDeUsuario.length > 0
+            ? postsCalificadosDeUsuario.reduce((s, p) => s + p.calificacion, 0) / postsCalificadosDeUsuario.length
+            : null;
+          return [
+            u.nombre || "Sin nombre",
+            u.email,
+            String(u.publicaciones || 0),
+            promedioIndividual !== null ? `${promedioIndividual.toFixed(1)}/10` : "Sin calificar",
+          ];
+        });
+
+      dibujarTabla(pdf, [
+        { titulo: "Nombre", ancho: 45 },
+        { titulo: "Correo", ancho: 65 },
+        { titulo: "Publ.", ancho: 25 },
+        { titulo: "Calificación", ancho: 35 },
+      ], filasPracticantes, y);
+
+      // ---------- Pie de página institucional en todas las páginas ----------
+      const totalPaginas = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPaginas; i++) {
+        pdf.setPage(i);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(140, 140, 140);
+        pdf.text("Escuela Normal Superior Federal de Aguascalientes · Profr. José Santos Valdés", 20, 290);
+        pdf.text(`Página ${i} de ${totalPaginas}`, 190, 290, { align: "right" });
+      }
+
+      const fechaArchivo = fechaGeneracion.toISOString().split("T")[0];
+      pdf.save(`Reporte_Institucional_ENSFA_${fechaArchivo}.pdf`);
+    } finally {
+      setGenerandoReporte(false);
+    }
+  };
+
   const coloresTipo: any = {
     "Diario": "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400",
     "Planeación": "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400",
@@ -520,6 +744,19 @@ export default function Admin() {
 
       <div className="max-w-5xl mx-auto px-4 py-6">
 
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h1 className="text-xl font-extrabold text-gray-800 dark:text-slate-100">Panel de administración</h1>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">Gestiona la plataforma y revisa el progreso de los practicantes</p>
+          </div>
+          <button
+            onClick={() => router.push("/presentacion")}
+            className="flex items-center gap-2 text-sm bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg transition active:scale-95"
+          >
+            <Presentation size={16} className="text-blue-400" /> Modo Presentación
+          </button>
+        </div>
+
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           {[
             { num: usuarios.length, label: "Practicantes", icon: Users2 },
@@ -552,7 +789,20 @@ export default function Admin() {
           ))}
         </div>
 
-        {vistaActual === "dashboard" && <Dashboard posts={posts} usuarios={usuarios} />}
+        {vistaActual === "dashboard" && (
+          <div>
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={exportarReporteInstitucional}
+                disabled={generandoReporte}
+                className="flex items-center gap-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg transition active:scale-95 disabled:opacity-50"
+              >
+                <FileDown size={16} /> {generandoReporte ? "Generando..." : "Exportar reporte institucional (PDF)"}
+              </button>
+            </div>
+            <Dashboard posts={posts} usuarios={usuarios} />
+          </div>
+        )}
 
         {vistaActual === "practicantes" && (
           <div>
@@ -645,6 +895,13 @@ export default function Admin() {
                         </div>
                       </div>
                     ))}
+                    <button
+                      type="button"
+                      onClick={() => setPostParaSugerenciaIA(post)}
+                      className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 px-3 py-2 rounded-xl hover:bg-violet-100 dark:hover:bg-violet-950/50 transition font-medium mb-2"
+                    >
+                      <Sparkles size={14} /> Sugerir retroalimentación con IA
+                    </button>
                     <div className="flex gap-2 mt-2">
                       <input
                         type="text"
@@ -667,6 +924,20 @@ export default function Admin() {
             ))}
           </div>
         )}
+
+        <ModalSugerenciaIA
+          visible={!!postParaSugerenciaIA}
+          contenidoPost={postParaSugerenciaIA?.contenido || ""}
+          tipo={postParaSugerenciaIA?.tipo || "práctica docente"}
+          colorTema="violet"
+          onUsar={(texto) => {
+            if (postParaSugerenciaIA) {
+              setNuevoComentario((prev: any) => ({ ...prev, [postParaSugerenciaIA.id]: texto }));
+            }
+            setPostParaSugerenciaIA(null);
+          }}
+          onCancelar={() => setPostParaSugerenciaIA(null)}
+        />
 
         {vistaActual === "reportes" && <ReportesList />}
 

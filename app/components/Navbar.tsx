@@ -6,7 +6,8 @@ import { signOut } from "firebase/auth";
 import { collection, getDocs, query, where, orderBy, updateDoc, doc } from "firebase/firestore";
 import ChatBubble from "./ChatBubble";
 import BusquedaGlobal from "./BusquedaGlobal";
-import { Home, FolderOpen, Users2, Calendar, User, UserPlus, LayersIcon, GraduationCap, Bell, LogOut, Sun, Moon, Menu, X } from "lucide-react";
+import { Home, FolderOpen, Users2, Calendar, User, UserPlus, LayersIcon, GraduationCap, Bell, LogOut, Sun, Moon, Menu, X, Shield, ShieldCheck } from "lucide-react";
+import { ADMINS } from "../lib/admins";
 
 export default function Navbar({ paginaActual }: { paginaActual: string }) {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
   const [modoOscuro, setModoOscuro] = useState(false);
   const [campanaVibrando, setCampanaVibrando] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [esMaestro, setEsMaestro] = useState(false);
   const notifRef = useRef<any[]>([]);
   const emailRef = useRef<string>("");
   const primeraCargaRef = useRef(true);
@@ -35,6 +37,7 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
         setUser(currentUser);
         emailRef.current = currentUser.email || "";
         cargarNotificaciones(currentUser.email || "");
+        verificarMaestro(currentUser.email || "");
       }
     });
     const intervalo = setInterval(() => {
@@ -42,6 +45,11 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
     }, 15000);
     return () => { unsubscribe(); clearInterval(intervalo); };
   }, []);
+
+  const verificarMaestro = async (email: string) => {
+    const snap = await getDocs(query(collection(db, "maestros"), where("email", "==", email)));
+    setEsMaestro(!snap.empty);
+  };
 
   const cargarNotificaciones = async (email: string) => {
     const q = query(collection(db, "notificaciones"), where("para", "==", email), orderBy("fecha", "desc"));
@@ -94,16 +102,18 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
   };
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
+  const esAdmin = !!user && ADMINS.includes(user.email || "");
 
   const NAV_ITEMS = [
     { label: "Feed", icon: Home, color: "text-blue-400" },
     { label: "Portafolio", icon: FolderOpen, color: "text-amber-400" },
-    { label: "Comunidad", icon: Users2, color: "text-purple-400" },
+    { label: "Comunidad", icon: Users2, color: "text-fuchsia-400" },
     { label: "Eventos", icon: Calendar, color: "text-pink-400" },
     { label: "Perfil", icon: User, color: "text-cyan-400" },
     { label: "Usuarios", icon: UserPlus, color: "text-emerald-400" },
     { label: "Grupos", icon: LayersIcon, color: "text-orange-400" },
     { label: "Maestro", icon: GraduationCap, color: "text-red-400" },
+    ...(esAdmin ? [{ label: "Admin", icon: Shield, color: "text-purple-400" }] : []),
   ];
 
   const irA = (label: string) => {
@@ -114,12 +124,24 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
   return (
     <>
       <nav className="bg-slate-900 px-4 md:px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-xl">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full" />
-          <div>
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          <img src="/logo.png" alt="ENSFA" className="w-8 h-8 rounded-full flex-shrink-0" />
+          <div className="min-w-0">
             <p className="text-xs text-slate-400 leading-none">ENSFA</p>
             <h1 className="text-sm font-bold text-white leading-tight">ENSFA<span className="text-blue-400">+</span></h1>
           </div>
+          {esAdmin && (
+            <span className="flex items-center gap-1 flex-shrink-0 text-[10px] font-bold text-purple-300 bg-purple-500/15 border border-purple-500/30 pl-1.5 pr-1.5 sm:pr-2 py-0.5 rounded-full">
+              <ShieldCheck size={11} />
+              <span className="hidden sm:inline uppercase tracking-wide">Admin</span>
+            </span>
+          )}
+          {esMaestro && (
+            <span className="flex items-center gap-1 flex-shrink-0 text-[10px] font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 pl-1.5 pr-1.5 sm:pr-2 py-0.5 rounded-full">
+              <GraduationCap size={11} />
+              <span className="hidden sm:inline uppercase tracking-wide">Maestro</span>
+            </span>
+          )}
         </div>
 
         {/* Navegación de escritorio */}

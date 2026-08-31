@@ -1,10 +1,6 @@
 "use client";
 import { BadgeCheck } from "lucide-react";
-
-const ADMINS: string[] = [
-  "eira.vargas@ensfa.edu.mx",
-  "alejandro_br.his23u@ensfa.edu.mx",
-];
+import { ADMINS } from "../lib/admins";
 
 const MAESTROS_EMAILS_CACHE: { emails: string[] | null } = { emails: null };
 

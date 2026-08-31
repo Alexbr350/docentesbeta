@@ -2,11 +2,12 @@
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { BookOpen, Medal, Trophy, Star, Award, Lock } from "lucide-react";
+import { BookOpen, Medal, Trophy, Star, Award, Lock, Flame } from "lucide-react";
+import { calcularRacha } from "../lib/racha";
 
 const METAS: Record<string, number> = { "Diario": 10, "Planeación": 5, "Narrativa": 1, "Extra": 3 };
 
-function calcularInsignias(posts: any[]) {
+function calcularInsignias(posts: any[], email?: string) {
   const conteo: Record<string, number> = {};
   posts.forEach((p) => {
     if (p.tipo) conteo[p.tipo] = (conteo[p.tipo] || 0) + 1;
@@ -15,6 +16,8 @@ function calcularInsignias(posts: any[]) {
   const todasLasMetas = ["Diario", "Planeación", "Narrativa", "Extra"].every(
     (tipo) => (conteo[tipo] || 0) >= METAS[tipo]
   );
+
+  const racha = calcularRacha(posts, email || "");
 
   return [
     {
@@ -62,6 +65,42 @@ function calcularInsignias(posts: any[]) {
       fondo: "bg-yellow-100 dark:bg-yellow-950/40",
       desbloqueada: todasLasMetas,
     },
+    {
+      id: "racha_3",
+      nombre: "Racha de 3 días",
+      descripcion: "Publica 3 días seguidos",
+      icono: Flame,
+      color: "text-orange-600 dark:text-orange-400",
+      fondo: "bg-orange-100 dark:bg-orange-950/40",
+      desbloqueada: racha >= 3,
+    },
+    {
+      id: "racha_7",
+      nombre: "Racha de 7 días",
+      descripcion: "Publica 7 días seguidos",
+      icono: Flame,
+      color: "text-red-600 dark:text-red-400",
+      fondo: "bg-red-100 dark:bg-red-950/40",
+      desbloqueada: racha >= 7,
+    },
+    {
+      id: "racha_14",
+      nombre: "Racha de 14 días",
+      descripcion: "Publica 14 días seguidos",
+      icono: Flame,
+      color: "text-rose-600 dark:text-rose-400",
+      fondo: "bg-rose-100 dark:bg-rose-950/40",
+      desbloqueada: racha >= 14,
+    },
+    {
+      id: "racha_30",
+      nombre: "Racha de 30 días",
+      descripcion: "Publica 30 días seguidos",
+      icono: Flame,
+      color: "text-pink-600 dark:text-pink-400",
+      fondo: "bg-pink-100 dark:bg-pink-950/40",
+      desbloqueada: racha >= 30,
+    },
   ];
 }
 
@@ -104,11 +143,11 @@ function ConfettiBurst() {
 }
 
 export default function Insignias({ posts, email, nombre }: { posts: any[]; email?: string; nombre?: string }) {
-  const [insignias, setInsignias] = useState(() => calcularInsignias([]));
+  const [insignias, setInsignias] = useState(() => calcularInsignias([], ""));
   const [confettiActivo, setConfettiActivo] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const nuevas = calcularInsignias(posts);
+    const nuevas = calcularInsignias(posts, email);
     setInsignias(nuevas);
     if (email) sincronizarDesbloqueos(nuevas);
     // eslint-disable-next-line react-hooks/exhaustive-deps

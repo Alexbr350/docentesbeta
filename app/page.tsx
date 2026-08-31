@@ -4,20 +4,18 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "./firebase";
 import { signOut } from "firebase/auth";
 import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc, where, deleteDoc, setDoc } from "firebase/firestore";
-import { Heart, ThumbsDown, MessageCircle, Flag, Paperclip, Calendar, ArrowRight, Layers, Repeat2, Globe, Users2, UserCheck, Lock, ChevronDown } from "lucide-react";
+import { Heart, ThumbsDown, MessageCircle, Flag, Paperclip, Calendar, ArrowRight, Layers, Repeat2, Globe, Users2, UserCheck, Lock, ChevronDown, Flame, Sparkles } from "lucide-react";
+import { calcularRacha } from "./lib/racha";
 import Navbar from "./components/Navbar";
 import Stories from "./components/Stories";
 import InsigniaVerificada, { esAdminOMaestro } from "./components/InsigniaVerificada";
 import Tendencias from "./components/Tendencias";
 import AmigosSugeridos from "./components/AmigosSugeridos";
 import ModalInput from "./components/ModalInput";
+import ModalMejorarIA from "./components/ModalMejorarIA";
 import { useToast } from "./components/Toast";
 import SplashScreen from "./components/SplashScreen";
-
-const ADMINS_LOCAL: string[] = [
-  "eira.vargas@ensfa.edu.mx",
-  "alejandro_br.his23u@ensfa.edu.mx",
-];
+import { ADMINS as ADMINS_LOCAL } from "./lib/admins";
 
 const PRIVACIDAD_INFO: Record<string, { label: string; desc: string; icono: any }> = {
   publico: { label: "Público", desc: "Todos en la plataforma", icono: Globe },
@@ -57,6 +55,7 @@ export default function Home() {
   const [showNotif, setShowNotif] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
+  const [showModalMejorarIA, setShowModalMejorarIA] = useState(false);
   const [likes, setLikes] = useState<any>({});
   const [dislikes, setDislikes] = useState<any>({});
   const [likeJustPopped, setLikeJustPopped] = useState<Record<string, boolean>>({});
@@ -382,6 +381,7 @@ export default function Home() {
   };
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
+  const miRacha = calcularRacha(posts, user?.email || "");
 
   const postsFiltrados = posts
     .filter((post) => {
@@ -439,7 +439,16 @@ export default function Home() {
               {!ADMINS_LOCAL.includes(user?.email) && maestrosEmails.includes(user?.email) && <InsigniaVerificada tipo="maestro" />}
             </p>
             <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 truncate">{user?.email}</p>
-            <span className="inline-block mt-2 text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-3 py-0.5 rounded-full font-medium">Practicante</span>
+            <div className="flex items-center justify-center gap-1.5 mt-2 flex-wrap">
+              <span className="inline-block text-xs bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-3 py-0.5 rounded-full font-medium">Practicante</span>
+              <span
+                title={miRacha > 0 ? `Racha de ${miRacha} ${miRacha === 1 ? "día" : "días"}` : "Publica hoy para empezar tu racha"}
+                className={`inline-flex items-center gap-1 text-xs px-3 py-0.5 rounded-full font-bold ${miRacha > 0 ? "bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400" : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}
+              >
+                <Flame size={12} className={miRacha > 0 ? "fill-orange-500 text-orange-500" : ""} />
+                {miRacha}
+              </span>
+            </div>
           </div>
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-md">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Mi espacio</p>
@@ -572,6 +581,16 @@ export default function Home() {
                     )}
                   </div>
 
+                  {["Diario", "Planeación", "Narrativa"].includes(tipoSeleccionado) && contenido.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => setShowModalMejorarIA(true)}
+                      className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 px-3 py-2 rounded-xl hover:bg-violet-100 dark:hover:bg-violet-950/50 transition font-medium"
+                    >
+                      <Sparkles size={14} /> Mejorar con IA
+                    </button>
+                  )}
+
                   <div className="flex justify-end gap-2 ml-auto">
                     <button
                       onClick={() => {
@@ -595,6 +614,14 @@ export default function Home() {
                     </button>
                   </div>
                 </div>
+
+                <ModalMejorarIA
+                  visible={showModalMejorarIA}
+                  original={contenido}
+                  tipo={tipoSeleccionado}
+                  onUsar={(texto) => { setContenido(texto); setShowModalMejorarIA(false); }}
+                  onCancelar={() => setShowModalMejorarIA(false)}
+                />
 
                 {privacidad === "especifico" && (
                   <div className="mt-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl p-3 max-h-40 overflow-y-auto">

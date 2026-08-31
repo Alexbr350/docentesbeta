@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
-import { GraduationCap, Star, MessageCircle, Send, Users2 } from "lucide-react";
+import { GraduationCap, Star, MessageCircle, Send, Users2, Sparkles } from "lucide-react";
+import ModalSugerenciaIA from "../components/ModalSugerenciaIA";
 
 export default function Maestro() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function Maestro() {
   const [comentarios, setComentarios] = useState<any>({});
   const [showComentarios, setShowComentarios] = useState<any>({});
   const [nuevoComentario, setNuevoComentario] = useState<any>({});
+  const [postParaSugerenciaIA, setPostParaSugerenciaIA] = useState<any>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
@@ -238,6 +240,13 @@ export default function Maestro() {
                         </div>
                       </div>
                     ))}
+                    <button
+                      type="button"
+                      onClick={() => setPostParaSugerenciaIA(post)}
+                      className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 px-3 py-2 rounded-xl hover:bg-violet-100 dark:hover:bg-violet-950/50 transition font-medium mb-2"
+                    >
+                      <Sparkles size={14} /> Sugerir retroalimentación con IA
+                    </button>
                     <div className="flex gap-2 mt-2">
                       <input
                         type="text"
@@ -260,6 +269,20 @@ export default function Maestro() {
             ))}
           </div>
         </div>
+
+        <ModalSugerenciaIA
+          visible={!!postParaSugerenciaIA}
+          contenidoPost={postParaSugerenciaIA?.contenido || ""}
+          tipo={postParaSugerenciaIA?.tipo || "práctica docente"}
+          colorTema="green"
+          onUsar={(texto) => {
+            if (postParaSugerenciaIA) {
+              setNuevoComentario((prev: any) => ({ ...prev, [postParaSugerenciaIA.id]: texto }));
+            }
+            setPostParaSugerenciaIA(null);
+          }}
+          onCancelar={() => setPostParaSugerenciaIA(null)}
+        />
       </div>
     </div>
   );

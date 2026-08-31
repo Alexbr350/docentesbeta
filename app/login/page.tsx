@@ -80,8 +80,8 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <span className="text-white text-2xl font-bold">D</span>
+          <div className="w-16 h-16 rounded-2xl overflow-hidden mx-auto mb-4 shadow-lg">
+            <img src="/logo.png" alt="ENSFA" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100">ENSFA+</h1>
           <p className="text-gray-500 dark:text-slate-400 mt-2 text-sm">Plataforma para practicantes docentes</p>

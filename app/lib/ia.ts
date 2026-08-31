@@ -1,0 +1,27 @@
+// Cliente ligero para el Asistente de IA de ENSFA+ (app/api/ia/route.ts).
+// Se usa desde ModalMejorarIA.tsx (escenario "mejorar" en el compositor del
+// feed) y ModalSugerenciaIA.tsx (escenario "retroalimentacion" en Admin y
+// Maestro) para no duplicar el fetch + manejo de errores en cada archivo.
+
+export type TareaIA = "mejorar" | "retroalimentacion";
+
+export async function llamarAsistenteIA(tarea: TareaIA, texto: string, tipo?: string): Promise<string> {
+  let respuesta: Response;
+  try {
+    respuesta = await fetch("/api/ia", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ tarea, texto, tipo }),
+    });
+  } catch {
+    throw new Error("No se pudo conectar con el asistente de IA. Revisa tu conexión.");
+  }
+
+  const data = await respuesta.json().catch(() => ({}));
+
+  if (!respuesta.ok || !data?.resultado) {
+    throw new Error(data?.error || "El asistente de IA no pudo generar una respuesta en este momento.");
+  }
+
+  return data.resultado as string;
+}

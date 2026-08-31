@@ -5,10 +5,12 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import Navbar from "../components/Navbar";
 import { collection, getDocs, query, where, orderBy, doc, getDoc, setDoc } from "firebase/firestore";
-import { BookOpen, ClipboardList, PenLine, Paperclip, HelpCircle, BarChart3, Newspaper, Edit, GraduationCap, Hash, Heart, Repeat2 } from "lucide-react";
+import { BookOpen, ClipboardList, PenLine, Paperclip, HelpCircle, BarChart3, Newspaper, Edit, GraduationCap, Hash, Heart, Repeat2, Flame } from "lucide-react";
 import Insignias from "../components/Insignias";
+import MapaCalor from "../components/MapaCalor";
 import ModalEditarPerfil from "../components/ModalEditarPerfil";
 import { useToast } from "../components/Toast";
+import { calcularRacha, proximoHitoRacha } from "../lib/racha";
 
 export default function Perfil() {
   const router = useRouter();
@@ -95,6 +97,8 @@ export default function Perfil() {
     "Pedir ayuda": "bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400",
     "Compartido": "bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400",
   };
+  const miRacha = calcularRacha(posts, user?.email || "");
+  const hitoRacha = proximoHitoRacha(miRacha);
   const metas: any = { "Diario": 10, "Planeación": 5, "Narrativa": 1, "Extra": 3, "Pedir ayuda": 99 };
   const barraColores: any = { "Diario": "bg-blue-500", "Planeación": "bg-indigo-500", "Narrativa": "bg-amber-500", "Extra": "bg-cyan-500" };
 
@@ -172,6 +176,28 @@ export default function Perfil() {
           onCancelar={() => setShowEditarPerfil(false)}
         />
 
+        <div className={`rounded-2xl p-6 mb-6 shadow-xl relative overflow-hidden ${miRacha > 0 ? "bg-gradient-to-br from-orange-500 to-red-500" : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"}`}>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-3xl opacity-10 pointer-events-none"></div>
+          <div className="flex items-center gap-4 relative z-10">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${miRacha > 0 ? "bg-white/20" : "bg-slate-100 dark:bg-slate-800"}`}>
+              <Flame size={30} className={miRacha > 0 ? "text-white fill-white" : "text-slate-400"} />
+            </div>
+            <div className="min-w-0">
+              <p className={`text-3xl font-extrabold ${miRacha > 0 ? "text-white" : "text-slate-500 dark:text-slate-400"}`}>
+                {miRacha} {miRacha === 1 ? "día" : "días"}
+              </p>
+              <p className={`text-sm font-semibold ${miRacha > 0 ? "text-white/80" : "text-slate-400"}`}>
+                {miRacha > 0 ? "¡Racha activa! Sigue publicando todos los días." : "Publica hoy para comenzar tu racha."}
+              </p>
+              {hitoRacha && (
+                <p className={`text-xs mt-1.5 ${miRacha > 0 ? "text-white/70" : "text-slate-400"}`}>
+                  Faltan {hitoRacha - miRacha} {hitoRacha - miRacha === 1 ? "día" : "días"} para tu próximo hito de {hitoRacha} días.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-6">
           {tipos.map((tipo) => {
             const Icono = iconosTipo[tipo];
@@ -229,6 +255,10 @@ export default function Perfil() {
             )}
           </div>
 
+        </div>
+
+        <div className="mt-5">
+          <MapaCalor posts={posts} email={user?.email} />
         </div>
 
         <div className="mt-5">
