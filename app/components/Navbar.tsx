@@ -6,7 +6,7 @@ import { signOut } from "firebase/auth";
 import { collection, getDocs, query, where, orderBy, updateDoc, doc } from "firebase/firestore";
 import ChatBubble from "./ChatBubble";
 import BusquedaGlobal from "./BusquedaGlobal";
-import { Home, FolderOpen, Users2, Calendar, User, UserPlus, LayersIcon, GraduationCap, Bell, LogOut, Sun, Moon, Menu, X, Shield, ShieldCheck } from "lucide-react";
+import { Home, FolderOpen, Users2, Calendar, CalendarDays, User, UserPlus, LayersIcon, GraduationCap, Bell, LogOut, Sun, Moon, Menu, X, Shield, ShieldCheck } from "lucide-react";
 import { ADMINS } from "../lib/admins";
 
 export default function Navbar({ paginaActual }: { paginaActual: string }) {
@@ -109,6 +109,7 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
     { label: "Portafolio", icon: FolderOpen, color: "text-amber-400" },
     { label: "Comunidad", icon: Users2, color: "text-fuchsia-400" },
     { label: "Eventos", icon: Calendar, color: "text-pink-400" },
+    { label: "Calendario", icon: CalendarDays, color: "text-blue-400" },
     { label: "Perfil", icon: User, color: "text-cyan-400" },
     { label: "Usuarios", icon: UserPlus, color: "text-emerald-400" },
     { label: "Grupos", icon: LayersIcon, color: "text-orange-400" },

@@ -5,11 +5,14 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
-import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3, Presentation, FileDown, Sparkles } from "lucide-react";
+import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, CalendarDays, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3, Presentation, FileDown, Sparkles } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import jsPDF from "jspdf";
 import ModalConfirmar from "../components/ModalConfirmar";
 import ModalSugerenciaIA from "../components/ModalSugerenciaIA";
+import CalendarioEscolar from "../components/CalendarioEscolar";
+import ModalCalendarioEvento, { DatosFormularioCalendario } from "../components/ModalCalendarioEvento";
+import { EventoCalendario } from "../lib/calendarioEscolar";
 import { useToast } from "../components/Toast";
 import { ADMINS } from "../lib/admins";
 
@@ -441,6 +444,110 @@ function MaestrosList() {
   );
 }
 
+function CalendarioAdminTab() {
+  const { mostrarToast } = useToast();
+  const [eventos, setEventos] = useState<EventoCalendario[]>([]);
+  const [showFormulario, setShowFormulario] = useState(false);
+  const [eventoEditar, setEventoEditar] = useState<EventoCalendario | null>(null);
+  const [fechaSugerida, setFechaSugerida] = useState<string | null>(null);
+  const [eventoAEliminar, setEventoAEliminar] = useState<EventoCalendario | null>(null);
+
+  useEffect(() => {
+    cargarCalendario();
+  }, []);
+
+  const cargarCalendario = async () => {
+    const snap = await getDocs(query(collection(db, "calendario_escolar"), orderBy("fechaInicio", "asc")));
+    setEventos(snap.docs.map((d) => ({ id: d.id, ...d.data() })) as EventoCalendario[]);
+  };
+
+  const abrirCrear = (fecha: string) => {
+    setEventoEditar(null);
+    setFechaSugerida(fecha);
+    setShowFormulario(true);
+  };
+
+  const abrirEditar = (evento: EventoCalendario) => {
+    setEventoEditar(evento);
+    setFechaSugerida(null);
+    setShowFormulario(true);
+  };
+
+  const guardar = async (datos: DatosFormularioCalendario) => {
+    const email = auth.currentUser?.email || "";
+    const payload: any = {
+      titulo: datos.titulo,
+      tipo: datos.tipo,
+      fechaInicio: datos.fechaInicio,
+      ...(datos.fechaFin && { fechaFin: datos.fechaFin }),
+      ...(datos.horaInicio && { horaInicio: datos.horaInicio }),
+      ...(datos.horaFin && { horaFin: datos.horaFin }),
+      ...(datos.descripcion && { descripcion: datos.descripcion }),
+    };
+
+    if (eventoEditar) {
+      await updateDoc(doc(db, "calendario_escolar", eventoEditar.id), payload);
+      mostrarToast("Fecha actualizada");
+    } else {
+      await addDoc(collection(db, "calendario_escolar"), {
+        ...payload,
+        creadoPor: email,
+        fecha: serverTimestamp(),
+      });
+      mostrarToast("Fecha agregada al calendario");
+    }
+    setShowFormulario(false);
+    setEventoEditar(null);
+    setFechaSugerida(null);
+    cargarCalendario();
+  };
+
+  const eliminar = async () => {
+    if (!eventoAEliminar) return;
+    await deleteDoc(doc(db, "calendario_escolar", eventoAEliminar.id));
+    setEventos(eventos.filter((e) => e.id !== eventoAEliminar.id));
+    setEventoAEliminar(null);
+    mostrarToast("Fecha eliminada");
+  };
+
+  return (
+    <div>
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => abrirCrear("")}
+          className="flex items-center gap-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-semibold shadow transition active:scale-95"
+        >
+          <CalendarDays size={16} /> Nueva fecha
+        </button>
+      </div>
+
+      <CalendarioEscolar
+        eventos={eventos}
+        modoEdicion
+        onCrear={abrirCrear}
+        onEditar={abrirEditar}
+        onEliminar={(ev) => setEventoAEliminar(ev)}
+      />
+
+      <ModalCalendarioEvento
+        visible={showFormulario}
+        eventoEditar={eventoEditar}
+        fechaSugerida={fechaSugerida}
+        onGuardar={guardar}
+        onCancelar={() => { setShowFormulario(false); setEventoEditar(null); setFechaSugerida(null); }}
+      />
+
+      <ModalConfirmar
+        visible={!!eventoAEliminar}
+        mensaje={eventoAEliminar ? `¿Eliminar "${eventoAEliminar.titulo}" del calendario?` : ""}
+        destructivo
+        onConfirmar={eliminar}
+        onCancelar={() => setEventoAEliminar(null)}
+      />
+    </div>
+  );
+}
+
 export default function Admin() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -772,7 +879,7 @@ export default function Admin() {
         </div>
 
         <div className="flex gap-2 mb-5 overflow-x-auto flex-nowrap pb-1">
-          {["dashboard", "publicaciones", "practicantes", "maestros", "reportes", "eventos"].map((v) => (
+          {["dashboard", "publicaciones", "practicantes", "maestros", "reportes", "eventos", "calendario"].map((v) => (
             <button
               key={v}
               onClick={() => setVistaActual(v)}
@@ -784,6 +891,7 @@ export default function Admin() {
               {v === "maestros" && <GraduationCap size={14} />}
               {v === "reportes" && <Flag size={14} />}
               {v === "eventos" && <Calendar size={14} />}
+              {v === "calendario" && <CalendarDays size={14} />}
               {v === "dashboard" ? "Estadísticas" : v.charAt(0).toUpperCase() + v.slice(1)}
             </button>
           ))}
@@ -942,6 +1050,8 @@ export default function Admin() {
         {vistaActual === "reportes" && <ReportesList />}
 
         {vistaActual === "eventos" && <EventosList />}
+
+        {vistaActual === "calendario" && <CalendarioAdminTab />}
 
         {vistaActual === "maestros" && (
           <div>
