@@ -6,8 +6,7 @@ import { signOut } from "firebase/auth";
 import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, doc, deleteDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
 import { Layers, Plus, Users2, X } from "lucide-react";
-
-const ADMINS: string[] = ["eira.vargas@ensfa.edu.mx"];
+import { ADMINS } from "../lib/admins";
 
 export default function Grupos() {
   const router = useRouter();
