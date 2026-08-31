@@ -50,7 +50,7 @@ export default function Presentacion() {
   const cargarDatos = async () => {
     const q = query(collection(db, "posts"), orderBy("fecha", "desc"));
     const snapshot = await getDocs(q);
-    const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const data: any[] = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
     setPosts(data);
     const emails = [...new Set(data.map((p: any) => p.email))];
     const usuariosData = emails.map((email) => ({
