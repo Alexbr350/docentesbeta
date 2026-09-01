@@ -5,10 +5,11 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import Navbar from "../components/Navbar";
 import { collection, getDocs, query, where, orderBy, doc, getDoc, setDoc } from "firebase/firestore";
-import { BookOpen, ClipboardList, PenLine, Paperclip, HelpCircle, BarChart3, Newspaper, Edit, GraduationCap, Hash, Heart, Repeat2, Flame } from "lucide-react";
+import { BookOpen, ClipboardList, PenLine, Paperclip, HelpCircle, BarChart3, Newspaper, Edit, GraduationCap, Hash, Heart, Repeat2, Flame, Sparkles } from "lucide-react";
 import Insignias from "../components/Insignias";
 import MapaCalor from "../components/MapaCalor";
 import ModalEditarPerfil from "../components/ModalEditarPerfil";
+import ResumenWrapped from "../components/ResumenWrapped";
 import { useToast } from "../components/Toast";
 import { calcularRacha, proximoHitoRacha } from "../lib/racha";
 
@@ -20,6 +21,7 @@ export default function Perfil() {
   const [loading, setLoading] = useState(true);
   const [perfil, setPerfil] = useState<any>({});
   const [showEditarPerfil, setShowEditarPerfil] = useState(false);
+  const [showWrapped, setShowWrapped] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -144,6 +146,12 @@ export default function Perfil() {
                 <span className="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-full">@ensfa.edu.mx</span>
                 <span className="text-xs bg-slate-700 text-slate-300 px-3 py-1 rounded-full">{posts.length} publicaciones</span>
               </div>
+              <button
+                onClick={() => setShowWrapped(true)}
+                className="flex items-center justify-center gap-1.5 mt-4 mx-auto sm:mx-0 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow-lg transition active:scale-95"
+              >
+                <Sparkles size={15} /> Ver mi resumen del semestre
+              </button>
               {(perfil?.licenciatura || perfil?.semestre || perfil?.intereses) && (
                 <div className="mt-4 pt-4 border-t border-slate-800 space-y-1.5">
                   {perfil?.licenciatura && (
@@ -266,6 +274,13 @@ export default function Perfil() {
         </div>
 
       </div>
+
+      <ResumenWrapped
+        visible={showWrapped}
+        onClose={() => setShowWrapped(false)}
+        posts={posts}
+        user={user}
+      />
     </div>
   );
 }

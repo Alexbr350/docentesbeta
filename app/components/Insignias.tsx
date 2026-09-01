@@ -7,7 +7,7 @@ import { calcularRacha } from "../lib/racha";
 
 const METAS: Record<string, number> = { "Diario": 10, "Planeación": 5, "Narrativa": 1, "Extra": 3 };
 
-function calcularInsignias(posts: any[], email?: string) {
+export function calcularInsignias(posts: any[], email?: string) {
   const conteo: Record<string, number> = {};
   posts.forEach((p) => {
     if (p.tipo) conteo[p.tipo] = (conteo[p.tipo] || 0) + 1;
