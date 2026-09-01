@@ -5,11 +5,15 @@ import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase
 import { useRouter } from "next/navigation";
 import { useToast } from "../components/Toast";
 import SplashScreen from "../components/SplashScreen";
+import Verificacion2FA from "../components/Verificacion2FA";
+import { ADMINS } from "../lib/admins";
 
 export default function LoginPage() {
   const router = useRouter();
   const { mostrarToast } = useToast();
   const [mostrarSplash, setMostrarSplash] = useState(false);
+  const [mostrar2FA, setMostrar2FA] = useState(false);
+  const [email2FA, setEmail2FA] = useState("");
 
   useEffect(() => {
     const guardado = localStorage.getItem("modoOscuro") === "true";
@@ -34,11 +38,30 @@ export default function LoginPage() {
 
   const procesarUsuario = async (email: string) => {
     if (email.endsWith("@ensfa.edu.mx")) {
+      // Verificación en dos pasos exclusiva para administradores: se pide una
+      // sola vez por sesión del navegador (sessionStorage), no en cada login
+      // si ya se verificó antes en esta misma pestaña/sesión.
+      if (ADMINS.includes(email) && sessionStorage.getItem(`2fa_ok_${email}`) !== "true") {
+        setEmail2FA(email);
+        setMostrar2FA(true);
+        return;
+      }
       setMostrarSplash(true);
     } else {
       await auth.signOut();
       mostrarToast("Solo puedes ingresar con un correo @ensfa.edu.mx", "error");
     }
+  };
+
+  const handleVerificado2FA = () => {
+    setMostrar2FA(false);
+    setMostrarSplash(true);
+  };
+
+  const handleCancelar2FA = async () => {
+    setMostrar2FA(false);
+    setEmail2FA("");
+    await auth.signOut();
   };
 
   const handleLogin = async () => {
@@ -69,6 +92,17 @@ export default function LoginPage() {
     sessionStorage.setItem("splashMostrado", "true");
     router.push("/");
   };
+
+  if (mostrar2FA) {
+    return (
+      <Verificacion2FA
+        visible={mostrar2FA}
+        email={email2FA}
+        onVerificado={handleVerificado2FA}
+        onCancelar={handleCancelar2FA}
+      />
+    );
+  }
 
   if (mostrarSplash) {
     return <SplashScreen onFinish={finalizarSplash} />;

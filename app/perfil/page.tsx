@@ -5,13 +5,32 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import Navbar from "../components/Navbar";
 import { collection, getDocs, query, where, orderBy, doc, getDoc, setDoc } from "firebase/firestore";
-import { BookOpen, ClipboardList, PenLine, Paperclip, HelpCircle, BarChart3, Newspaper, Edit, GraduationCap, Hash, Heart, Repeat2, Flame, Sparkles } from "lucide-react";
+import jsPDF from "jspdf";
+import { BookOpen, ClipboardList, PenLine, Paperclip, HelpCircle, BarChart3, Newspaper, Edit, GraduationCap, Hash, Heart, Repeat2, Flame, Sparkles, BadgeCheck, Clock, FileDown } from "lucide-react";
 import Insignias from "../components/Insignias";
 import MapaCalor from "../components/MapaCalor";
 import ModalEditarPerfil from "../components/ModalEditarPerfil";
 import ResumenWrapped from "../components/ResumenWrapped";
 import { useToast } from "../components/Toast";
 import { calcularRacha, proximoHitoRacha } from "../lib/racha";
+import { metasCompletadas } from "../lib/certificado";
+
+// Convierte una imagen servida por la app (ej. /logo.png) a base64 para poder
+// insertarla en el PDF del certificado con pdf.addImage() (mismo patrón que
+// ya usa app/admin/page.tsx para el reporte institucional).
+function cargarImagenComoBase64(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    fetch(url)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      })
+      .catch(reject);
+  });
+}
 
 export default function Perfil() {
   const router = useRouter();
@@ -22,6 +41,8 @@ export default function Perfil() {
   const [perfil, setPerfil] = useState<any>({});
   const [showEditarPerfil, setShowEditarPerfil] = useState(false);
   const [showWrapped, setShowWrapped] = useState(false);
+  const [certificacion, setCertificacion] = useState<any>(null);
+  const [generandoCertificado, setGenerandoCertificado] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -31,6 +52,7 @@ export default function Perfil() {
         setUser(user);
         cargarPosts(user.email || "");
         cargarPerfil(user.email || "");
+        cargarCertificacion(user.email || "");
       }
     });
     return () => unsubscribe();
@@ -51,6 +73,121 @@ export default function Perfil() {
   const cargarPerfil = async (email: string) => {
     const snap = await getDoc(doc(db, "perfiles", email));
     if (snap.exists()) setPerfil(snap.data());
+  };
+
+  const cargarCertificacion = async (email: string) => {
+    const snap = await getDoc(doc(db, "certificaciones", email));
+    if (snap.exists()) setCertificacion(snap.data());
+  };
+
+  const descargarCertificado = async () => {
+    if (!certificacion) return;
+    setGenerandoCertificado(true);
+    try {
+      const logoBase64 = await cargarImagenComoBase64("/logo.png").catch(() => null);
+      const pdf = new jsPDF({ orientation: "landscape" });
+      const nombreCompleto = user?.displayName || "Practicante";
+
+      // ---------- Marco tipo diploma ----------
+      pdf.setDrawColor(37, 99, 235);
+      pdf.setLineWidth(1.2);
+      pdf.rect(10, 10, 277, 190);
+      pdf.setLineWidth(0.4);
+      pdf.rect(14, 14, 269, 182);
+
+      if (logoBase64) {
+        pdf.addImage(logoBase64, "PNG", 133.5, 20, 30, 30);
+      }
+
+      // ---------- Título ----------
+      pdf.setTextColor(15, 23, 42);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(24);
+      pdf.text("Certificado de Cumplimiento", 148.5, 64, { align: "center" });
+      pdf.setTextColor(37, 99, 235);
+      pdf.setFontSize(15);
+      pdf.text("Práctica Docente", 148.5, 73, { align: "center" });
+      pdf.setTextColor(15, 23, 42);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      pdf.setTextColor(90, 90, 90);
+      pdf.text("Escuela Normal Superior Federal de Aguascalientes", 148.5, 82, { align: "center" });
+      pdf.text('"Profr. José Santos Valdés"', 148.5, 88, { align: "center" });
+      pdf.setTextColor(15, 23, 42);
+
+      // ---------- Nombre del practicante ----------
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(12);
+      pdf.text("Se certifica que", 148.5, 101, { align: "center" });
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(28);
+      pdf.text(nombreCompleto, 148.5, 115, { align: "center" });
+      const anchoNombre = pdf.getTextWidth(nombreCompleto);
+      pdf.setDrawColor(37, 99, 235);
+      pdf.setLineWidth(0.6);
+      pdf.line(148.5 - anchoNombre / 2, 119, 148.5 + anchoNombre / 2, 119);
+
+      // ---------- Licenciatura (si existe en el perfil extendido) ----------
+      let y = 129;
+      if (perfil?.licenciatura) {
+        pdf.setFont("helvetica", "italic");
+        pdf.setFontSize(11);
+        pdf.setTextColor(90, 90, 90);
+        pdf.text(`Licenciatura en ${perfil.licenciatura}`, 148.5, y, { align: "center" });
+        pdf.setTextColor(15, 23, 42);
+        y += 10;
+      } else {
+        y += 3;
+      }
+
+      // ---------- Texto institucional formal ----------
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(11);
+      const parrafo =
+        "ha cumplido satisfactoriamente con los requisitos de la práctica docente, conforme a la evaluación y seguimiento realizado por su evaluador asignado, dentro del programa de formación de ENSFA+.";
+      const lineas = pdf.splitTextToSize(parrafo, 190);
+      lineas.forEach((linea: string, i: number) => {
+        pdf.text(linea, 148.5, y + i * 6, { align: "center" });
+      });
+
+      // ---------- Folio, fecha y evaluador ----------
+      const fechaTexto = certificacion.fechaCertificacion?.toDate?.()
+        ? certificacion.fechaCertificacion.toDate().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })
+        : new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+
+      const yFirma = 172;
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9);
+      pdf.setTextColor(90, 90, 90);
+      pdf.text(`Folio: ${certificacion.folio}`, 30, yFirma - 2);
+      pdf.text(`Fecha de certificación: ${fechaTexto}`, 30, yFirma + 5);
+
+      pdf.setFontSize(10);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text(certificacion.certificadoPor || "Evaluador", 246, yFirma - 2, { align: "center" });
+      pdf.setDrawColor(150, 150, 150);
+      pdf.setLineWidth(0.3);
+      pdf.line(225, yFirma, 267, yFirma);
+      pdf.setFontSize(8);
+      pdf.setTextColor(120, 120, 120);
+      pdf.text("Evaluador · ENSFA+", 246, yFirma + 5, { align: "center" });
+
+      // ---------- Pie institucional ----------
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(140, 140, 140);
+      pdf.text(
+        "Este documento certifica el cumplimiento de la práctica docente conforme al seguimiento registrado en ENSFA+.",
+        148.5,
+        195,
+        { align: "center" }
+      );
+
+      pdf.save(`Certificado_ENSFA_${nombreCompleto.replace(/\s+/g, "_")}.pdf`);
+    } finally {
+      setGenerandoCertificado(false);
+    }
   };
 
   const handleGuardarPerfil = async (
@@ -101,6 +238,7 @@ export default function Perfil() {
   };
   const miRacha = calcularRacha(posts, user?.email || "");
   const hitoRacha = proximoHitoRacha(miRacha);
+  const completoMetas = metasCompletadas(posts, user?.email || "");
   const metas: any = { "Diario": 10, "Planeación": 5, "Narrativa": 1, "Extra": 3, "Pedir ayuda": 99 };
   const barraColores: any = { "Diario": "bg-blue-500", "Planeación": "bg-indigo-500", "Narrativa": "bg-amber-500", "Extra": "bg-cyan-500" };
 
@@ -205,6 +343,60 @@ export default function Perfil() {
             </div>
           </div>
         </div>
+
+        {completoMetas && (
+          <div
+            className={`rounded-2xl p-6 mb-6 shadow-xl relative overflow-hidden ${
+              certificacion
+                ? "bg-gradient-to-br from-emerald-500 to-teal-600"
+                : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
+            }`}
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-3xl opacity-10 pointer-events-none"></div>
+            <div className="flex items-center gap-4 relative z-10 flex-wrap">
+              <div
+                className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg ${
+                  certificacion ? "bg-white/20" : "bg-amber-100 dark:bg-amber-950/40"
+                }`}
+              >
+                {certificacion ? (
+                  <BadgeCheck size={30} className="text-white" />
+                ) : (
+                  <Clock size={28} className="text-amber-500" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                {certificacion ? (
+                  <>
+                    <p className="text-lg font-extrabold text-white">Certificado de finalización</p>
+                    <p className="text-sm text-white/80 mt-0.5">
+                      Folio {certificacion.folio} · Certificado por {certificacion.certificadoPor}
+                    </p>
+                    {certificacion.comentario && (
+                      <p className="text-sm text-white/70 mt-1.5 italic">"{certificacion.comentario}"</p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-bold text-gray-800 dark:text-slate-100">¡Completaste tus metas!</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                      Espera la certificación de tu evaluador para desbloquear tu certificado de finalización.
+                    </p>
+                  </>
+                )}
+              </div>
+              {certificacion && (
+                <button
+                  onClick={descargarCertificado}
+                  disabled={generandoCertificado}
+                  className="flex items-center gap-1.5 text-sm bg-white text-emerald-700 hover:bg-white/90 px-4 py-2.5 rounded-xl font-bold shadow transition active:scale-95 disabled:opacity-60 flex-shrink-0"
+                >
+                  <FileDown size={15} /> {generandoCertificado ? "Generando..." : "Descargar certificado"}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 mb-6">
           {tipos.map((tipo) => {

@@ -1,0 +1,74 @@
+Variables de entorno nuevas para Firebase Admin (arregla el PERMISSION_DENIED)
+================================================================================
+
+Por qué pasaba el error: las rutas /api/2fa/enviar y /api/2fa/verificar
+corren en el servidor, sin la sesión de Firebase Auth del navegador. Como
+tus reglas de Firestore son "allow read, write: if request.auth != null",
+el SDK de cliente que usaban antes llegaba con request.auth vacío y
+Firestore rechazaba la escritura. La solución (ya aplicada en el código) es
+usar el SDK de Admin de Firebase, que se autentica con una cuenta de
+servicio y se salta las reglas — por eso necesitas estas 3 variables nuevas.
+
+1. Ve a la consola de Firebase (https://console.firebase.google.com) →
+   selecciona el proyecto "docentesbeta-b1f32" → el ícono de engrane
+   arriba a la izquierda → "Configuración del proyecto" → pestaña
+   "Cuentas de servicio" ("Service accounts").
+
+2. Ahí verás un botón "Generar nueva clave privada" ("Generate new private
+   key"). Dale clic y confirma — se descarga un archivo .json a tu
+   computadora (algo como docentesbeta-b1f32-firebase-adminsdk-xxxxx.json).
+
+   IMPORTANTE: ese archivo da acceso total de administrador a tu base de
+   datos. NO lo subas al repositorio de GitHub ni lo compartas. Después de
+   copiar los 3 valores de abajo, bórralo o guárdalo en un lugar privado
+   fuera de la carpeta del proyecto.
+
+3. Abre ese .json descargado. Adentro vas a ver algo como:
+
+   {
+     "project_id": "docentesbeta-b1f32",
+     "client_email": "firebase-adminsdk-xxxxx@docentesbeta-b1f32.iam.gserviceaccount.com",
+     "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END PRIVATE KEY-----\n",
+     ...
+   }
+
+4. Copia esos 3 valores a tu .env.local así (agrégalas junto a las demás):
+
+   FIREBASE_ADMIN_PROJECT_ID=docentesbeta-b1f32
+   FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-xxxxx@docentesbeta-b1f32.iam.gserviceaccount.com
+   FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END PRIVATE KEY-----\n"
+
+   Para FIREBASE_ADMIN_PRIVATE_KEY: copia el valor TAL CUAL aparece en el
+   .json, entre comillas dobles, con los "\n" tal cual (como texto, no como
+   saltos de línea reales). El código ya sabe convertirlos — no los edites
+   a mano.
+
+5. En Vercel: Settings → Environment Variables, agrega las mismas 3
+   variables (igual que hiciste con GEMINI_API_KEY), y vuelve a desplegar.
+   Al pegar FIREBASE_ADMIN_PRIVATE_KEY en Vercel, pégala completa entre
+   comillas igual que en .env.local.
+
+6. Corre "npm install" (agregué "firebase-admin" a package.json) y luego
+   "npm run dev" para probar de nuevo el login de un administrador.
+
+Extra — reglas de Firestore recomendadas para codigos2fa
+----------------------------------------------------------
+Como el SDK de Admin se salta las reglas, puedes (y deberías) cerrar por
+completo el acceso a esa colección desde el navegador, para que nadie pueda
+leer un código directamente con el SDK de cliente. En Firebase Console →
+Firestore Database → Reglas, agrega esta regla específica ANTES de tu regla
+general (las reglas más específicas deben ir primero o Firestore usará la
+que coincida):
+
+  match /databases/{database}/documents {
+    match /codigos2fa/{email} {
+      allow read, write: if false;
+    }
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+
+Esto no afecta al 2FA (que ya no usa el SDK de cliente para esta
+colección), pero sí evita que cualquier usuario autenticado pueda leer los
+códigos de otros directo desde la consola del navegador.

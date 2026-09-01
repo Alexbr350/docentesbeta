@@ -1,0 +1,41 @@
+Variables de entorno nuevas para el 2FA de administradores (Resend)
+=====================================================================
+
+1. Crea una cuenta gratuita en https://resend.com (el plan gratuito incluye
+   3,000 correos al mes / 100 al día, más que suficiente para códigos 2FA
+   de 2 administradores).
+
+2. En el dashboard de Resend, ve a "API Keys" (menú lateral) y crea una
+   nueva API key (puedes dejarle permisos de "Sending access" solamente).
+   Cópiala — Resend solo la muestra una vez.
+
+3. Agrega esta línea a tu archivo .env.local (en la raíz del proyecto,
+   junto a GEMINI_API_KEY y las de Cloudinary):
+
+   RESEND_API_KEY=re_tu_clave_aqui
+
+4. (Opcional pero recomendado) Sobre el remitente del correo:
+
+   Sin verificar un dominio propio en Resend, solo puedes usar el remitente
+   de pruebas "onboarding@resend.dev" — y ese remitente de pruebas SOLO
+   entrega correos a la dirección con la que te registraste en Resend, no a
+   cualquier destinatario. Como tienes 2 administradores con correos
+   distintos (eira.vargas@ensfa.edu.mx y alejandro_br.his23u@ensfa.edu.mx),
+   para que el código les llegue a AMBOS necesitas verificar un dominio que
+   controles en Resend (Dashboard → Domains → Add Domain, agregando los
+   registros DNS que te indique). Si no tienes un dominio propio disponible
+   para esto, dime y buscamos una alternativa (por ejemplo, un dominio
+   barato solo para envíos, o ajustar el flujo).
+
+   Si verificas un dominio, agrega también esta línea (si no la agregas,
+   se usa el remitente de pruebas por default):
+
+   RESEND_FROM_EMAIL=ENSFA+ <2fa@tudominio.com>
+
+5. En Vercel: Settings → Environment Variables, agrega RESEND_API_KEY (y
+   RESEND_FROM_EMAIL si aplica) igual que hiciste con GEMINI_API_KEY, y
+   vuelve a desplegar para que tome efecto en producción.
+
+6. Después de agregar RESEND_API_KEY a tu .env.local, corre "npm install"
+   una vez (agregué el paquete "resend" a package.json) y luego
+   "npm run dev" para probar el login de un administrador.

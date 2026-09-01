@@ -3,16 +3,19 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
-import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
-import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, CalendarDays, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3, Presentation, FileDown, Sparkles } from "lucide-react";
+import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, CalendarDays, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3, Presentation, FileDown, Sparkles, BadgeCheck, ScrollText, Filter } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import jsPDF from "jspdf";
 import ModalConfirmar from "../components/ModalConfirmar";
 import ModalSugerenciaIA from "../components/ModalSugerenciaIA";
 import CalendarioEscolar from "../components/CalendarioEscolar";
 import ModalCalendarioEvento, { DatosFormularioCalendario } from "../components/ModalCalendarioEvento";
+import ModalCertificarFinalizacion from "../components/ModalCertificarFinalizacion";
 import { EventoCalendario } from "../lib/calendarioEscolar";
+import { metasCompletadas, generarFolio } from "../lib/certificado";
+import { registrarAuditoria, INFO_ACCION_AUDITORIA, INFO_ACCION_DEFAULT, EntradaAuditoria } from "../lib/auditoria";
 import { useToast } from "../components/Toast";
 import { ADMINS } from "../lib/admins";
 
@@ -100,6 +103,7 @@ function AddMaestroForm() {
       nombre,
       fecha: serverTimestamp(),
     });
+    registrarAuditoria("maestro_agregado", `Agregó al maestro ${nombre || email}`, auth.currentUser?.email || "", { email, nombre });
     setEmail("");
     setNombre("");
     setAgregando(false);
@@ -144,6 +148,13 @@ function ReportesList() {
 
   const marcarRevisado = async (id: string) => {
     await updateDoc(doc(db, "reportes", id), { estado: "revisado" });
+    const reporte = reportes.find((r) => r.id === id);
+    registrarAuditoria(
+      "reporte_revisado",
+      `Marcó como revisado un reporte sobre ${reporte?.autorReportado || reporte?.emailReportado || "una publicación"}`,
+      auth.currentUser?.email || "",
+      { reporteId: id, emailReportado: reporte?.emailReportado, motivo: reporte?.motivo }
+    );
     setReportes(reportes.map((r) => r.id === id ? { ...r, estado: "revisado" } : r));
   };
 
@@ -494,6 +505,11 @@ function CalendarioAdminTab() {
         creadoPor: email,
         fecha: serverTimestamp(),
       });
+      registrarAuditoria("calendario_creado", `Creó la fecha "${datos.titulo}" en el calendario escolar`, email, {
+        titulo: datos.titulo,
+        tipo: datos.tipo,
+        fechaInicio: datos.fechaInicio,
+      });
       mostrarToast("Fecha agregada al calendario");
     }
     setShowFormulario(false);
@@ -505,6 +521,12 @@ function CalendarioAdminTab() {
   const eliminar = async () => {
     if (!eventoAEliminar) return;
     await deleteDoc(doc(db, "calendario_escolar", eventoAEliminar.id));
+    registrarAuditoria(
+      "calendario_eliminado",
+      `Eliminó la fecha "${eventoAEliminar.titulo}" del calendario escolar`,
+      auth.currentUser?.email || "",
+      { titulo: eventoAEliminar.titulo, id: eventoAEliminar.id }
+    );
     setEventos(eventos.filter((e) => e.id !== eventoAEliminar.id));
     setEventoAEliminar(null);
     mostrarToast("Fecha eliminada");
@@ -550,6 +572,7 @@ function CalendarioAdminTab() {
 
 export default function Admin() {
   const router = useRouter();
+  const { mostrarToast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [accesoDenegado, setAccesoDenegado] = useState(false);
@@ -563,6 +586,11 @@ export default function Admin() {
   const [postAEliminar, setPostAEliminar] = useState<string | null>(null);
   const [postParaSugerenciaIA, setPostParaSugerenciaIA] = useState<any>(null);
   const [generandoReporte, setGenerandoReporte] = useState(false);
+  const [certificaciones, setCertificaciones] = useState<Record<string, any>>({});
+  const [practicanteACertificar, setPracticanteACertificar] = useState<any>(null);
+  const [auditLog, setAuditLog] = useState<EntradaAuditoria[]>([]);
+  const [filtroAdminAuditoria, setFiltroAdminAuditoria] = useState("");
+  const [filtroTipoAuditoria, setFiltroTipoAuditoria] = useState("");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -579,9 +607,16 @@ export default function Admin() {
       setLoading(false);
       cargarPosts();
       cargarUsuarios();
+      cargarCertificaciones();
+      cargarAuditLog();
     });
     return () => unsubscribe();
   }, [router]);
+
+  const cargarAuditLog = async () => {
+    const snap = await getDocs(query(collection(db, "audit_log"), orderBy("fecha", "desc")));
+    setAuditLog(snap.docs.map((d) => ({ id: d.id, ...d.data() })) as EntradaAuditoria[]);
+  };
 
   const cargarPosts = async () => {
     const q = query(collection(db, "posts"), orderBy("fecha", "desc"));
@@ -602,6 +637,45 @@ export default function Admin() {
       publicaciones: snapshot.docs.filter((d) => d.data().email === email).length,
     }));
     setUsuarios(data);
+  };
+
+  const cargarCertificaciones = async () => {
+    const snapshot = await getDocs(collection(db, "certificaciones"));
+    const mapa: Record<string, any> = {};
+    snapshot.docs.forEach((d) => { mapa[d.id] = { id: d.id, ...d.data() }; });
+    setCertificaciones(mapa);
+  };
+
+  const certificarFinalizacion = async (comentario: string) => {
+    if (!practicanteACertificar || !user) return;
+    const folio = generarFolio();
+    await setDoc(doc(db, "certificaciones", practicanteACertificar.email), {
+      email: practicanteACertificar.email,
+      nombre: practicanteACertificar.nombre || practicanteACertificar.email,
+      fechaCertificacion: serverTimestamp(),
+      certificadoPor: user.displayName || user.email,
+      comentario,
+      folio,
+    });
+    await addDoc(collection(db, "notificaciones"), {
+      para: practicanteACertificar.email,
+      de: user.displayName || user.email,
+      mensaje: "certificó tu práctica docente. Ya puedes descargar tu certificado de finalización.",
+      leida: false,
+      fecha: serverTimestamp(),
+    });
+    setCertificaciones((prev) => ({
+      ...prev,
+      [practicanteACertificar.email]: { email: practicanteACertificar.email, folio, comentario, certificadoPor: user.displayName || user.email },
+    }));
+    registrarAuditoria(
+      "certificacion",
+      `Certificó la finalización de ${practicanteACertificar.nombre || practicanteACertificar.email}`,
+      user.displayName || user.email,
+      { email: practicanteACertificar.email, folio }
+    );
+    setPracticanteACertificar(null);
+    mostrarToast("Practicante certificado");
   };
 
   const cargarComentarios = async (postId: string) => {
@@ -638,8 +712,15 @@ export default function Admin() {
 
   const eliminarPost = async (postId: string) => {
     setPostAEliminar(null);
+    const post = posts.find((p) => p.id === postId);
     await deleteDoc(doc(db, "posts", postId));
     setPosts(posts.filter((p) => p.id !== postId));
+    registrarAuditoria(
+      "post_eliminado",
+      `Eliminó una publicación de ${post?.autor || post?.email || "un practicante"}`,
+      user?.email || "",
+      { postId, tipo: post?.tipo, autor: post?.email }
+    );
   };
 
   const calificar = async (postId: string, postAutorEmail: string, calificacion: number) => {
@@ -879,7 +960,7 @@ export default function Admin() {
         </div>
 
         <div className="flex gap-2 mb-5 overflow-x-auto flex-nowrap pb-1">
-          {["dashboard", "publicaciones", "practicantes", "maestros", "reportes", "eventos", "calendario"].map((v) => (
+          {["dashboard", "publicaciones", "practicantes", "maestros", "reportes", "eventos", "calendario", "auditoria"].map((v) => (
             <button
               key={v}
               onClick={() => setVistaActual(v)}
@@ -892,6 +973,7 @@ export default function Admin() {
               {v === "reportes" && <Flag size={14} />}
               {v === "eventos" && <Calendar size={14} />}
               {v === "calendario" && <CalendarDays size={14} />}
+              {v === "auditoria" && <ScrollText size={14} />}
               {v === "dashboard" ? "Estadísticas" : v.charAt(0).toUpperCase() + v.slice(1)}
             </button>
           ))}
@@ -914,25 +996,47 @@ export default function Admin() {
 
         {vistaActual === "practicantes" && (
           <div>
-            {usuarios.map((u) => (
-              <div key={u.email} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-slate-800 text-white flex items-center justify-center font-extrabold shadow">
-                      {u.nombre?.charAt(0).toUpperCase()}
+            {usuarios.map((u) => {
+              const completo = metasCompletadas(posts, u.email);
+              const certificacion = certificaciones[u.email];
+              return (
+                <div key={u.email} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-slate-800 text-white flex items-center justify-center font-extrabold shadow">
+                        {u.nombre?.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{u.nombre}</p>
+                        <p className="text-xs text-slate-400">{u.email}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{u.nombre}</p>
-                      <p className="text-xs text-slate-400">{u.email}</p>
+                    <div className="text-right">
+                      <p className="text-2xl font-extrabold text-gray-800 dark:text-slate-100">{u.publicaciones}</p>
+                      <p className="text-xs text-slate-400 font-medium">publicaciones</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-extrabold text-gray-800 dark:text-slate-100">{u.publicaciones}</p>
-                    <p className="text-xs text-slate-400 font-medium">publicaciones</p>
-                  </div>
+
+                  {completo && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                      {certificacion ? (
+                        <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/30 rounded-xl px-3 py-2">
+                          <BadgeCheck size={15} className="flex-shrink-0" />
+                          Certificado · Folio {certificacion.folio}
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setPracticanteACertificar(u)}
+                          className="flex items-center gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-semibold shadow transition active:scale-95"
+                        >
+                          <BadgeCheck size={14} /> Certificar finalización
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -1053,6 +1157,74 @@ export default function Admin() {
 
         {vistaActual === "calendario" && <CalendarioAdminTab />}
 
+        {vistaActual === "auditoria" && (
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-5">
+              <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold">
+                <Filter size={13} /> Filtrar:
+              </div>
+              <select
+                value={filtroAdminAuditoria}
+                onChange={(e) => setFiltroAdminAuditoria(e.target.value)}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 focus:outline-none focus:border-blue-400"
+              >
+                <option value="">Todos los administradores</option>
+                {ADMINS.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+              <select
+                value={filtroTipoAuditoria}
+                onChange={(e) => setFiltroTipoAuditoria(e.target.value)}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 focus:outline-none focus:border-blue-400"
+              >
+                <option value="">Todos los tipos de acción</option>
+                {Object.entries(INFO_ACCION_AUDITORIA).map(([tipo, info]) => (
+                  <option key={tipo} value={tipo}>{info.etiqueta}</option>
+                ))}
+              </select>
+            </div>
+
+            {(() => {
+              const filtrado = auditLog
+                .filter((e) => !filtroAdminAuditoria || e.realizadoPor === filtroAdminAuditoria)
+                .filter((e) => !filtroTipoAuditoria || e.tipo === filtroTipoAuditoria);
+
+              if (filtrado.length === 0) {
+                return (
+                  <div className="bg-white dark:bg-slate-900 rounded-2xl p-10 text-center text-slate-400 text-sm shadow-md">
+                    No hay entradas de auditoría {(filtroAdminAuditoria || filtroTipoAuditoria) ? "que coincidan con el filtro." : "todavía."}
+                  </div>
+                );
+              }
+
+              return filtrado.map((entrada) => {
+                const info = INFO_ACCION_AUDITORIA[entrada.tipo] || INFO_ACCION_DEFAULT;
+                const Icono = info.icono;
+                const detallesTexto = Object.entries(entrada.detalles || {})
+                  .filter(([, v]) => v !== undefined && v !== null && v !== "")
+                  .map(([k, v]) => `${k}: ${v}`)
+                  .join(" · ");
+                const fechaTexto = entrada.fecha?.toDate?.()
+                  ? entrada.fecha.toDate().toLocaleString("es-MX", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+                  : "hace un momento";
+                return (
+                  <div key={entrada.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-3 shadow-md flex items-start gap-3">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${info.fondo}`}>
+                      <Icono size={16} className={info.color} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{entrada.accion}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{entrada.realizadoPor} · {fechaTexto}</p>
+                      {detallesTexto && <p className="text-xs text-slate-400 mt-1 truncate">{detallesTexto}</p>}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        )}
+
         {vistaActual === "maestros" && (
           <div>
             <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-md">
@@ -1071,6 +1243,14 @@ export default function Admin() {
         destructivo
         onConfirmar={() => postAEliminar && eliminarPost(postAEliminar)}
         onCancelar={() => setPostAEliminar(null)}
+      />
+
+      <ModalCertificarFinalizacion
+        visible={!!practicanteACertificar}
+        practicante={practicanteACertificar}
+        posts={posts}
+        onCertificar={certificarFinalizacion}
+        onCancelar={() => setPracticanteACertificar(null)}
       />
     </div>
   );
