@@ -41,7 +41,14 @@ export default function LoginPage() {
       // Verificación en dos pasos exclusiva para administradores: se pide una
       // sola vez por sesión del navegador (sessionStorage), no en cada login
       // si ya se verificó antes en esta misma pestaña/sesión.
-      if (ADMINS.includes(email) && sessionStorage.getItem(`2fa_ok_${email}`) !== "true") {
+      //
+      // Interruptor temporal: NEXT_PUBLIC_TFA_ACTIVO=true la activa. Si no
+      // está presente o vale cualquier otra cosa (incluido "false"), el
+      // login de administradores se comporta como antes de tener 2FA — sin
+      // tocar Verificacion2FA.tsx ni las API routes de app/api/2fa/, que
+      // quedan intactas para reactivarlo solo cambiando esta variable.
+      const tfaActivo = process.env.NEXT_PUBLIC_TFA_ACTIVO === "true";
+      if (tfaActivo && ADMINS.includes(email) && sessionStorage.getItem(`2fa_ok_${email}`) !== "true") {
         setEmail2FA(email);
         setMostrar2FA(true);
         return;
