@@ -11,6 +11,7 @@
   "dependencies": {
     "@google/genai": "^2.19.0",
     "cloudinary": "^2.10.0",
+    "emoji-picker-react": "^4.19.4",
     "firebase": "^12.13.0",
     "firebase-admin": "^14.3.0",
     "jspdf": "^4.2.1",
