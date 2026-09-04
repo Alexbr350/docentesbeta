@@ -10,6 +10,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import jsPDF from "jspdf";
 import ModalConfirmar from "../components/ModalConfirmar";
 import ModalSugerenciaIA from "../components/ModalSugerenciaIA";
+import ModalCalificacionIA from "../components/ModalCalificacionIA";
 import CalendarioEscolar from "../components/CalendarioEscolar";
 import ModalCalendarioEvento, { DatosFormularioCalendario } from "../components/ModalCalendarioEvento";
 import ModalCertificarFinalizacion from "../components/ModalCertificarFinalizacion";
@@ -585,6 +586,7 @@ export default function Admin() {
   const [calificaciones, setCalificaciones] = useState<any>({});
   const [postAEliminar, setPostAEliminar] = useState<string | null>(null);
   const [postParaSugerenciaIA, setPostParaSugerenciaIA] = useState<any>(null);
+  const [postParaCalificacionIA, setPostParaCalificacionIA] = useState<any>(null);
   const [generandoReporte, setGenerandoReporte] = useState(false);
   const [certificaciones, setCertificaciones] = useState<Record<string, any>>({});
   const [practicanteACertificar, setPracticanteACertificar] = useState<any>(null);
@@ -1062,7 +1064,16 @@ export default function Admin() {
                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-4">{post.contenido}</p>
 
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-3">
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1"><Star size={13} className="text-amber-500" /> Calificación</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1"><Star size={13} className="text-amber-500" /> Calificación</p>
+                    <button
+                      type="button"
+                      onClick={() => setPostParaCalificacionIA(post)}
+                      className="flex items-center gap-1 text-[11px] text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 px-2 py-1 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-950/50 transition font-medium"
+                    >
+                      <Sparkles size={12} /> Sugerir con IA
+                    </button>
+                  </div>
                   <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
                     {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                       <button
@@ -1149,6 +1160,13 @@ export default function Admin() {
             setPostParaSugerenciaIA(null);
           }}
           onCancelar={() => setPostParaSugerenciaIA(null)}
+        />
+
+        <ModalCalificacionIA
+          visible={!!postParaCalificacionIA}
+          contenidoPost={postParaCalificacionIA?.contenido || ""}
+          tipo={postParaCalificacionIA?.tipo || "práctica docente"}
+          onCancelar={() => setPostParaCalificacionIA(null)}
         />
 
         {vistaActual === "reportes" && <ReportesList />}

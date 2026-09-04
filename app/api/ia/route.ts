@@ -10,6 +10,8 @@ import { GoogleGenAI } from "@google/genai";
 //    a partir de lo que el practicante ya escribió (aunque sea poco).
 //  - "respuesta_comunidad": sugiere un borrador de respuesta a una pregunta
 //    publicada en la Comunidad.
+//  - "calificacion": sugiere una calificación del 1 al 10 con justificación
+//    para una publicación (el evaluador siempre confirma manualmente).
 
 // gemini-3.5-flash-lite: modelo rápido y económico, pensado para uso a gran
 // escala dentro de la capa gratuita de la API de Gemini.
@@ -53,6 +55,17 @@ Reglas:
 - Este es solo un BORRADOR: la persona que responde lo va a revisar y editar antes de publicarlo, así que redáctalo en primera persona como si esa persona lo estuviera escribiendo.
 - Responde ÚNICAMENTE con la respuesta sugerida. Sin encabezados, sin comillas, sin explicaciones adicionales.`;
 
+const PROMPT_CALIFICACION = (tipo: string) => `Eres un maestro normalista mexicano con experiencia, evaluando publicaciones de practicantes docentes de la Escuela Normal Superior Federal de Aguascalientes (ENSFA) en su portafolio digital. Vas a leer una publicación de tipo "${tipo}" y debes proponer una calificación sugerida del 1 al 10, junto con una breve justificación.
+
+Reglas:
+- Evalúa la calidad, claridad, profundidad y cumplimiento de lo esperado para ese tipo de publicación, según el nivel típico de un practicante docente en formación — ni excesivamente estricto ni condescendiente.
+- La calificación debe ser un número entero del 1 al 10.
+- La justificación debe ser breve (1 a 2 oraciones), específica sobre el contenido del texto, explicando por qué diste ese número.
+- Esto es solo una SUGERENCIA: el evaluador (maestro o administrador) es quien decide y confirma la calificación final con un clic manual — tú nunca calificas ni guardas nada directamente.
+- Responde ÚNICAMENTE en este formato exacto, sin nada más antes o después:
+Calificación: <número del 1 al 10>
+Justificación: <tu justificación breve>`;
+
 export async function POST(req: NextRequest) {
   let body: any;
   try {
@@ -66,7 +79,7 @@ export async function POST(req: NextRequest) {
   if (typeof texto !== "string" || !texto.trim()) {
     return NextResponse.json({ error: "Falta el texto a procesar." }, { status: 400 });
   }
-  const TAREAS_VALIDAS = ["mejorar", "retroalimentacion", "planeacion", "respuesta_comunidad"];
+  const TAREAS_VALIDAS = ["mejorar", "retroalimentacion", "planeacion", "respuesta_comunidad", "calificacion"];
   if (!TAREAS_VALIDAS.includes(tarea)) {
     return NextResponse.json({ error: "Tarea no válida." }, { status: 400 });
   }
@@ -85,6 +98,7 @@ export async function POST(req: NextRequest) {
     tarea === "mejorar" ? PROMPT_MEJORAR(tipoTexto) :
     tarea === "planeacion" ? PROMPT_PLANEACION() :
     tarea === "respuesta_comunidad" ? PROMPT_RESPUESTA_COMUNIDAD() :
+    tarea === "calificacion" ? PROMPT_CALIFICACION(tipoTexto) :
     PROMPT_RETROALIMENTACION(tipoTexto);
 
   try {

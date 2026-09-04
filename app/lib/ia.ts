@@ -1,11 +1,12 @@
 // Cliente ligero para el Asistente de IA de ENSFA+ (app/api/ia/route.ts).
 // Se usa desde ModalMejorarIA.tsx (escenario "mejorar" en el compositor del
 // feed), ModalSugerenciaIA.tsx (escenario "retroalimentacion" en Admin y
-// Maestro, y también "respuesta_comunidad" en Comunidad) y
+// Maestro, y también "respuesta_comunidad" en Comunidad),
 // ModalSugerenciaPlaneacion.tsx (escenario "planeacion" en el compositor
-// del feed) para no duplicar el fetch + manejo de errores.
+// del feed) y ModalCalificacionIA.tsx (escenario "calificacion" en Admin y
+// Maestro) para no duplicar el fetch + manejo de errores.
 
-export type TareaIA = "mejorar" | "retroalimentacion" | "planeacion" | "respuesta_comunidad";
+export type TareaIA = "mejorar" | "retroalimentacion" | "planeacion" | "respuesta_comunidad" | "calificacion";
 
 export async function llamarAsistenteIA(tarea: TareaIA, texto: string, tipo?: string): Promise<string> {
   let respuesta: Response;

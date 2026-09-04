@@ -6,6 +6,7 @@ import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, update
 import Navbar from "../components/Navbar";
 import { GraduationCap, Star, MessageCircle, Send, Users2, Sparkles } from "lucide-react";
 import ModalSugerenciaIA from "../components/ModalSugerenciaIA";
+import ModalCalificacionIA from "../components/ModalCalificacionIA";
 
 export default function Maestro() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function Maestro() {
   const [showComentarios, setShowComentarios] = useState<any>({});
   const [nuevoComentario, setNuevoComentario] = useState<any>({});
   const [postParaSugerenciaIA, setPostParaSugerenciaIA] = useState<any>(null);
+  const [postParaCalificacionIA, setPostParaCalificacionIA] = useState<any>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
@@ -204,7 +206,16 @@ export default function Maestro() {
                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-4">{post.contenido}</p>
 
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mb-3">
-                  <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 flex items-center gap-1"><Star size={13} className="text-amber-500" /> Calificación</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1"><Star size={13} className="text-amber-500" /> Calificación</p>
+                    <button
+                      type="button"
+                      onClick={() => setPostParaCalificacionIA(post)}
+                      className="flex items-center gap-1 text-[11px] text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 px-2 py-1 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-950/50 transition font-medium"
+                    >
+                      <Sparkles size={12} /> Sugerir con IA
+                    </button>
+                  </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     {[1,2,3,4,5,6,7,8,9,10].map((n) => (
                       <button
@@ -282,6 +293,13 @@ export default function Maestro() {
             setPostParaSugerenciaIA(null);
           }}
           onCancelar={() => setPostParaSugerenciaIA(null)}
+        />
+
+        <ModalCalificacionIA
+          visible={!!postParaCalificacionIA}
+          contenidoPost={postParaCalificacionIA?.contenido || ""}
+          tipo={postParaCalificacionIA?.tipo || "práctica docente"}
+          onCancelar={() => setPostParaCalificacionIA(null)}
         />
       </div>
     </div>
