@@ -13,6 +13,7 @@ import Tendencias from "./components/Tendencias";
 import AmigosSugeridos from "./components/AmigosSugeridos";
 import ModalInput from "./components/ModalInput";
 import ModalMejorarIA from "./components/ModalMejorarIA";
+import ModalSugerenciaPlaneacion from "./components/ModalSugerenciaPlaneacion";
 import SelectorEmojis from "./components/SelectorEmojis";
 import { useToast } from "./components/Toast";
 import SplashScreen from "./components/SplashScreen";
@@ -57,6 +58,7 @@ export default function Home() {
   const [busqueda, setBusqueda] = useState("");
   const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
   const [showModalMejorarIA, setShowModalMejorarIA] = useState(false);
+  const [showModalPlaneacionIA, setShowModalPlaneacionIA] = useState(false);
   const [likes, setLikes] = useState<any>({});
   const [dislikes, setDislikes] = useState<any>({});
   const [likeJustPopped, setLikeJustPopped] = useState<Record<string, boolean>>({});
@@ -611,6 +613,16 @@ export default function Home() {
                     </button>
                   )}
 
+                  {tipoSeleccionado === "Planeación" && contenido.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => setShowModalPlaneacionIA(true)}
+                      className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 px-3 py-2 rounded-xl hover:bg-violet-100 dark:hover:bg-violet-950/50 transition font-medium"
+                    >
+                      <Sparkles size={14} /> Sugerir ideas con IA
+                    </button>
+                  )}
+
                   <div className="flex justify-end gap-2 ml-auto">
                     <button
                       onClick={() => {
@@ -641,6 +653,13 @@ export default function Home() {
                   tipo={tipoSeleccionado}
                   onUsar={(texto) => { setContenido(texto); setShowModalMejorarIA(false); }}
                   onCancelar={() => setShowModalMejorarIA(false)}
+                />
+
+                <ModalSugerenciaPlaneacion
+                  visible={showModalPlaneacionIA}
+                  contenidoActual={contenido}
+                  onInsertar={(texto) => { setContenido(texto); setShowModalPlaneacionIA(false); }}
+                  onCancelar={() => setShowModalPlaneacionIA(false)}
                 />
 
                 {privacidad === "especifico" && (
