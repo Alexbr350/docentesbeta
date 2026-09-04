@@ -121,7 +121,7 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="text-center mb-10">
-          <div className="w-16 h-16 rounded-2xl overflow-hidden mx-auto mb-4 shadow-lg">
+          <div className="w-16 h-16 rounded-full overflow-hidden mx-auto mb-4 shadow-lg">
             <img src="/logo.png" alt="ENSFA" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100">ENSFA+</h1>
