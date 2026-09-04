@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "./firebase";
 import { signOut } from "firebase/auth";
@@ -13,6 +13,7 @@ import Tendencias from "./components/Tendencias";
 import AmigosSugeridos from "./components/AmigosSugeridos";
 import ModalInput from "./components/ModalInput";
 import ModalMejorarIA from "./components/ModalMejorarIA";
+import SelectorEmojis from "./components/SelectorEmojis";
 import { useToast } from "./components/Toast";
 import SplashScreen from "./components/SplashScreen";
 import { ADMINS as ADMINS_LOCAL } from "./lib/admins";
@@ -68,6 +69,8 @@ export default function Home() {
   const [maestrosEmails, setMaestrosEmails] = useState<string[]>([]);
   const [modalReportar, setModalReportar] = useState<{ postId: string; autorNombre: string; autorEmail: string } | null>(null);
   const [modalCompartir, setModalCompartir] = useState<any>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const comentarioInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [privacidad, setPrivacidad] = useState<string>("publico");
   const [showPrivacidadMenu, setShowPrivacidadMenu] = useState(false);
   const [visiblePara, setVisiblePara] = useState<string[]>([]);
@@ -530,6 +533,7 @@ export default function Home() {
             {showComposer && (
               <div className="mt-4">
                 <textarea
+                  ref={composerRef}
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm text-slate-700 dark:text-slate-300 resize-none focus:outline-none focus:border-blue-400"
                   rows={4}
                   placeholder={`Escribe tu ${tipoSeleccionado.toLowerCase()} aquí...`}
@@ -542,6 +546,22 @@ export default function Home() {
                     <input type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp" className="hidden" onChange={(e) => setArchivoSeleccionado(e.target.files?.[0] || null)} />
                   </label>
                   {archivoSeleccionado && <span className="text-xs text-blue-600 font-medium">✓ {archivoSeleccionado.name}</span>}
+
+                  <SelectorEmojis
+                    valor={contenido}
+                    onCambiar={setContenido}
+                    obtenerElemento={() => composerRef.current}
+                    posicionPanel="bottom-full mb-2 left-0"
+                    etiqueta="Emoji"
+                    tamanoIcono={14}
+                    claseBoton={(activo) =>
+                      `flex items-center gap-2 text-xs px-3 py-2 rounded-xl border transition ${
+                        activo
+                          ? "border-blue-400 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40"
+                          : "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-800 hover:border-blue-400"
+                      }`
+                    }
+                  />
 
                   <div className="relative">
                     <button
@@ -799,8 +819,15 @@ export default function Home() {
                       </div>
                     </div>
                   ))}
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-2 items-center">
+                    <SelectorEmojis
+                      valor={nuevoComentario[post.id] || ""}
+                      onCambiar={(nuevoValor) => setNuevoComentario((prev: any) => ({ ...prev, [post.id]: nuevoValor }))}
+                      obtenerElemento={() => comentarioInputRefs.current[post.id] ?? null}
+                      posicionPanel="bottom-full mb-2 left-0"
+                    />
                     <input
+                      ref={(el) => { comentarioInputRefs.current[post.id] = el; }}
                       type="text"
                       placeholder="Escribe un comentario..."
                       value={nuevoComentario[post.id] || ""}

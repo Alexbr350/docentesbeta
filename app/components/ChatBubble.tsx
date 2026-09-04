@@ -1,7 +1,31 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { auth, db } from "../firebase";
 import { collection, getDocs, addDoc, serverTimestamp, query, where, orderBy } from "firebase/firestore";
+import SelectorEmojis from "./SelectorEmojis";
+
+// Reacciones rápidas predefinidas: emojis grandes con fondo de color que se
+// envían como mensaje con un solo toque. Se decidió por esta opción en vez
+// de la API de GIPHY porque, aunque GIPHY tiene una capa gratuita, requiere
+// registrar una app y obtener una clave nueva (con límite de 100
+// llamadas/hora) — estas reacciones no necesitan ninguna clave ni servicio
+// externo, y para un chat entre compañeros de práctica son suficientes.
+const STICKERS: { emoji: string; etiqueta: string; color: string }[] = [
+  { emoji: "👍", etiqueta: "Genial", color: "bg-blue-500" },
+  { emoji: "❤️", etiqueta: "Me encanta", color: "bg-rose-500" },
+  { emoji: "😂", etiqueta: "Jaja", color: "bg-amber-500" },
+  { emoji: "👏", etiqueta: "Bien hecho", color: "bg-emerald-500" },
+  { emoji: "🎉", etiqueta: "Felicidades", color: "bg-purple-500" },
+  { emoji: "🤔", etiqueta: "Interesante", color: "bg-slate-500" },
+];
+
+// Detecta si un mensaje es "solo emoji" (sin texto normal), para mostrarlo
+// más grande en la burbuja, como una reacción visual en vez de texto plano.
+function esSoloEmoji(texto: string): boolean {
+  const limpio = texto.trim();
+  if (!limpio) return false;
+  return /^[\p{Extended_Pictographic}\u200D\uFE0F\s]+$/u.test(limpio);
+}
 
 export default function ChatBubble() {
   const [user, setUser] = useState<any>(null);
@@ -10,6 +34,7 @@ export default function ChatBubble() {
   const [amigoSeleccionado, setAmigoSeleccionado] = useState<any>(null);
   const [mensajes, setMensajes] = useState<any[]>([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
@@ -42,15 +67,15 @@ export default function ChatBubble() {
     setMensajes(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
   };
 
-  const enviarMensaje = async () => {
-    if (!nuevoMensaje.trim() || !amigoSeleccionado) return;
+  const enviarTexto = async (texto: string) => {
+    if (!texto.trim() || !amigoSeleccionado) return;
     const convId = idConversacion(user.email, amigoSeleccionado.email);
     await addDoc(collection(db, "mensajes"), {
       conversacion: convId,
       de: user.email,
       deNombre: user.displayName || user.email,
       para: amigoSeleccionado.email,
-      texto: nuevoMensaje,
+      texto,
       fecha: serverTimestamp(),
     });
     await addDoc(collection(db, "notificaciones"), {
@@ -60,8 +85,18 @@ export default function ChatBubble() {
       leida: false,
       fecha: serverTimestamp(),
     });
-    setNuevoMensaje("");
     await abrirChat(amigoSeleccionado);
+  };
+
+  const enviarMensaje = async () => {
+    if (!nuevoMensaje.trim()) return;
+    const texto = nuevoMensaje;
+    setNuevoMensaje("");
+    await enviarTexto(texto);
+  };
+
+  const enviarSticker = async (emoji: string) => {
+    await enviarTexto(emoji);
   };
 
   if (!user) return null;
@@ -79,7 +114,7 @@ export default function ChatBubble() {
       {/* Panel de chat */}
       {abierto && (
         <div className="fixed bottom-24 right-4 left-4 md:left-auto md:right-6 w-auto md:w-80 max-w-full md:max-w-none bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 z-40 flex flex-col overflow-hidden" style={{ height: "480px", maxHeight: "70vh" }}>
-          
+
           {!amigoSeleccionado && (
             <>
               <div className="bg-slate-900 px-4 py-3">
@@ -120,14 +155,42 @@ export default function ChatBubble() {
                 )}
                 {mensajes.map((m) => (
                   <div key={m.id} className={`flex ${m.de === user?.email ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[75%] px-3 py-1.5 rounded-xl text-xs ${m.de === user?.email ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"}`}>
-                      {m.texto}
-                    </div>
+                    {esSoloEmoji(m.texto) ? (
+                      <div className="max-w-[75%] px-2 py-1 text-4xl leading-none">
+                        {m.texto}
+                      </div>
+                    ) : (
+                      <div className={`max-w-[75%] px-3 py-1.5 rounded-xl text-xs ${m.de === user?.email ? "bg-blue-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"}`}>
+                        {m.texto}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
-              <div className="p-2 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+
+              {/* Carrusel de stickers/reacciones rápidas */}
+              <div className="px-2 pt-1.5 pb-1 border-t border-slate-100 dark:border-slate-800 flex gap-2 overflow-x-auto">
+                {STICKERS.map((s) => (
+                  <button
+                    key={s.etiqueta}
+                    onClick={() => enviarSticker(s.emoji)}
+                    title={s.etiqueta}
+                    className={`flex-shrink-0 w-10 h-10 rounded-full ${s.color} flex items-center justify-center text-xl shadow-sm hover:shadow-md transition active:scale-90`}
+                  >
+                    {s.emoji}
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-2 flex gap-2 items-center">
+                <SelectorEmojis
+                  valor={nuevoMensaje}
+                  onCambiar={setNuevoMensaje}
+                  obtenerElemento={() => inputRef.current}
+                  posicionPanel="bottom-full mb-2 left-0"
+                />
                 <input
+                  ref={inputRef}
                   type="text"
                   placeholder="Escribe un mensaje..."
                   value={nuevoMensaje}
@@ -135,7 +198,7 @@ export default function ChatBubble() {
                   onKeyDown={(e) => e.key === "Enter" && enviarMensaje()}
                   className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-blue-400"
                 />
-                <button onClick={enviarMensaje} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95">
+                <button onClick={enviarMensaje} className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition active:scale-95">
                   Enviar
                 </button>
               </div>
