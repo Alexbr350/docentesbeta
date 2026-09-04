@@ -1,13 +1,26 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Sparkles, Loader2, X } from "lucide-react";
-import { llamarAsistenteIA } from "../lib/ia";
+import { llamarAsistenteIA, type TareaIA } from "../lib/ia";
 
+// Modal genérico de "borrador sugerido por IA": arranca la generación al
+// abrirse, muestra el resultado en un textarea editable, y deja que quien
+// lo usa decida si lo usa tal cual, lo edita, o lo descarta — nunca se
+// envía nada automáticamente. Se reutiliza para varios escenarios (cambia
+// solo la `tarea` que se le pide a la API y los textos del modal):
+//  - "retroalimentacion" (Admin/Maestro, comentario para el practicante)
+//  - "respuesta_comunidad" (Comunidad, respuesta a una pregunta)
 export default function ModalSugerenciaIA({
   visible,
   contenidoPost,
   tipo,
   colorTema = "violet",
+  tarea = "retroalimentacion",
+  titulo = "Sugerencia de retroalimentación (IA)",
+  etiquetaBorrador = "Borrador — puedes editarlo antes de usarlo",
+  textoCargando = "Generando sugerencia...",
+  textoAyuda = "Este texto solo se colocará en el campo de retroalimentación. Tú decides si lo editas y cuándo enviarlo.",
+  textoBotonUsar = "Usar este borrador",
   onUsar,
   onCancelar,
 }: {
@@ -15,6 +28,12 @@ export default function ModalSugerenciaIA({
   contenidoPost: string;
   tipo: string;
   colorTema?: "violet" | "purple" | "green";
+  tarea?: TareaIA;
+  titulo?: string;
+  etiquetaBorrador?: string;
+  textoCargando?: string;
+  textoAyuda?: string;
+  textoBotonUsar?: string;
   onUsar: (texto: string) => void;
   onCancelar: () => void;
 }) {
@@ -27,7 +46,7 @@ export default function ModalSugerenciaIA({
     setBorrador("");
     setError("");
     setCargando(true);
-    llamarAsistenteIA("retroalimentacion", contenidoPost, tipo)
+    llamarAsistenteIA(tarea, contenidoPost, tipo)
       .then((resultado) => setBorrador(resultado))
       .catch((err) => setError(err?.message || "No se pudo generar el borrador."))
       .finally(() => setCargando(false));
@@ -48,7 +67,7 @@ export default function ModalSugerenciaIA({
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-xl w-full max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 flex items-center gap-1.5">
-            <Sparkles size={16} className="text-violet-500" /> Sugerencia de retroalimentación (IA)
+            <Sparkles size={16} className="text-violet-500" /> {titulo}
           </h3>
           <button onClick={onCancelar} className="p-1 -m-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition">
             <X size={18} />
@@ -58,7 +77,7 @@ export default function ModalSugerenciaIA({
         {cargando && (
           <div className="flex flex-col items-center justify-center py-14 gap-3">
             <Loader2 size={28} className="text-violet-500 animate-spin" />
-            <p className="text-sm text-slate-400">Generando sugerencia...</p>
+            <p className="text-sm text-slate-400">{textoCargando}</p>
           </div>
         )}
 
@@ -77,7 +96,7 @@ export default function ModalSugerenciaIA({
         {!cargando && !error && (
           <>
             <p className="text-xs font-bold text-violet-500 uppercase tracking-widest mb-2 flex items-center gap-1">
-              <Sparkles size={12} /> Borrador — puedes editarlo antes de usarlo
+              <Sparkles size={12} /> {etiquetaBorrador}
             </p>
             <textarea
               value={borrador}
@@ -86,7 +105,7 @@ export default function ModalSugerenciaIA({
               className="w-full bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 rounded-xl p-3 text-sm text-slate-700 dark:text-slate-300 resize-none focus:outline-none focus:border-violet-400"
             />
             <p className="text-[11px] text-slate-400 mt-2 mb-5">
-              Este texto solo se colocará en el campo de retroalimentación. Tú decides si lo editas y cuándo enviarlo.
+              {textoAyuda}
             </p>
             <div className="flex flex-col sm:flex-row justify-end gap-2">
               <button
@@ -100,7 +119,7 @@ export default function ModalSugerenciaIA({
                 disabled={!borrador.trim()}
                 className={`flex items-center justify-center gap-1.5 text-sm ${boton} text-white px-5 py-2.5 rounded-xl font-semibold shadow transition active:scale-95 disabled:opacity-50`}
               >
-                <Sparkles size={14} /> Usar este borrador
+                <Sparkles size={14} /> {textoBotonUsar}
               </button>
             </div>
           </>

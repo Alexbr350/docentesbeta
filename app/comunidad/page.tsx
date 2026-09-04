@@ -5,7 +5,8 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import Navbar from "../components/Navbar";
 import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc } from "firebase/firestore";
-import { HelpCircle, MessageCircle, CheckCircle2, Send } from "lucide-react";
+import { HelpCircle, MessageCircle, CheckCircle2, Send, Sparkles } from "lucide-react";
+import ModalSugerenciaIA from "../components/ModalSugerenciaIA";
 
 export default function Comunidad() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function Comunidad() {
   const [showRespuestas, setShowRespuestas] = useState<any>({});
   const [respuestas, setRespuestas] = useState<any>({});
   const [nuevaRespuesta, setNuevaRespuesta] = useState<any>({});
+  const [preguntaParaSugerenciaIA, setPreguntaParaSugerenciaIA] = useState<any>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
@@ -246,6 +248,13 @@ export default function Comunidad() {
                     </div>
                   </div>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setPreguntaParaSugerenciaIA(pregunta)}
+                  className="flex items-center gap-1.5 text-xs text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 px-3 py-2 rounded-xl hover:bg-violet-100 dark:hover:bg-violet-950/50 transition font-medium mb-2"
+                >
+                  <Sparkles size={14} /> Sugerir respuesta con IA
+                </button>
                 <div className="flex gap-2 mt-2">
                   <input
                     type="text"
@@ -266,6 +275,26 @@ export default function Comunidad() {
             )}
           </div>
         ))}
+
+        <ModalSugerenciaIA
+          visible={!!preguntaParaSugerenciaIA}
+          contenidoPost={preguntaParaSugerenciaIA ? `${preguntaParaSugerenciaIA.titulo}\n\n${preguntaParaSugerenciaIA.descripcion}` : ""}
+          tipo="pregunta de la comunidad"
+          colorTema="purple"
+          tarea="respuesta_comunidad"
+          titulo="Sugerencia de respuesta (IA)"
+          etiquetaBorrador="Borrador de respuesta — puedes editarlo antes de usarlo"
+          textoCargando="Pensando una respuesta..."
+          textoAyuda="Este texto solo se colocará en el campo de respuesta. Tú decides si lo editas y cuándo enviarlo."
+          textoBotonUsar="Usar este borrador"
+          onUsar={(texto) => {
+            if (preguntaParaSugerenciaIA) {
+              setNuevaRespuesta((prev: any) => ({ ...prev, [preguntaParaSugerenciaIA.id]: texto }));
+            }
+            setPreguntaParaSugerenciaIA(null);
+          }}
+          onCancelar={() => setPreguntaParaSugerenciaIA(null)}
+        />
       </div>
     </div>
   );
