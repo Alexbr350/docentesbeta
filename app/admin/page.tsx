@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
@@ -449,6 +449,169 @@ function DeteccionAtencion({ posts, usuarios }: { posts: any[]; usuarios: any[] 
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+// Construye un resumen de texto con los datos ya calculados del lado del
+// cliente (conteos por tipo, actividad reciente, practicantes más activos,
+// calificación promedio). Esto es lo único que se le manda a la IA para el
+// chat de estadísticas — nunca tiene acceso directo a Firestore.
+function construirResumenDatos(posts: any[], usuarios: any[]): string {
+  const TIPOS = ["Diario", "Planeación", "Narrativa", "Extra", "Pedir ayuda"];
+  const DIA_MS = 24 * 60 * 60 * 1000;
+  const ahora = Date.now();
+
+  const contarPorTipo = (lista: any[]) =>
+    TIPOS.map((t) => `- ${t}: ${lista.filter((p) => p.tipo === t).length}`).join("\n");
+
+  const dentroDeVentana = (dias: number) =>
+    posts.filter((p) => {
+      const fecha = p.fecha?.toDate?.();
+      return fecha ? ahora - fecha.getTime() <= dias * DIA_MS : false;
+    });
+
+  const postsUltimos7Dias = dentroDeVentana(7);
+  const postsUltimos30Dias = dentroDeVentana(30);
+
+  const topActivos = (lista: any[]) => {
+    const conteo: Record<string, number> = {};
+    lista.forEach((p) => { conteo[p.email] = (conteo[p.email] || 0) + 1; });
+    const filas = Object.entries(conteo)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([email, n], i) => {
+        const nombre = usuarios.find((u) => u.email === email)?.nombre || email;
+        return `${i + 1}. ${nombre} — ${n} publicaciones`;
+      });
+    return filas.length > 0 ? filas.join("\n") : "(sin publicaciones en este periodo)";
+  };
+
+  const calificados = posts.filter((p) => p.calificacion);
+  const promedioGeneral =
+    calificados.length > 0
+      ? `${(calificados.reduce((s, p) => s + p.calificacion, 0) / calificados.length).toFixed(1)}/10 (basado en ${calificados.length} publicaciones calificadas)`
+      : "sin publicaciones calificadas todavía";
+
+  return `Fecha actual: ${new Date().toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" })}
+
+Total de practicantes registrados: ${usuarios.length}
+Total de publicaciones (todo el tiempo): ${posts.length}
+
+Publicaciones por tipo (todo el tiempo):
+${contarPorTipo(posts)}
+
+Publicaciones en los últimos 7 días (por tipo):
+${contarPorTipo(postsUltimos7Dias)}
+Total últimos 7 días: ${postsUltimos7Dias.length}
+
+Publicaciones en los últimos 30 días (por tipo):
+${contarPorTipo(postsUltimos30Dias)}
+Total últimos 30 días: ${postsUltimos30Dias.length}
+
+Top 10 practicantes más activos (todo el tiempo):
+${topActivos(posts)}
+
+Top 10 practicantes más activos en los últimos 30 días:
+${topActivos(postsUltimos30Dias)}
+
+Calificación promedio general: ${promedioGeneral}`;
+}
+
+// Chat de preguntas y respuestas en lenguaje natural sobre las estadísticas
+// de la plataforma. El resumen de datos se calcula una sola vez del lado
+// del cliente (useMemo) y se manda junto con cada pregunta — la IA nunca
+// toca Firestore directamente, solo ve este resumen ya calculado.
+function ChatEstadisticasIA({ posts, usuarios }: { posts: any[]; usuarios: any[] }) {
+  const [historial, setHistorial] = useState<{ pregunta: string; respuesta: string }[]>([]);
+  const [preguntaActual, setPreguntaActual] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState("");
+
+  const resumenDatos = useMemo(() => construirResumenDatos(posts, usuarios), [posts, usuarios]);
+
+  const enviarPregunta = async () => {
+    const pregunta = preguntaActual.trim();
+    if (!pregunta || enviando) return;
+    setEnviando(true);
+    setError("");
+    setPreguntaActual("");
+
+    const historialTexto = historial
+      .slice(-3)
+      .map((h) => `Pregunta anterior: ${h.pregunta}\nRespuesta anterior: ${h.respuesta}`)
+      .join("\n\n");
+
+    const texto = `=== RESUMEN DE DATOS ===\n${resumenDatos}\n=== FIN DEL RESUMEN ===\n\n${historialTexto ? historialTexto + "\n\n" : ""}Pregunta del administrador: ${pregunta}`;
+
+    try {
+      const respuesta = await llamarAsistenteIA("chat_estadisticas", texto, "estadísticas");
+      setHistorial((prev) => [...prev, { pregunta, respuesta }]);
+    } catch (err: any) {
+      setError(err?.message || "No se pudo obtener una respuesta. Intenta de nuevo.");
+      setPreguntaActual(pregunta);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-md mb-5">
+      <div className="flex items-center gap-2 mb-3">
+        <MessageCircle size={18} className="text-violet-500 flex-shrink-0" />
+        <div>
+          <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100">Pregúntale a la IA sobre tus estadísticas</h3>
+          <p className="text-xs text-slate-400">Responde con base en los datos reales de la plataforma</p>
+        </div>
+      </div>
+
+      <div className="max-h-72 overflow-y-auto space-y-3 mb-3 pr-1">
+        {historial.length === 0 && !enviando && (
+          <p className="text-xs text-slate-400 py-2">
+            Por ejemplo: "¿quién ha sido el más activo este mes?" o "¿cuántas planeaciones se subieron esta semana?"
+          </p>
+        )}
+        {historial.map((h, i) => (
+          <div key={i} className="space-y-1.5">
+            <div className="flex justify-end">
+              <div className="max-w-[85%] bg-blue-600 text-white text-xs px-3 py-2 rounded-xl rounded-br-sm">{h.pregunta}</div>
+            </div>
+            <div className="flex justify-start">
+              <div className="max-w-[85%] bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 text-slate-700 dark:text-slate-300 text-xs px-3 py-2 rounded-xl rounded-bl-sm whitespace-pre-wrap">
+                {h.respuesta}
+              </div>
+            </div>
+          </div>
+        ))}
+        {enviando && (
+          <div className="flex justify-start">
+            <div className="flex items-center gap-2 bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 text-xs px-3 py-2 rounded-xl rounded-bl-sm">
+              <Loader2 size={13} className="text-violet-500 animate-spin" /> Pensando...
+            </div>
+          </div>
+        )}
+      </div>
+
+      {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="Escribe tu pregunta..."
+          value={preguntaActual}
+          onChange={(e) => setPreguntaActual(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && enviarPregunta()}
+          disabled={enviando}
+          className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-violet-400 disabled:opacity-60"
+        />
+        <button
+          onClick={enviarPregunta}
+          disabled={enviando || !preguntaActual.trim()}
+          className="flex items-center gap-1 text-xs bg-violet-600 hover:bg-violet-700 text-white px-3 py-2 rounded-xl font-semibold transition active:scale-95 disabled:opacity-50"
+        >
+          <Send size={13} /> Preguntar
+        </button>
+      </div>
     </div>
   );
 }
@@ -1125,6 +1288,7 @@ export default function Admin() {
             </div>
             <DeteccionAtencion posts={posts} usuarios={usuarios} />
             <Dashboard posts={posts} usuarios={usuarios} />
+            <ChatEstadisticasIA posts={posts} usuarios={usuarios} />
           </div>
         )}
 

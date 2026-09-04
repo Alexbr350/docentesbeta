@@ -15,6 +15,9 @@ import { GoogleGenAI, Type } from "@google/genai";
 //  - "deteccion_atencion": revisa publicaciones de "Pedir ayuda" recientes de
 //    varios practicantes y devuelve, en JSON, cuáles podrían necesitar
 //    seguimiento y por qué (solo informativo, nunca contacta a nadie).
+//  - "chat_estadisticas": responde preguntas en lenguaje natural sobre las
+//    estadísticas de la plataforma, usando solo un resumen de datos ya
+//    calculado del lado del cliente (nunca tiene acceso a Firestore).
 
 // gemini-3.5-flash-lite: modelo rápido y económico, pensado para uso a gran
 // escala dentro de la capa gratuita de la API de Gemini.
@@ -83,6 +86,16 @@ Reglas:
 - Esto es solo información para que el evaluador le dé seguimiento — nunca es una acción automática, ni contacta ni notifica al practicante de ninguna forma.
 - Responde ÚNICAMENTE con un arreglo JSON (puede ser vacío si nadie muestra señales de dificultad real), sin texto adicional antes o después.`;
 
+const PROMPT_CHAT_ESTADISTICAS = () => `Eres un asistente de datos para el panel de administración de ENSFA+, una plataforma para practicantes docentes de la Escuela Normal Superior Federal de Aguascalientes (ENSFA). Vas a recibir un resumen de datos reales ya calculados (conteos de publicaciones, actividad reciente, practicantes más activos, calificaciones, etc.), opcionalmente algo de contexto de preguntas anteriores en esta misma conversación, y una pregunta nueva del administrador en español.
+
+Reglas:
+- Responde ÚNICAMENTE con base en los datos del resumen que se te dio. NUNCA inventes números, nombres ni cifras que no estén ahí.
+- Si el resumen no tiene la información necesaria para responder con precisión, dilo claramente (por ejemplo: "No tengo ese dato en el resumen que me diste") en vez de inventar una respuesta.
+- Responde de forma breve, clara y directa, en español, como si le hablaras al administrador. Usa cifras concretas del resumen cuando estén disponibles.
+- No repitas ni copies todo el resumen de datos en tu respuesta; solo usa lo relevante para contestar.
+- No tienes acceso directo a la base de datos ni a nada fuera de este resumen — nunca actúes como si pudieras consultar o modificar algo directamente.
+- Responde ÚNICAMENTE con tu respuesta a la pregunta. Sin encabezados, sin comillas, sin explicaciones sobre el formato.`;
+
 export async function POST(req: NextRequest) {
   let body: any;
   try {
@@ -96,7 +109,7 @@ export async function POST(req: NextRequest) {
   if (typeof texto !== "string" || !texto.trim()) {
     return NextResponse.json({ error: "Falta el texto a procesar." }, { status: 400 });
   }
-  const TAREAS_VALIDAS = ["mejorar", "retroalimentacion", "planeacion", "respuesta_comunidad", "calificacion", "deteccion_atencion"];
+  const TAREAS_VALIDAS = ["mejorar", "retroalimentacion", "planeacion", "respuesta_comunidad", "calificacion", "deteccion_atencion", "chat_estadisticas"];
   if (!TAREAS_VALIDAS.includes(tarea)) {
     return NextResponse.json({ error: "Tarea no válida." }, { status: 400 });
   }
@@ -117,6 +130,7 @@ export async function POST(req: NextRequest) {
     tarea === "respuesta_comunidad" ? PROMPT_RESPUESTA_COMUNIDAD() :
     tarea === "calificacion" ? PROMPT_CALIFICACION(tipoTexto) :
     tarea === "deteccion_atencion" ? PROMPT_DETECCION_ATENCION() :
+    tarea === "chat_estadisticas" ? PROMPT_CHAT_ESTADISTICAS() :
     PROMPT_RETROALIMENTACION(tipoTexto);
 
   // "deteccion_atencion" necesita una lista estructurada de vuelta (no texto
