@@ -41,8 +41,8 @@ export default function Landing() {
           <div className="flex-1">
             <span className="text-xs font-semibold bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">Plataforma oficial ENSFA</span>
             <h1 className="text-4xl md:text-6xl font-extrabold mt-5 leading-tight">
-              Práctica<br />
-              <span className="text-yellow-300">Docente</span>
+              Tu práctica docente,<br />
+              <span className="text-yellow-300">organizada</span>
             </h1>
             <p className="text-blue-100 mt-5 text-lg leading-relaxed max-w-md">
               La plataforma digital para practicantes de la Escuela Normal Superior Federal de Aguascalientes.
