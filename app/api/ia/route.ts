@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 // Asistente de IA de ENSFA+. Llama a la API de Google Gemini (capa gratuita)
 // desde el servidor — la API key nunca se expone al cliente. Tareas
@@ -12,6 +12,9 @@ import { GoogleGenAI } from "@google/genai";
 //    publicada en la Comunidad.
 //  - "calificacion": sugiere una calificación del 1 al 10 con justificación
 //    para una publicación (el evaluador siempre confirma manualmente).
+//  - "deteccion_atencion": revisa publicaciones de "Pedir ayuda" recientes de
+//    varios practicantes y devuelve, en JSON, cuáles podrían necesitar
+//    seguimiento y por qué (solo informativo, nunca contacta a nadie).
 
 // gemini-3.5-flash-lite: modelo rápido y económico, pensado para uso a gran
 // escala dentro de la capa gratuita de la API de Gemini.
@@ -66,6 +69,20 @@ Reglas:
 Calificación: <número del 1 al 10>
 Justificación: <tu justificación breve>`;
 
+const PROMPT_DETECCION_ATENCION = () => `Eres un asesor pedagógico experto ayudando a los evaluadores de la Escuela Normal Superior Federal de Aguascalientes (ENSFA) a identificar practicantes docentes que podrían estar teniendo dificultades y necesitar seguimiento cercano.
+
+Vas a recibir un resumen de publicaciones recientes de tipo "Pedir ayuda" de varios practicantes, agrupadas por practicante (con su nombre y correo), y de cuántas publicaciones recientes tiene en total como contexto adicional.
+
+Tu tarea es identificar cuáles de estos practicantes parecen tener dificultades genuinas (no solo dudas rutinarias o preguntas puntuales) según el contenido de lo que escribieron, y para cada uno escribir una razón breve explicando por qué lo marcaste.
+
+Reglas:
+- Solo incluye practicantes cuyo contenido sugiera dificultades reales: estrés, sentirse perdidos o abrumados, problemas recurrentes, señales de agobio, etc. No incluyas a alguien que solo hizo una pregunta simple, técnica o puntual.
+- Basa tu análisis únicamente en el contenido que se te compartió; no inventes situaciones ni datos que no estén ahí.
+- La razón debe ser específica al contenido de ese practicante (1 a 2 oraciones), no genérica ni copiada entre practicantes.
+- Usa exactamente el correo que te dieron para cada practicante, sin modificarlo.
+- Esto es solo información para que el evaluador le dé seguimiento — nunca es una acción automática, ni contacta ni notifica al practicante de ninguna forma.
+- Responde ÚNICAMENTE con un arreglo JSON (puede ser vacío si nadie muestra señales de dificultad real), sin texto adicional antes o después.`;
+
 export async function POST(req: NextRequest) {
   let body: any;
   try {
@@ -79,7 +96,7 @@ export async function POST(req: NextRequest) {
   if (typeof texto !== "string" || !texto.trim()) {
     return NextResponse.json({ error: "Falta el texto a procesar." }, { status: 400 });
   }
-  const TAREAS_VALIDAS = ["mejorar", "retroalimentacion", "planeacion", "respuesta_comunidad", "calificacion"];
+  const TAREAS_VALIDAS = ["mejorar", "retroalimentacion", "planeacion", "respuesta_comunidad", "calificacion", "deteccion_atencion"];
   if (!TAREAS_VALIDAS.includes(tarea)) {
     return NextResponse.json({ error: "Tarea no válida." }, { status: 400 });
   }
@@ -99,7 +116,29 @@ export async function POST(req: NextRequest) {
     tarea === "planeacion" ? PROMPT_PLANEACION() :
     tarea === "respuesta_comunidad" ? PROMPT_RESPUESTA_COMUNIDAD() :
     tarea === "calificacion" ? PROMPT_CALIFICACION(tipoTexto) :
+    tarea === "deteccion_atencion" ? PROMPT_DETECCION_ATENCION() :
     PROMPT_RETROALIMENTACION(tipoTexto);
+
+  // "deteccion_atencion" necesita una lista estructurada de vuelta (no texto
+  // libre), así que le pedimos a Gemini que responda en JSON siguiendo un
+  // esquema fijo, en vez de parsear texto libre del lado del cliente.
+  const configExtra =
+    tarea === "deteccion_atencion"
+      ? {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                email: { type: Type.STRING },
+                razon: { type: Type.STRING },
+              },
+              required: ["email", "razon"],
+            },
+          },
+        }
+      : {};
 
   try {
     const ai = new GoogleGenAI({ apiKey });
@@ -109,7 +148,8 @@ export async function POST(req: NextRequest) {
       contents: texto,
       config: {
         systemInstruction: systemPrompt,
-        maxOutputTokens: 1024,
+        maxOutputTokens: tarea === "deteccion_atencion" ? 2048 : 1024,
+        ...configExtra,
       },
     });
 

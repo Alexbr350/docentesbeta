@@ -3,10 +3,11 @@
 // feed), ModalSugerenciaIA.tsx (escenario "retroalimentacion" en Admin y
 // Maestro, y también "respuesta_comunidad" en Comunidad),
 // ModalSugerenciaPlaneacion.tsx (escenario "planeacion" en el compositor
-// del feed) y ModalCalificacionIA.tsx (escenario "calificacion" en Admin y
-// Maestro) para no duplicar el fetch + manejo de errores.
+// del feed), ModalCalificacionIA.tsx (escenario "calificacion" en Admin y
+// Maestro) y DeteccionAtencion en app/admin/page.tsx (escenario
+// "deteccion_atencion") para no duplicar el fetch + manejo de errores.
 
-export type TareaIA = "mejorar" | "retroalimentacion" | "planeacion" | "respuesta_comunidad" | "calificacion";
+export type TareaIA = "mejorar" | "retroalimentacion" | "planeacion" | "respuesta_comunidad" | "calificacion" | "deteccion_atencion";
 
 export async function llamarAsistenteIA(tarea: TareaIA, texto: string, tipo?: string): Promise<string> {
   let respuesta: Response;

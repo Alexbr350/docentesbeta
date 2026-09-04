@@ -5,7 +5,7 @@ import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
 import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
-import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, CalendarDays, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3, Presentation, FileDown, Sparkles, BadgeCheck, ScrollText, Filter } from "lucide-react";
+import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, CalendarDays, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3, Presentation, FileDown, Sparkles, BadgeCheck, ScrollText, Filter, AlertTriangle, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import jsPDF from "jspdf";
 import ModalConfirmar from "../components/ModalConfirmar";
@@ -17,6 +17,7 @@ import ModalCertificarFinalizacion from "../components/ModalCertificarFinalizaci
 import { EventoCalendario } from "../lib/calendarioEscolar";
 import { metasCompletadas, generarFolio } from "../lib/certificado";
 import { registrarAuditoria, INFO_ACCION_AUDITORIA, INFO_ACCION_DEFAULT, EntradaAuditoria } from "../lib/auditoria";
+import { llamarAsistenteIA } from "../lib/ia";
 import { useToast } from "../components/Toast";
 import { ADMINS } from "../lib/admins";
 
@@ -318,6 +319,136 @@ function EventosList() {
         onConfirmar={() => eventoAEliminar && eliminarEvento(eventoAEliminar)}
         onCancelar={() => setEventoAEliminar(null)}
       />
+    </div>
+  );
+}
+
+// Revisa publicaciones recientes de tipo "Pedir ayuda" (últimos 30 días) y le
+// pide a la IA que identifique cuáles practicantes parecen tener
+// dificultades reales, con una razón breve por cada uno. Es puramente
+// informativo: no envía nada, no contacta a nadie, y el análisis solo corre
+// cuando el evaluador lo pide explícitamente (no automático al cargar).
+function DeteccionAtencion({ posts, usuarios }: { posts: any[]; usuarios: any[] }) {
+  const [analizando, setAnalizando] = useState(false);
+  const [resultados, setResultados] = useState<{ email: string; razon: string }[] | null>(null);
+  const [error, setError] = useState("");
+
+  const analizar = async () => {
+    setAnalizando(true);
+    setError("");
+    setResultados(null);
+
+    const VENTANA_MS = 30 * 24 * 60 * 60 * 1000; // últimos 30 días
+    const ahora = Date.now();
+    const postsRecientes = posts.filter((p) => {
+      const fecha = p.fecha?.toDate?.();
+      return fecha ? ahora - fecha.getTime() <= VENTANA_MS : false;
+    });
+
+    const pedirAyudaPorEmail: Record<string, any[]> = {};
+    postsRecientes
+      .filter((p) => p.tipo === "Pedir ayuda")
+      .forEach((p) => {
+        if (!pedirAyudaPorEmail[p.email]) pedirAyudaPorEmail[p.email] = [];
+        pedirAyudaPorEmail[p.email].push(p);
+      });
+
+    const candidatos = Object.keys(pedirAyudaPorEmail).map((email) => ({
+      email,
+      nombre: usuarios.find((u) => u.email === email)?.nombre || email,
+      totalReciente: postsRecientes.filter((p) => p.email === email).length,
+      publicacionesAyuda: pedirAyudaPorEmail[email].slice(0, 5),
+    }));
+
+    if (candidatos.length === 0) {
+      setResultados([]);
+      setAnalizando(false);
+      return;
+    }
+
+    const texto = candidatos
+      .map((c) => {
+        const lista = c.publicacionesAyuda
+          .map((p: any, i: number) => `  ${i + 1}. ${(p.contenido || "").slice(0, 400)}`)
+          .join("\n");
+        return `Practicante: ${c.nombre} (${c.email})\nTotal de publicaciones recientes (últimos 30 días, todos los tipos): ${c.totalReciente}\nPublicaciones de "Pedir ayuda" recientes:\n${lista}`;
+      })
+      .join("\n\n");
+
+    try {
+      const resultado = await llamarAsistenteIA("deteccion_atencion", texto, "resumen de publicaciones");
+      let lista: any;
+      try {
+        lista = JSON.parse(resultado);
+      } catch {
+        throw new Error("La IA no devolvió un formato reconocible. Intenta de nuevo.");
+      }
+      const emailsValidos = new Set(candidatos.map((c) => c.email));
+      const filtrada = Array.isArray(lista)
+        ? lista.filter((item) => item && typeof item.email === "string" && typeof item.razon === "string" && emailsValidos.has(item.email))
+        : [];
+      setResultados(filtrada);
+    } catch (err: any) {
+      setError(err?.message || "No se pudo completar el análisis.");
+    } finally {
+      setAnalizando(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-md mb-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
+        <div className="flex items-center gap-2">
+          <AlertTriangle size={18} className="text-amber-500 flex-shrink-0" />
+          <div>
+            <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100">Practicantes que podrían necesitar atención</h3>
+            <p className="text-xs text-slate-400">Análisis con IA de publicaciones de "Pedir ayuda" de los últimos 30 días — solo informativo</p>
+          </div>
+        </div>
+        <button
+          onClick={analizar}
+          disabled={analizando}
+          className="flex items-center gap-1.5 text-xs bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-xl font-semibold shadow transition active:scale-95 disabled:opacity-50 flex-shrink-0"
+        >
+          <Sparkles size={14} /> {analizando ? "Analizando..." : resultados ? "Analizar de nuevo" : "Analizar con IA"}
+        </button>
+      </div>
+
+      {analizando && (
+        <div className="flex flex-col items-center justify-center py-8 gap-2">
+          <Loader2 size={22} className="text-violet-500 animate-spin" />
+          <p className="text-xs text-slate-400">Revisando publicaciones recientes...</p>
+        </div>
+      )}
+
+      {!analizando && error && <p className="text-sm text-red-500 py-3">{error}</p>}
+
+      {!analizando && !error && resultados !== null && resultados.length === 0 && (
+        <p className="text-sm text-slate-400 py-3">No se detectaron practicantes con señales de dificultad en publicaciones recientes.</p>
+      )}
+
+      {!analizando && !error && resultados !== null && resultados.length > 0 && (
+        <div className="space-y-2 mt-3">
+          {resultados.map((r) => {
+            const nombre = usuarios.find((u) => u.email === r.email)?.nombre || r.email;
+            return (
+              <div key={r.email} className="flex gap-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 rounded-xl p-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  {nombre.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-800 dark:text-slate-100">{nombre}</p>
+                  <p className="text-xs text-slate-400 mb-1">{r.email}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{r.razon}</p>
+                </div>
+              </div>
+            );
+          })}
+          <p className="text-[11px] text-slate-400 pt-1">
+            Esto es solo información para que le des seguimiento — no se envía nada automáticamente ni se contacta al practicante.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -992,6 +1123,7 @@ export default function Admin() {
                 <FileDown size={16} /> {generandoReporte ? "Generando..." : "Exportar reporte institucional (PDF)"}
               </button>
             </div>
+            <DeteccionAtencion posts={posts} usuarios={usuarios} />
             <Dashboard posts={posts} usuarios={usuarios} />
           </div>
         )}
