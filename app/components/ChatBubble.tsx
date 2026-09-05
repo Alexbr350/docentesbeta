@@ -3,21 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { auth, db } from "../firebase";
 import { collection, getDocs, addDoc, serverTimestamp, query, where, orderBy } from "firebase/firestore";
 import SelectorEmojis from "./SelectorEmojis";
-
-// Reacciones rápidas predefinidas: emojis grandes con fondo de color que se
-// envían como mensaje con un solo toque. Se decidió por esta opción en vez
-// de la API de GIPHY porque, aunque GIPHY tiene una capa gratuita, requiere
-// registrar una app y obtener una clave nueva (con límite de 100
-// llamadas/hora) — estas reacciones no necesitan ninguna clave ni servicio
-// externo, y para un chat entre compañeros de práctica son suficientes.
-const STICKERS: { emoji: string; etiqueta: string; color: string }[] = [
-  { emoji: "👍", etiqueta: "Genial", color: "bg-blue-500" },
-  { emoji: "❤️", etiqueta: "Me encanta", color: "bg-rose-500" },
-  { emoji: "😂", etiqueta: "Jaja", color: "bg-amber-500" },
-  { emoji: "👏", etiqueta: "Bien hecho", color: "bg-emerald-500" },
-  { emoji: "🎉", etiqueta: "Felicidades", color: "bg-purple-500" },
-  { emoji: "🤔", etiqueta: "Interesante", color: "bg-slate-500" },
-];
+import StickersRapidos from "./StickersRapidos";
 
 // Detecta si un mensaje es "solo emoji" (sin texto normal), para mostrarlo
 // más grande en la burbuja, como una reacción visual en vez de texto plano.
@@ -169,17 +155,8 @@ export default function ChatBubble() {
               </div>
 
               {/* Carrusel de stickers/reacciones rápidas */}
-              <div className="px-2 pt-1.5 pb-1 border-t border-slate-100 dark:border-slate-800 flex gap-2 overflow-x-auto">
-                {STICKERS.map((s) => (
-                  <button
-                    key={s.etiqueta}
-                    onClick={() => enviarSticker(s.emoji)}
-                    title={s.etiqueta}
-                    className={`flex-shrink-0 w-10 h-10 rounded-full ${s.color} flex items-center justify-center text-xl shadow-sm hover:shadow-md transition active:scale-90`}
-                  >
-                    {s.emoji}
-                  </button>
-                ))}
+              <div className="px-2 pt-1.5 pb-1 border-t border-slate-100 dark:border-slate-800">
+                <StickersRapidos onSeleccionar={enviarSticker} />
               </div>
 
               <div className="p-2 flex gap-2 items-center">

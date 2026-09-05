@@ -15,6 +15,8 @@ import ModalInput from "./components/ModalInput";
 import ModalMejorarIA from "./components/ModalMejorarIA";
 import ModalSugerenciaPlaneacion from "./components/ModalSugerenciaPlaneacion";
 import SelectorEmojis from "./components/SelectorEmojis";
+import StickersRapidos from "./components/StickersRapidos";
+import { insertarEnCursor } from "./lib/insertarEnCursor";
 import { useToast } from "./components/Toast";
 import SplashScreen from "./components/SplashScreen";
 import { ADMINS as ADMINS_LOCAL } from "./lib/admins";
@@ -542,6 +544,14 @@ export default function Home() {
                   value={contenido}
                   onChange={(e) => setContenido(e.target.value)}
                 />
+                <div className="mt-2">
+                  <StickersRapidos
+                    onSeleccionar={(sticker) =>
+                      insertarEnCursor(contenido, composerRef.current, sticker, setContenido)
+                    }
+                    tamano="w-8 h-8 text-base"
+                  />
+                </div>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 cursor-pointer bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl hover:border-blue-400 transition">
                     <Paperclip size={14} /> Adjuntar
@@ -838,6 +848,19 @@ export default function Home() {
                       </div>
                     </div>
                   ))}
+                  <div className="flex gap-2 mt-2 mb-2 overflow-x-auto">
+                    <StickersRapidos
+                      onSeleccionar={(sticker) =>
+                        insertarEnCursor(
+                          nuevoComentario[post.id] || "",
+                          comentarioInputRefs.current[post.id] ?? null,
+                          sticker,
+                          (nuevoValor) => setNuevoComentario((prev: any) => ({ ...prev, [post.id]: nuevoValor }))
+                        )
+                      }
+                      tamano="w-7 h-7 text-sm"
+                    />
+                  </div>
                   <div className="flex gap-2 mt-2 items-center">
                     <SelectorEmojis
                       valor={nuevoComentario[post.id] || ""}

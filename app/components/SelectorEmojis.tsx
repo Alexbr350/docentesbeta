@@ -3,13 +3,12 @@ import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Smile } from "lucide-react";
 import type { EmojiClickData, Theme } from "emoji-picker-react";
+import { insertarEnCursor, type ElementoConCursor } from "../lib/insertarEnCursor";
 
 // El selector de emojis usa APIs del navegador (mide el layout, maneja
 // focus, etc.), así que se carga solo en el cliente: con ssr:false evitamos
 // que Next.js intente renderizarlo en el servidor.
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
-
-type ElementoConCursor = HTMLInputElement | HTMLTextAreaElement;
 
 type SelectorEmojisProps = {
   /** Valor actual del input/textarea donde se va a insertar el emoji. */
@@ -71,21 +70,7 @@ export default function SelectorEmojis({
   // Inserta el emoji elegido justo donde está el cursor (no solo al final),
   // y deja el cursor justo después de insertarlo.
   const insertarEmoji = (emojiData: EmojiClickData) => {
-    const emoji = emojiData.emoji;
-    const el = obtenerElemento();
-    if (!el) {
-      onCambiar(valor + emoji);
-      return;
-    }
-    const inicio = el.selectionStart ?? valor.length;
-    const fin = el.selectionEnd ?? valor.length;
-    const nuevoValor = valor.slice(0, inicio) + emoji + valor.slice(fin);
-    onCambiar(nuevoValor);
-    requestAnimationFrame(() => {
-      const nuevaPos = inicio + emoji.length;
-      el.focus();
-      el.setSelectionRange(nuevaPos, nuevaPos);
-    });
+    insertarEnCursor(valor, obtenerElemento(), emojiData.emoji, onCambiar);
   };
 
   return (
