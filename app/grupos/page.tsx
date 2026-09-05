@@ -7,6 +7,7 @@ import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, 
 import Navbar from "../components/Navbar";
 import { Layers, Plus, Users2, X } from "lucide-react";
 import { ADMINS } from "../lib/admins";
+import Spinner from "../components/Spinner";
 
 export default function Grupos() {
   const router = useRouter();
@@ -104,7 +105,7 @@ export default function Grupos() {
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
         <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
-        <p className="text-slate-400 text-sm">Cargando grupos...</p>
+        <Spinner texto="Cargando grupos..." />
       </div>
     </div>
   );

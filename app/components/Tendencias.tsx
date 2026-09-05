@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { collection, getDocs, query, where, Timestamp } from "firebase/firestore";
 import { TrendingUp, BookOpen, ClipboardList, PenLine, Layers, HelpCircle, Flame } from "lucide-react";
+import Spinner from "./Spinner";
 
 const TIPOS_INFO: Record<string, { icono: any; bg: string; texto: string }> = {
   "Diario": { icono: BookOpen, bg: "bg-blue-100 dark:bg-blue-950/40", texto: "text-blue-700 dark:text-blue-400" },
@@ -52,7 +53,7 @@ export default function Tendencias() {
         <TrendingUp size={14} className="text-orange-500" /> Tendencias
       </p>
 
-      {cargando && <p className="text-xs text-slate-400">Cargando...</p>}
+      {cargando && <Spinner tamano={14} texto="Cargando..." />}
 
       {!cargando && ranking.length === 0 && (
         <p className="text-xs text-slate-400">Aún no hay actividad esta semana.</p>

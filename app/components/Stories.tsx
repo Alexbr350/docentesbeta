@@ -281,8 +281,8 @@ export default function Stories() {
 
       {/* Modal de subir historia */}
       {showUpload && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full animate-modal-pop">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100">Subir historia</h3>
               <button onClick={() => { setShowUpload(false); setArchivoSeleccionado(null); }} className="p-1 -m-1"><X size={18} className="text-slate-400" /></button>
@@ -337,7 +337,7 @@ export default function Stories() {
 
       {/* Modal de cámara en vivo */}
       {modoCamara && (
-        <div className="fixed inset-0 bg-black z-[60] flex flex-col items-center justify-center">
+        <div className="fixed inset-0 bg-black z-[60] flex flex-col items-center justify-center animate-fade-in">
           <button onClick={cerrarCamara} className="absolute top-6 right-4 text-white z-10 p-2">
             <X size={28} />
           </button>
@@ -371,7 +371,7 @@ export default function Stories() {
 
       {/* Visor de historias */}
       {grupoSeleccionado && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 animate-fade-in">
           <div className="absolute top-3 left-3 right-3 flex gap-1 z-10">
             {grupoSeleccionado.map((_, i) => (
               <div key={i} className="flex-1 h-1 bg-white/25 rounded-full overflow-hidden">

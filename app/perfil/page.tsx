@@ -13,6 +13,7 @@ import ModalEditarPerfil from "../components/ModalEditarPerfil";
 import ResumenWrapped from "../components/ResumenWrapped";
 import { useToast } from "../components/Toast";
 import { calcularRacha, proximoHitoRacha } from "../lib/racha";
+import Spinner from "../components/Spinner";
 import { metasCompletadas } from "../lib/certificado";
 
 // Convierte una imagen servida por la app (ej. /logo.png) a base64 para poder
@@ -246,7 +247,7 @@ export default function Perfil() {
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
         <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
-        <p className="text-slate-400 text-sm">Cargando perfil...</p>
+        <Spinner texto="Cargando perfil..." />
       </div>
     </div>
   );
@@ -391,7 +392,13 @@ export default function Perfil() {
                   disabled={generandoCertificado}
                   className="flex items-center gap-1.5 text-sm bg-white text-emerald-700 hover:bg-white/90 px-4 py-2.5 rounded-xl font-bold shadow transition active:scale-95 disabled:opacity-60 flex-shrink-0"
                 >
-                  <FileDown size={15} /> {generandoCertificado ? "Generando..." : "Descargar certificado"}
+                  {generandoCertificado ? (
+                    <Spinner tamano={14} texto="Generando..." />
+                  ) : (
+                    <>
+                      <FileDown size={15} /> Descargar certificado
+                    </>
+                  )}
                 </button>
               )}
             </div>

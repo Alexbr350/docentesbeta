@@ -35,8 +35,8 @@ export default function ModalMejorarIA({
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-2xl w-full max-h-[85vh] overflow-y-auto animate-modal-pop">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 flex items-center gap-1.5">
             <Sparkles size={16} className="text-violet-500" /> Mejorar con IA
@@ -66,7 +66,7 @@ export default function ModalMejorarIA({
         )}
 
         {!cargando && !error && sugerencia && (
-          <>
+          <div className="animate-fade-in-up">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
               <div>
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Tu versión</p>
@@ -97,7 +97,7 @@ export default function ModalMejorarIA({
                 <Sparkles size={14} /> Usar esta versión
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

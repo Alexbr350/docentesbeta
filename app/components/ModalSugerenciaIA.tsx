@@ -63,8 +63,8 @@ export default function ModalSugerenciaIA({
       : "bg-violet-600 hover:bg-violet-700";
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-xl w-full max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-xl w-full max-h-[85vh] overflow-y-auto animate-modal-pop">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 flex items-center gap-1.5">
             <Sparkles size={16} className="text-violet-500" /> {titulo}
@@ -94,7 +94,7 @@ export default function ModalSugerenciaIA({
         )}
 
         {!cargando && !error && (
-          <>
+          <div className="animate-fade-in-up">
             <p className="text-xs font-bold text-violet-500 uppercase tracking-widest mb-2 flex items-center gap-1">
               <Sparkles size={12} /> {etiquetaBorrador}
             </p>
@@ -122,7 +122,7 @@ export default function ModalSugerenciaIA({
                 <Sparkles size={14} /> {textoBotonUsar}
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

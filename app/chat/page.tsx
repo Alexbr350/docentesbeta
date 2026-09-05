@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { collection, getDocs, addDoc, serverTimestamp, query, where, orderBy } from "firebase/firestore";
 import Navbar from "../components/Navbar";
+import Spinner from "../components/Spinner";
 
 export default function Chat() {
   const router = useRouter();
@@ -73,7 +74,7 @@ export default function Chat() {
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
         <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
-        <p className="text-slate-400 text-sm">Cargando chat...</p>
+        <Spinner texto="Cargando chat..." />
       </div>
     </div>
   );

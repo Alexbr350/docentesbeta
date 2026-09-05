@@ -6,6 +6,7 @@ import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { ShieldAlert, Users2, ClipboardList, Star, TrendingUp, ChevronLeft, ChevronRight, X, Maximize, Minimize, Trophy } from "lucide-react";
 import { ADMINS } from "../lib/admins";
+import Spinner from "../components/Spinner";
 
 const DURACION_SLIDE = 9000; // ms entre slides en auto-avance
 const TOTAL_SLIDES = 6;
@@ -112,10 +113,10 @@ export default function Presentacion() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 animate-fade-in">
         <div className="text-center">
           <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
-          <p className="text-blue-200/60 text-sm">Cargando modo presentación...</p>
+          <Spinner tamano={24} texto="Cargando modo presentación..." />
         </div>
       </div>
     );
@@ -123,8 +124,8 @@ export default function Presentacion() {
 
   if (accesoDenegado) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950">
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-10 text-center max-w-sm shadow-2xl">
+      <div className="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 animate-fade-in">
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-10 text-center max-w-sm shadow-2xl animate-modal-pop">
           <ShieldAlert size={48} className="text-red-400 mx-auto mb-4" />
           <h2 className="text-lg font-extrabold text-white mb-2">Acceso denegado</h2>
           <p className="text-sm text-slate-400 mb-6">No tienes permisos para ver esta página.</p>

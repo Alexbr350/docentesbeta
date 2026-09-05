@@ -7,6 +7,7 @@ import Navbar from "../components/Navbar";
 import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc } from "firebase/firestore";
 import { HelpCircle, MessageCircle, CheckCircle2, Send, Sparkles } from "lucide-react";
 import ModalSugerenciaIA from "../components/ModalSugerenciaIA";
+import Spinner from "../components/Spinner";
 
 export default function Comunidad() {
   const router = useRouter();
@@ -102,7 +103,7 @@ export default function Comunidad() {
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
         <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
-        <p className="text-slate-400 text-sm">Cargando comunidad...</p>
+        <Spinner texto="Cargando comunidad..." />
       </div>
     </div>
   );

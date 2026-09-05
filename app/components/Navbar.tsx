@@ -208,7 +208,7 @@ export default function Navbar({ paginaActual }: { paginaActual: string }) {
       {menuAbierto && (
         <div className="fixed inset-0 z-40 md:hidden">
           <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={() => setMenuAbierto(false)} />
-          <div className="absolute top-0 right-0 h-full w-72 max-w-[85vw] bg-slate-900 shadow-2xl flex flex-col p-4 overflow-y-auto">
+          <div className="absolute top-0 right-0 h-full w-72 max-w-[85vw] bg-slate-900 shadow-2xl flex flex-col p-4 overflow-y-auto animate-slide-in-right">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-white font-bold text-sm">Menú</h2>
               <button onClick={() => setMenuAbierto(false)} className="p-2 rounded-lg hover:bg-slate-800 text-slate-300 active:scale-95 transition" aria-label="Cerrar menú">

@@ -28,7 +28,7 @@ export default function ModalConfirmar({
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-xl text-center animate-fade-in-up">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full shadow-xl text-center animate-modal-pop">
         <div
           className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 ${
             destructivo ? "bg-red-100 dark:bg-red-950/40" : "bg-blue-100 dark:bg-blue-950/40"

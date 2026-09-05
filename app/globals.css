@@ -19,7 +19,22 @@
   --animate-fade-in: fade-in 0.35s ease-out both;
   --animate-fade-in-up: fade-in-up 0.4s ease-out both;
   --animate-confetti: confetti-burst 0.7s ease-out forwards;
+  /* Entrada estándar de modales: la tarjeta aparece con un scale-up + fade-in
+     suave (el fondo oscuro usa animate-fade-in). Se usa en TODOS los modales
+     del proyecto para que se sientan consistentes entre sí. */
+  --animate-modal-pop: modal-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* Transición estándar al cambiar de pestaña (Admin, Maestro, etc.). */
+  --animate-tab-fade: tab-fade 0.25s ease-out both;
+  /* Paneles tipo "cajón" (drawer) que entran desde el borde, ej. el menú móvil. */
+  --animate-slide-in-right: slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+/* Convención de tiempos/curvas del proyecto: 200ms con ease-out para hover y
+   micro-interacciones, ~250ms con ease-out para entradas de contenido
+   (pestañas, tarjetas), y las curvas más "elásticas" (cubic-bezier arriba)
+   solo para la entrada de modales. Se documenta aquí para que futuras
+   animaciones sigan el mismo ritmo en vez de tiempos elegidos al azar.
+   Referencia rápida: duration-200 ease-out (hover), duration-300 (entradas). */
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -32,6 +47,34 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  /* Red de seguridad global de hover: garantiza que TODO botón de la
+     plataforma tenga alguna respuesta visual al pasar el mouse y al
+     presionar, incluso si ese botón en particular no definió su propia
+     clase de hover. Usa filter (no toca colores/bordes) para que nunca
+     choque con los estilos propios de cada botón — solo se suma encima.
+     Los botones que ya tienen su propio hover (cambio de color, sombra,
+     etc.) simplemente se ven un poco más marcados; los que no tenían
+     ninguno dejan de sentirse "muertos" al tacto. */
+  button:not(:disabled) {
+    transition: filter 0.2s ease-out, transform 0.15s ease-out, background-color 0.2s ease-out,
+      color 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out, opacity 0.2s ease-out;
+  }
+  button:not(:disabled):hover {
+    filter: brightness(0.96);
+  }
+  button:not(:disabled):active {
+    filter: brightness(0.9);
+  }
+
+  /* Scroll suave dentro de cualquier panel con scroll propio (comentarios,
+     calendario, chat, listas de auditoría, etc.), además del scroll-smooth
+     que se aplica puntualmente en algunos contenedores clave. */
+  .overflow-y-auto {
+    scroll-behavior: smooth;
+  }
 }
 
 @keyframes heart-pop {
@@ -68,4 +111,19 @@ body {
     transform: translate(var(--tx), var(--ty)) rotate(var(--tr)) scale(0.4);
     opacity: 0;
   }
+}
+
+@keyframes modal-pop {
+  from { opacity: 0; transform: scale(0.95) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes tab-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
 }

@@ -19,6 +19,7 @@ import StickersRapidos from "./components/StickersRapidos";
 import { insertarEnCursor } from "./lib/insertarEnCursor";
 import { useToast } from "./components/Toast";
 import SplashScreen from "./components/SplashScreen";
+import Spinner from "./components/Spinner";
 import { ADMINS as ADMINS_LOCAL } from "./lib/admins";
 
 const PRIVACIDAD_INFO: Record<string, { label: string; desc: string; icono: any }> = {
@@ -419,7 +420,7 @@ export default function Home() {
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
         <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
-        <p className="text-slate-400 text-sm">Cargando ENSFA+...</p>
+        <Spinner texto="Cargando ENSFA+..." />
       </div>
     </div>
   );

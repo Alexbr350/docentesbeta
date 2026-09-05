@@ -50,7 +50,7 @@ export default function ModalCertificarFinalizacion({
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full shadow-xl max-h-[90vh] overflow-y-auto animate-fade-in-up">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full shadow-xl max-h-[90vh] overflow-y-auto animate-modal-pop">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center">

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { ShieldCheck, KeyRound } from "lucide-react";
+import Spinner from "./Spinner";
 
 // Pantalla intermedia de verificación en dos pasos (2FA) para administradores
 // — se muestra después de un login con Google exitoso, antes de dejar entrar
@@ -94,7 +95,7 @@ export default function Verificacion2FA({
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 p-4 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-8 max-w-sm w-full text-center animate-fade-in-up">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-8 max-w-sm w-full text-center animate-modal-pop">
         <div className="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center mx-auto mb-4">
           <ShieldCheck size={26} className="text-blue-600 dark:text-blue-400" />
         </div>
@@ -124,7 +125,15 @@ export default function Verificacion2FA({
           disabled={codigo.length !== 6 || verificando}
           className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-2xl mt-5 disabled:opacity-50 transition active:scale-95"
         >
-          <KeyRound size={16} /> {verificando ? "Verificando..." : "Verificar código"}
+          {verificando ? (
+            <>
+              <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" /> Verificando...
+            </>
+          ) : (
+            <>
+              <KeyRound size={16} /> Verificar código
+            </>
+          )}
         </button>
 
         <button
@@ -132,7 +141,7 @@ export default function Verificacion2FA({
           disabled={cooldown > 0 || enviando}
           className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-4 disabled:text-slate-300 dark:disabled:text-slate-600 disabled:no-underline font-semibold block mx-auto"
         >
-          {cooldown > 0 ? `Reenviar código (${cooldown}s)` : enviando ? "Enviando..." : "Reenviar código"}
+          {cooldown > 0 ? `Reenviar código (${cooldown}s)` : enviando ? <Spinner tamano={11} texto="Enviando..." /> : "Reenviar código"}
         </button>
 
         <button onClick={onCancelar} className="block mx-auto text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 mt-4">

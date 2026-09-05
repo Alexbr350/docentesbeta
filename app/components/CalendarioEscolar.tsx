@@ -81,7 +81,7 @@ export default function CalendarioEscolar({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div key={nombreMes} className="grid grid-cols-7 gap-1 animate-fade-in">
         {celdas.map((dia, i) => {
           if (!dia) return <div key={`vacio-${i}`} />;
           const eventosDelDia = eventosPorDia.get(dia) || [];
@@ -119,8 +119,8 @@ export default function CalendarioEscolar({
       </div>
 
       {diaSeleccionado && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto animate-modal-pop">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100">{formatearFechaLarga(diaSeleccionado)}</h3>
               <button onClick={() => setDiaSeleccionado(null)} className="p-1 -m-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition">

@@ -8,6 +8,7 @@ import { collection, getDocs, addDoc, serverTimestamp, query, where, updateDoc, 
 import { UserPlus, Users2, Check, X } from "lucide-react";
 import { useToast } from "../components/Toast";
 import AmigosSugeridos from "../components/AmigosSugeridos";
+import Spinner from "../components/Spinner";
 
 export default function Usuarios() {
   const { mostrarToast } = useToast();
@@ -142,7 +143,7 @@ export default function Usuarios() {
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
         <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
-        <p className="text-slate-400 text-sm">Cargando usuarios...</p>
+        <Spinner texto="Cargando usuarios..." />
       </div>
     </div>
   );

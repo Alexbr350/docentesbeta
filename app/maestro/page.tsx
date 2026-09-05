@@ -7,6 +7,7 @@ import Navbar from "../components/Navbar";
 import { GraduationCap, Star, MessageCircle, Send, Users2, Sparkles } from "lucide-react";
 import ModalSugerenciaIA from "../components/ModalSugerenciaIA";
 import ModalCalificacionIA from "../components/ModalCalificacionIA";
+import Spinner from "../components/Spinner";
 
 export default function Maestro() {
   const router = useRouter();
@@ -118,7 +119,7 @@ export default function Maestro() {
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
         <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
-        <p className="text-slate-400 text-sm">Cargando panel maestro...</p>
+        <Spinner texto="Cargando panel maestro..." />
       </div>
     </div>
   );

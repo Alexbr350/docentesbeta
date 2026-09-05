@@ -66,8 +66,8 @@ export default function ModalCalendarioEvento({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full max-h-[85vh] overflow-y-auto animate-modal-pop">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 flex items-center gap-1.5">
             <CalendarDays size={16} className="text-blue-600" /> {esEdicion ? "Editar fecha" : "Nueva fecha"}

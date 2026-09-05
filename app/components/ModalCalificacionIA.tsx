@@ -66,8 +66,8 @@ export default function ModalCalificacionIA({
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full max-h-[85vh] overflow-y-auto animate-modal-pop">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 flex items-center gap-1.5">
             <Sparkles size={16} className="text-violet-500" /> Calificación sugerida (IA)
@@ -98,7 +98,7 @@ export default function ModalCalificacionIA({
 
         {!cargando && !error && numero !== null && (
           <>
-            <div className="flex flex-col items-center justify-center bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 rounded-xl p-5 mb-4">
+            <div className="flex flex-col items-center justify-center bg-violet-50 dark:bg-violet-950/30 border border-violet-200 dark:border-violet-900/40 rounded-xl p-5 mb-4 animate-fade-in-up">
               <div className="flex items-center gap-1.5 text-violet-500 mb-1">
                 <Star size={13} fill="currentColor" />
                 <span className="text-[11px] font-bold uppercase tracking-widest">Sugerencia de la IA</span>

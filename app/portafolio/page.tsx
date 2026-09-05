@@ -8,6 +8,7 @@ import { collection, getDocs, query, where, orderBy, deleteDoc, doc } from "fire
 import jsPDF from "jspdf";
 import { BookOpen, ClipboardList, PenLine, Paperclip, HelpCircle, FileDown, Trash2 } from "lucide-react";
 import ModalConfirmar from "../components/ModalConfirmar";
+import Spinner from "../components/Spinner";
 
 export default function Portafolio() {
   const router = useRouter();
@@ -123,7 +124,7 @@ export default function Portafolio() {
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
         <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
-        <p className="text-slate-400 text-sm">Cargando portafolio...</p>
+        <Spinner texto="Cargando portafolio..." />
       </div>
     </div>
   );

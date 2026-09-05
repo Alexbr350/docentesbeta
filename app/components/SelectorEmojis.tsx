@@ -76,7 +76,7 @@ export default function SelectorEmojis({
   return (
     <div className="relative inline-block">
       {mostrar && (
-        <div ref={panelRef} className={`absolute z-50 shadow-2xl rounded-xl overflow-hidden ${posicionPanel}`}>
+        <div ref={panelRef} className={`absolute z-50 shadow-2xl rounded-xl overflow-hidden animate-modal-pop ${posicionPanel}`}>
           <EmojiPicker
             onEmojiClick={insertarEmoji}
             theme={(modoOscuro ? "dark" : "light") as Theme}

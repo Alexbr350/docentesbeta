@@ -13,6 +13,7 @@ import ModalSugerenciaIA from "../components/ModalSugerenciaIA";
 import ModalCalificacionIA from "../components/ModalCalificacionIA";
 import CalendarioEscolar from "../components/CalendarioEscolar";
 import ModalCalendarioEvento, { DatosFormularioCalendario } from "../components/ModalCalendarioEvento";
+import Spinner from "../components/Spinner";
 import ModalCertificarFinalizacion from "../components/ModalCertificarFinalizacion";
 import { EventoCalendario } from "../lib/calendarioEscolar";
 import { metasCompletadas, generarFolio } from "../lib/certificado";
@@ -572,7 +573,7 @@ function ChatEstadisticasIA({ posts, usuarios }: { posts: any[]; usuarios: any[]
           </p>
         )}
         {historial.map((h, i) => (
-          <div key={i} className="space-y-1.5">
+          <div key={i} className="space-y-1.5 animate-fade-in-up">
             <div className="flex justify-end">
               <div className="max-w-[85%] bg-blue-600 text-white text-xs px-3 py-2 rounded-xl rounded-br-sm">{h.pregunta}</div>
             </div>
@@ -1204,7 +1205,7 @@ export default function Admin() {
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="text-center">
         <img src="/logo.png" alt="ENSFA" className="w-16 h-16 rounded-full mx-auto mb-4 opacity-80" />
-        <p className="text-slate-400 text-sm">Cargando panel...</p>
+        <Spinner texto="Cargando panel..." />
       </div>
     </div>
   );
@@ -1276,14 +1277,20 @@ export default function Admin() {
         </div>
 
         {vistaActual === "dashboard" && (
-          <div>
+          <div className="animate-tab-fade">
             <div className="flex justify-end mb-4">
               <button
                 onClick={exportarReporteInstitucional}
                 disabled={generandoReporte}
                 className="flex items-center gap-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg transition active:scale-95 disabled:opacity-50"
               >
-                <FileDown size={16} /> {generandoReporte ? "Generando..." : "Exportar reporte institucional (PDF)"}
+                {generandoReporte ? (
+                  <Spinner tamano={14} texto="Generando..." />
+                ) : (
+                  <>
+                    <FileDown size={16} /> Exportar reporte institucional (PDF)
+                  </>
+                )}
               </button>
             </div>
             <DeteccionAtencion posts={posts} usuarios={usuarios} />
@@ -1293,7 +1300,7 @@ export default function Admin() {
         )}
 
         {vistaActual === "practicantes" && (
-          <div>
+          <div className="animate-tab-fade">
             {usuarios.map((u) => {
               const completo = metasCompletadas(posts, u.email);
               const certificacion = certificaciones[u.email];
@@ -1339,7 +1346,7 @@ export default function Admin() {
         )}
 
         {vistaActual === "publicaciones" && (
-          <div>
+          <div className="animate-tab-fade">
             {posts.map((post) => (
               <div key={post.id} className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-3 shadow-md hover:shadow-lg transition">
                 <div className="flex items-center justify-between mb-3">
@@ -1465,14 +1472,26 @@ export default function Admin() {
           onCancelar={() => setPostParaCalificacionIA(null)}
         />
 
-        {vistaActual === "reportes" && <ReportesList />}
+        {vistaActual === "reportes" && (
+          <div className="animate-tab-fade">
+            <ReportesList />
+          </div>
+        )}
 
-        {vistaActual === "eventos" && <EventosList />}
+        {vistaActual === "eventos" && (
+          <div className="animate-tab-fade">
+            <EventosList />
+          </div>
+        )}
 
-        {vistaActual === "calendario" && <CalendarioAdminTab />}
+        {vistaActual === "calendario" && (
+          <div className="animate-tab-fade">
+            <CalendarioAdminTab />
+          </div>
+        )}
 
         {vistaActual === "auditoria" && (
-          <div>
+          <div className="animate-tab-fade">
             <div className="flex flex-wrap items-center gap-2 mb-5">
               <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold">
                 <Filter size={13} /> Filtrar:
@@ -1512,7 +1531,7 @@ export default function Admin() {
                 );
               }
 
-              return filtrado.map((entrada) => {
+              return filtrado.map((entrada, index) => {
                 const info = INFO_ACCION_AUDITORIA[entrada.tipo] || INFO_ACCION_DEFAULT;
                 const Icono = info.icono;
                 const detallesTexto = Object.entries(entrada.detalles || {})
@@ -1523,7 +1542,11 @@ export default function Admin() {
                   ? entrada.fecha.toDate().toLocaleString("es-MX", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
                   : "hace un momento";
                 return (
-                  <div key={entrada.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-3 shadow-md flex items-start gap-3">
+                  <div
+                    key={entrada.id}
+                    className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-3 shadow-md hover:shadow-lg transition flex items-start gap-3 animate-fade-in-up"
+                    style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
+                  >
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${info.fondo}`}>
                       <Icono size={16} className={info.color} />
                     </div>
@@ -1540,7 +1563,7 @@ export default function Admin() {
         )}
 
         {vistaActual === "maestros" && (
-          <div>
+          <div className="animate-tab-fade">
             <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 shadow-md">
               <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 mb-4 flex items-center gap-1.5"><GraduationCap size={16} className="text-green-600" /> Gestionar Maestros</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Agrega correos de maestros para que puedan calificar a sus grupos.</p>
