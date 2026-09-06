@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { X, CalendarDays } from "lucide-react";
+import { X, CalendarDays, Users } from "lucide-react";
 import { EventoCalendario, TipoEventoCalendario, TIPOS_EVENTO } from "../lib/calendarioEscolar";
 
 export type DatosFormularioCalendario = {
@@ -11,18 +11,23 @@ export type DatosFormularioCalendario = {
   horaInicio: string;
   horaFin: string;
   descripcion: string;
+  momentoActivo: boolean;
+  autorizados: string[];
 };
 
 export default function ModalCalendarioEvento({
   visible,
   eventoEditar,
   fechaSugerida,
+  usuariosDisponibles,
   onGuardar,
   onCancelar,
 }: {
   visible: boolean;
   eventoEditar?: EventoCalendario | null;
   fechaSugerida?: string | null;
+  // Practicantes que se pueden autorizar a contribuir al Momento colaborativo.
+  usuariosDisponibles?: { email: string; nombre?: string }[];
   onGuardar: (datos: DatosFormularioCalendario) => void;
   onCancelar: () => void;
 }) {
@@ -33,6 +38,8 @@ export default function ModalCalendarioEvento({
   const [horaInicio, setHoraInicio] = useState("");
   const [horaFin, setHoraFin] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [momentoActivo, setMomentoActivo] = useState(false);
+  const [autorizados, setAutorizados] = useState<string[]>([]);
 
   useEffect(() => {
     if (!visible) return;
@@ -44,6 +51,8 @@ export default function ModalCalendarioEvento({
       setHoraInicio(eventoEditar.horaInicio || "");
       setHoraFin(eventoEditar.horaFin || "");
       setDescripcion(eventoEditar.descripcion || "");
+      setMomentoActivo(!!eventoEditar.momentoActivo);
+      setAutorizados(eventoEditar.autorizados || []);
     } else {
       setTitulo("");
       setTipo("practica");
@@ -52,6 +61,8 @@ export default function ModalCalendarioEvento({
       setHoraInicio("");
       setHoraFin("");
       setDescripcion("");
+      setMomentoActivo(false);
+      setAutorizados([]);
     }
   }, [visible, eventoEditar, fechaSugerida]);
 
@@ -62,7 +73,17 @@ export default function ModalCalendarioEvento({
 
   const guardar = () => {
     if (deshabilitado) return;
-    onGuardar({ titulo: titulo.trim(), tipo, fechaInicio, fechaFin, horaInicio, horaFin, descripcion: descripcion.trim() });
+    onGuardar({
+      titulo: titulo.trim(),
+      tipo,
+      fechaInicio,
+      fechaFin,
+      horaInicio,
+      horaFin,
+      descripcion: descripcion.trim(),
+      momentoActivo,
+      autorizados: momentoActivo ? autorizados : [],
+    });
   };
 
   return (
@@ -156,6 +177,46 @@ export default function ModalCalendarioEvento({
           rows={3}
           className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-700 dark:text-slate-300 resize-none mb-4 focus:outline-none focus:border-blue-400"
         />
+
+        <label className="flex items-start gap-2.5 mb-3 cursor-pointer bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 rounded-xl px-3.5 py-3">
+          <input
+            type="checkbox"
+            checked={momentoActivo}
+            onChange={(e) => setMomentoActivo(e.target.checked)}
+            className="mt-0.5"
+          />
+          <span>
+            <span className="flex items-center gap-1.5 text-sm font-bold text-gray-800 dark:text-slate-100">
+              <Users size={14} className="text-amber-600 dark:text-amber-400" /> Permitir Momento colaborativo
+            </span>
+            <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Los practicantes que autorices podrán agregar sus Stories del día del evento a un álbum colaborativo del evento.
+            </span>
+          </span>
+        </label>
+
+        {momentoActivo && (
+          <div className="mb-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl p-3 max-h-40 overflow-y-auto">
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">¿Quién puede contribuir?</p>
+            {(!usuariosDisponibles || usuariosDisponibles.length === 0) && (
+              <p className="text-xs text-slate-400">No hay practicantes registrados todavía.</p>
+            )}
+            {usuariosDisponibles?.map((u) => (
+              <label key={u.email} className="flex items-center gap-2 py-1 text-xs text-slate-600 dark:text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={autorizados.includes(u.email)}
+                  onChange={(e) => {
+                    setAutorizados((prev) =>
+                      e.target.checked ? [...prev, u.email] : prev.filter((em) => em !== u.email)
+                    );
+                  }}
+                />
+                {u.nombre || u.email}
+              </label>
+            ))}
+          </div>
+        )}
 
         <div className="flex justify-end gap-2">
           <button onClick={onCancelar} className="text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-400 px-4 py-2">

@@ -1,12 +1,15 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
-import { collection, getDocs, addDoc, serverTimestamp, query, orderBy, deleteDoc, doc } from "firebase/firestore";
-import { Plus, X, Send, Heart, Trash2, Camera, Video, Upload, Circle } from "lucide-react";
+import { collection, getDocs, addDoc, serverTimestamp, query, orderBy, where, deleteDoc, doc } from "firebase/firestore";
+import { Plus, X, Send, Heart, Trash2, Camera, Video, Upload, Circle, Users } from "lucide-react";
 import ModalConfirmar from "./ModalConfirmar";
 import { useToast } from "./Toast";
+import { EventoCalendario, aFechaISO, puedeContribuirMomento } from "../lib/calendarioEscolar";
 
 export default function Stories() {
+  const router = useRouter();
   const { mostrarToast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [stories, setStories] = useState<any[]>([]);
@@ -17,6 +20,8 @@ export default function Stories() {
   const [indiceActual, setIndiceActual] = useState(0);
   const [barraLlena, setBarraLlena] = useState(false);
   const [respuesta, setRespuesta] = useState("");
+  const [momentosDisponibles, setMomentosDisponibles] = useState<EventoCalendario[]>([]);
+  const [momentoSeleccionado, setMomentoSeleccionado] = useState<string>("");
   const timeoutRef = useRef<any>(null);
 
   const [modoCamara, setModoCamara] = useState(false);
@@ -32,6 +37,7 @@ export default function Stories() {
       if (currentUser) {
         setUser(currentUser);
         cargarStories();
+        cargarMomentosDisponibles(currentUser.email || "");
       }
     });
     return () => unsubscribe();
@@ -46,6 +52,18 @@ export default function Stories() {
       .map((d) => ({ id: d.id, ...d.data() }))
       .filter((s: any) => s.fecha?.toDate?.() > hace24h);
     setStories(data);
+  };
+
+  // Eventos del Calendario Escolar cuyo Momento colaborativo está activo hoy
+  // y para los que el usuario actual está autorizado a contribuir — se le
+  // ofrece agregarlos como una opción adicional al subir su historia normal.
+  const cargarMomentosDisponibles = async (email: string) => {
+    const hoy = aFechaISO(new Date());
+    const snap = await getDocs(query(collection(db, "calendario_escolar"), where("momentoActivo", "==", true)));
+    const activos = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as EventoCalendario))
+      .filter((ev) => puedeContribuirMomento(ev, email, hoy));
+    setMomentosDisponibles(activos);
   };
 
   const abrirCamara = async () => {
@@ -132,13 +150,24 @@ export default function Stories() {
       autor: user.displayName || user.email,
       email: user.email,
       fecha: serverTimestamp(),
+      ...(momentoSeleccionado && { eventoId: momentoSeleccionado }),
     });
 
     setArchivoSeleccionado(null);
     setShowUpload(false);
     setSubiendo(false);
+    setMomentoSeleccionado("");
     cargarStories();
   };
+
+  // El anillo cambia de color (y se agrega una insignia) cuando alguna
+  // historia del grupo pertenece a un Momento colaborativo activo — así se
+  // distingue de una historia normal sin necesidad de abrirla primero.
+  const tieneMomento = (grupo: any[]) => grupo.some((s) => !!s.eventoId);
+  const anilloDe = (grupo: any[]) =>
+    tieneMomento(grupo)
+      ? "bg-gradient-to-br from-amber-400 via-orange-500 to-pink-600"
+      : "bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500";
 
   const storiesPorAutor = stories.reduce((acc: any, story: any) => {
     if (!acc[story.email]) acc[story.email] = [];
@@ -232,7 +261,7 @@ export default function Stories() {
         <div className="flex flex-col items-center gap-1 flex-shrink-0">
           {storiesPorAutor[user?.email] ? (
             <button onClick={() => abrirGrupo(storiesPorAutor[user?.email])} className="relative w-16 h-16">
-              <div className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
+              <div className={`w-16 h-16 rounded-full p-0.5 ${anilloDe(storiesPorAutor[user?.email])}`}>
                 {storiesPorAutor[user?.email][0].esVideo ? (
                   <div className="w-full h-full rounded-full bg-slate-800 border-2 border-white flex items-center justify-center">
                     <Video size={20} className="text-white" />
@@ -241,6 +270,11 @@ export default function Stories() {
                   <img src={storiesPorAutor[user?.email][0].imagenUrl} alt="Tu historia" className="w-full h-full rounded-full object-cover border-2 border-white" />
                 )}
               </div>
+              {tieneMomento(storiesPorAutor[user?.email]) && (
+                <span className="absolute -top-0.5 -left-0.5 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center border-2 border-white">
+                  <Users size={10} className="text-white" />
+                </span>
+              )}
               <span
                 onClick={(e) => { e.stopPropagation(); setShowUpload(true); }}
                 className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white"
@@ -264,13 +298,18 @@ export default function Stories() {
           const primera = storiesDelAutor[0];
           return (
             <div key={email} className="flex flex-col items-center gap-1 flex-shrink-0">
-              <button onClick={() => abrirGrupo(storiesDelAutor)} className="w-16 h-16 rounded-full p-0.5 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500">
+              <button onClick={() => abrirGrupo(storiesDelAutor)} className={`relative w-16 h-16 rounded-full p-0.5 ${anilloDe(storiesDelAutor)}`}>
                 {primera.esVideo ? (
                   <div className="w-full h-full rounded-full bg-slate-800 border-2 border-white flex items-center justify-center">
                     <Video size={20} className="text-white" />
                   </div>
                 ) : (
                   <img src={primera.imagenUrl} alt={primera.autor} className="w-full h-full rounded-full object-cover border-2 border-white" />
+                )}
+                {tieneMomento(storiesDelAutor) && (
+                  <span className="absolute -top-0.5 -left-0.5 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center border-2 border-white">
+                    <Users size={10} className="text-white" />
+                  </span>
                 )}
               </button>
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate w-16 text-center">{primera.autor?.split(" ")[0]}</span>
@@ -285,7 +324,7 @@ export default function Stories() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-sm w-full animate-modal-pop">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100">Subir historia</h3>
-              <button onClick={() => { setShowUpload(false); setArchivoSeleccionado(null); }} className="p-1 -m-1"><X size={18} className="text-slate-400" /></button>
+              <button onClick={() => { setShowUpload(false); setArchivoSeleccionado(null); setMomentoSeleccionado(""); }} className="p-1 -m-1"><X size={18} className="text-slate-400" /></button>
             </div>
 
             {!archivoSeleccionado ? (
@@ -310,6 +349,41 @@ export default function Stories() {
                 ) : (
                   <img src={URL.createObjectURL(archivoSeleccionado)} alt="" className="w-full max-h-64 object-contain" />
                 )}
+              </div>
+            )}
+
+            {archivoSeleccionado && momentosDisponibles.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+                  <Users size={12} className="text-amber-600 dark:text-amber-400" /> Agregar también a un Momento colaborativo (opcional)
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setMomentoSeleccionado("")}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition font-medium ${
+                      !momentoSeleccionado
+                        ? "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200"
+                        : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-400"
+                    }`}
+                  >
+                    Solo mi historia
+                  </button>
+                  {momentosDisponibles.map((ev) => (
+                    <button
+                      key={ev.id}
+                      type="button"
+                      onClick={() => setMomentoSeleccionado(ev.id)}
+                      className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border transition font-medium ${
+                        momentoSeleccionado === ev.id
+                          ? "bg-amber-100 dark:bg-amber-950/40 border-amber-400 text-amber-700 dark:text-amber-400"
+                          : "border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-400"
+                      }`}
+                    >
+                      <Users size={12} /> {ev.titulo}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -415,6 +489,17 @@ export default function Stories() {
                 <img src={grupoSeleccionado[indiceActual].imagenUrl} alt="" className="w-full max-h-[65vh] object-contain bg-black/40" />
               )}
             </div>
+
+            {grupoSeleccionado[indiceActual].eventoId && (
+              <div className="flex justify-center mt-3 relative z-20">
+                <button
+                  onClick={() => router.push(`/momento/${grupoSeleccionado[indiceActual].eventoId}`)}
+                  className="flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 py-1.5 rounded-full backdrop-blur-md transition"
+                >
+                  <Users size={12} /> Ver Momento completo
+                </button>
+              </div>
+            )}
 
             {grupoSeleccionado[indiceActual].email === user?.email ? (
               <div className="flex justify-center mt-5 relative z-20">

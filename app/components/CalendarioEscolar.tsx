@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, X, Edit, Trash2, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CalendarDays, ChevronLeft, ChevronRight, X, Edit, Trash2, Plus, Users } from "lucide-react";
 import {
   EventoCalendario,
   TIPOS_EVENTO,
@@ -26,6 +27,7 @@ export default function CalendarioEscolar({
   onEditar?: (evento: EventoCalendario) => void;
   onEliminar?: (evento: EventoCalendario) => void;
 }) {
+  const router = useRouter();
   const hoyDate = new Date();
   const [mesActual, setMesActual] = useState(new Date(hoyDate.getFullYear(), hoyDate.getMonth(), 1));
   const [diaSeleccionado, setDiaSeleccionado] = useState<string | null>(null);
@@ -153,6 +155,14 @@ export default function CalendarioEscolar({
                   )}
                   {ev.descripcion && (
                     <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed break-words">{ev.descripcion}</p>
+                  )}
+                  {ev.momentoActivo && (
+                    <button
+                      onClick={() => router.push(`/momento/${ev.id}`)}
+                      className="flex items-center gap-1.5 text-xs bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg font-semibold transition active:scale-95 mt-2"
+                    >
+                      <Users size={12} /> Ver Momento colaborativo
+                    </button>
                   )}
                   {modoEdicion && (
                     <div className="flex gap-3 mt-2 pt-2 border-t border-slate-900/10 dark:border-white/10">

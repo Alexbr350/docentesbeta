@@ -3,9 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../firebase";
 import { signOut } from "firebase/auth";
-import { collection, getDocs, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { collection, getDocs, getDoc, orderBy, query, addDoc, serverTimestamp, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
 import Navbar from "../components/Navbar";
-import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, CalendarDays, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3, Presentation, FileDown, Sparkles, BadgeCheck, ScrollText, Filter, AlertTriangle, Loader2 } from "lucide-react";
+import { ShieldAlert, Users2, ClipboardList, Star, Flag, Calendar, CalendarDays, GraduationCap, MessageCircle, Trash2, Send, CheckCircle2, ImageIcon, FileIcon, BarChart3, Presentation, FileDown, Sparkles, BadgeCheck, ScrollText, Filter, AlertTriangle, Loader2, Radio } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import jsPDF from "jspdf";
 import ModalConfirmar from "../components/ModalConfirmar";
@@ -758,14 +758,31 @@ function CalendarioAdminTab() {
   const [eventoEditar, setEventoEditar] = useState<EventoCalendario | null>(null);
   const [fechaSugerida, setFechaSugerida] = useState<string | null>(null);
   const [eventoAEliminar, setEventoAEliminar] = useState<EventoCalendario | null>(null);
+  const [practicantes, setPracticantes] = useState<{ email: string; nombre?: string }[]>([]);
 
   useEffect(() => {
     cargarCalendario();
+    cargarPracticantes();
   }, []);
 
   const cargarCalendario = async () => {
     const snap = await getDocs(query(collection(db, "calendario_escolar"), orderBy("fechaInicio", "asc")));
     setEventos(snap.docs.map((d) => ({ id: d.id, ...d.data() })) as EventoCalendario[]);
+  };
+
+  // Igual que el resto del panel de admin, la lista de practicantes se deriva
+  // de quién ha publicado en "posts" (no existe una colección única de
+  // usuarios registrados) — se usa para el selector de "autorizados" del
+  // Momento colaborativo.
+  const cargarPracticantes = async () => {
+    const snap = await getDocs(collection(db, "posts"));
+    const emails = [...new Set(snap.docs.map((d) => d.data().email))] as string[];
+    setPracticantes(
+      emails.map((email) => ({
+        email,
+        nombre: snap.docs.find((d) => d.data().email === email)?.data().autor,
+      }))
+    );
   };
 
   const abrirCrear = (fecha: string) => {
@@ -790,6 +807,8 @@ function CalendarioAdminTab() {
       ...(datos.horaInicio && { horaInicio: datos.horaInicio }),
       ...(datos.horaFin && { horaFin: datos.horaFin }),
       ...(datos.descripcion && { descripcion: datos.descripcion }),
+      momentoActivo: datos.momentoActivo,
+      autorizados: datos.autorizados,
     };
 
     if (eventoEditar) {
@@ -851,6 +870,7 @@ function CalendarioAdminTab() {
         visible={showFormulario}
         eventoEditar={eventoEditar}
         fechaSugerida={fechaSugerida}
+        usuariosDisponibles={practicantes}
         onGuardar={guardar}
         onCancelar={() => { setShowFormulario(false); setEventoEditar(null); setFechaSugerida(null); }}
       />
@@ -862,6 +882,123 @@ function CalendarioAdminTab() {
         onConfirmar={eliminar}
         onCancelar={() => setEventoAEliminar(null)}
       />
+    </div>
+  );
+}
+
+// Extrae el ID de video de YouTube de un link (watch, youtu.be, /live/,
+// /embed/) o lo deja pasar si ya es un ID de 11 caracteres.
+function extraerIdYoutube(valor: string): string {
+  const texto = valor.trim();
+  const patrones = [
+    /(?:youtube\.com\/watch\?v=)([\w-]{11})/,
+    /(?:youtu\.be\/)([\w-]{11})/,
+    /(?:youtube\.com\/live\/)([\w-]{11})/,
+    /(?:youtube\.com\/embed\/)([\w-]{11})/,
+  ];
+  for (const patron of patrones) {
+    const m = texto.match(patron);
+    if (m) return m[1];
+  }
+  return /^[\w-]{11}$/.test(texto) ? texto : "";
+}
+
+function TransmisionAdminTab() {
+  const { mostrarToast } = useToast();
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const [activa, setActiva] = useState(false);
+  const [youtubeVideoId, setYoutubeVideoId] = useState("");
+  const [inputLink, setInputLink] = useState("");
+
+  useEffect(() => {
+    cargar();
+  }, []);
+
+  const cargar = async () => {
+    const snap = await getDoc(doc(db, "configuracion", "transmision"));
+    if (snap.exists()) {
+      const data: any = snap.data();
+      setActiva(!!data.activa);
+      setYoutubeVideoId(data.youtubeVideoId || "");
+      setInputLink(data.youtubeVideoId || "");
+    }
+    setCargando(false);
+  };
+
+  const guardarLink = async () => {
+    const id = extraerIdYoutube(inputLink);
+    if (!id) {
+      mostrarToast("Pega un link de YouTube válido o el ID del video.", "error");
+      return;
+    }
+    setGuardando(true);
+    await setDoc(doc(db, "configuracion", "transmision"), { youtubeVideoId: id, activa }, { merge: true });
+    setYoutubeVideoId(id);
+    setInputLink(id);
+    setGuardando(false);
+    mostrarToast("Link de la transmisión guardado");
+  };
+
+  const alternarActiva = async () => {
+    const nuevoValor = !activa;
+    if (nuevoValor && !youtubeVideoId) {
+      mostrarToast("Primero guarda el link del video.", "error");
+      return;
+    }
+    setActiva(nuevoValor);
+    await setDoc(doc(db, "configuracion", "transmision"), { activa: nuevoValor, youtubeVideoId }, { merge: true });
+    mostrarToast(nuevoValor ? "Transmisión activada — ya es visible en el feed" : "Transmisión finalizada");
+  };
+
+  if (cargando) {
+    return (
+      <div className="py-10 flex justify-center">
+        <Spinner tamano={22} texto="Cargando..." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-md max-w-lg">
+      <h3 className="text-sm font-extrabold text-gray-800 dark:text-slate-100 flex items-center gap-1.5 mb-1">
+        <Radio size={16} className="text-red-500" /> Transmisión en vivo institucional
+      </h3>
+      <p className="text-xs text-slate-400 mb-4">
+        Pega el link (o el ID) del video de YouTube Live desde el que la institución esté transmitiendo (OBS o celular, directo a YouTube Live).
+      </p>
+
+      <input
+        type="text"
+        placeholder="https://www.youtube.com/watch?v=... o el ID del video"
+        value={inputLink}
+        onChange={(e) => setInputLink(e.target.value)}
+        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 mb-3 focus:outline-none focus:border-blue-400"
+      />
+      <button
+        onClick={guardarLink}
+        disabled={guardando}
+        className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold shadow transition active:scale-95 disabled:opacity-50 mb-5"
+      >
+        {guardando ? "Guardando..." : "Guardar link"}
+      </button>
+
+      <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4">
+        <div>
+          <p className="text-sm font-bold text-gray-800 dark:text-slate-100">Estado</p>
+          <p className="text-xs text-slate-400">{activa ? "En vivo ahora mismo" : "Sin transmitir"}</p>
+        </div>
+        <button
+          onClick={alternarActiva}
+          className={`flex items-center gap-1.5 text-sm px-4 py-2 rounded-xl font-semibold shadow transition active:scale-95 ${
+            activa
+              ? "bg-red-600 hover:bg-red-700 text-white"
+              : "bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300"
+          }`}
+        >
+          <Radio size={14} /> {activa ? "Terminar transmisión" : "Iniciar transmisión"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -1257,7 +1394,7 @@ export default function Admin() {
         </div>
 
         <div className="flex gap-2 mb-5 overflow-x-auto flex-nowrap pb-1">
-          {["dashboard", "publicaciones", "practicantes", "maestros", "reportes", "eventos", "calendario", "auditoria"].map((v) => (
+          {["dashboard", "publicaciones", "practicantes", "maestros", "reportes", "eventos", "calendario", "transmision", "auditoria"].map((v) => (
             <button
               key={v}
               onClick={() => setVistaActual(v)}
@@ -1270,8 +1407,9 @@ export default function Admin() {
               {v === "reportes" && <Flag size={14} />}
               {v === "eventos" && <Calendar size={14} />}
               {v === "calendario" && <CalendarDays size={14} />}
+              {v === "transmision" && <Radio size={14} />}
               {v === "auditoria" && <ScrollText size={14} />}
-              {v === "dashboard" ? "Estadísticas" : v.charAt(0).toUpperCase() + v.slice(1)}
+              {v === "dashboard" ? "Estadísticas" : v === "transmision" ? "En vivo" : v.charAt(0).toUpperCase() + v.slice(1)}
             </button>
           ))}
         </div>
@@ -1487,6 +1625,12 @@ export default function Admin() {
         {vistaActual === "calendario" && (
           <div className="animate-tab-fade">
             <CalendarioAdminTab />
+          </div>
+        )}
+
+        {vistaActual === "transmision" && (
+          <div className="animate-tab-fade">
+            <TransmisionAdminTab />
           </div>
         )}
 

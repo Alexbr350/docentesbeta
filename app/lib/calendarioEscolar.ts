@@ -21,6 +21,12 @@ export type EventoCalendario = {
   horaFin?: string; // "HH:MM"
   descripcion?: string;
   creadoPor?: string;
+  // Momento colaborativo: si está activo, los emails en `autorizados` pueden
+  // agregar sus Stories al álbum colaborativo del evento (ver
+  // app/components/Stories.tsx y app/momento/[eventoId]/page.tsx). Cualquiera
+  // puede VER el álbum ya armado; solo los autorizados pueden CONTRIBUIR.
+  momentoActivo?: boolean;
+  autorizados?: string[];
 };
 
 export const TIPOS_EVENTO: {
@@ -98,4 +104,12 @@ export function aFechaISO(fecha: Date): string {
   const m = String(fecha.getMonth() + 1).padStart(2, "0");
   const d = String(fecha.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+/** True si el evento tiene su Momento colaborativo activo, es hoy (dentro de
+ * su rango de fechas), y el email dado está en su lista de autorizados. */
+export function puedeContribuirMomento(evento: EventoCalendario, email: string, hoyISO: string): boolean {
+  if (!evento.momentoActivo || !email) return false;
+  if (!(evento.autorizados || []).includes(email)) return false;
+  return expandirRangoFechas(evento.fechaInicio, evento.fechaFin).includes(hoyISO);
 }

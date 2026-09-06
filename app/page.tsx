@@ -3,9 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "./firebase";
 import { signOut } from "firebase/auth";
-import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc, where, deleteDoc, setDoc } from "firebase/firestore";
-import { Heart, ThumbsDown, MessageCircle, MessageSquare, Flag, Paperclip, Calendar, ArrowRight, Layers, Repeat2, Globe, Users2, UserCheck, Lock, ChevronDown, Flame, Sparkles } from "lucide-react";
+import { collection, addDoc, getDocs, getDoc, orderBy, query, serverTimestamp, doc, updateDoc, where, deleteDoc, setDoc } from "firebase/firestore";
+import { Heart, ThumbsDown, MessageCircle, MessageSquare, Flag, Paperclip, Calendar, ArrowRight, Layers, Repeat2, Globe, Users2, UserCheck, Lock, ChevronDown, Flame, Sparkles, Radio, Users } from "lucide-react";
 import { calcularRacha } from "./lib/racha";
+import { aFechaISO, expandirRangoFechas } from "./lib/calendarioEscolar";
 import Navbar from "./components/Navbar";
 import Stories from "./components/Stories";
 import InsigniaVerificada, { esAdminOMaestro } from "./components/InsigniaVerificada";
@@ -72,6 +73,8 @@ export default function Home() {
   const [amigos, setAmigos] = useState<string[]>([]);
   const [misGrupos, setMisGrupos] = useState<any[]>([]);
   const [proximoEvento, setProximoEvento] = useState<any>(null);
+  const [momentosActivos, setMomentosActivos] = useState<any[]>([]);
+  const [transmisionEnVivo, setTransmisionEnVivo] = useState<{ activa?: boolean; youtubeVideoId?: string } | null>(null);
   const [maestrosEmails, setMaestrosEmails] = useState<string[]>([]);
   const [modalReportar, setModalReportar] = useState<{ postId: string; autorNombre: string; autorEmail: string } | null>(null);
   const [modalCompartir, setModalCompartir] = useState<any>(null);
@@ -109,6 +112,8 @@ export default function Home() {
         cargarAmigos(currentUser.email || "");
         cargarGrupos(currentUser.email || "");
         cargarProximoEvento();
+        cargarMomentosActivos();
+        cargarTransmision();
         cargarMaestros();
         cargarPerfiles();
       }
@@ -229,6 +234,23 @@ export default function Home() {
     const eventos = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     const proximo = eventos.find((e: any) => e.fechaEvento >= hoy);
     setProximoEvento(proximo || null);
+  };
+
+  // Momentos colaborativos del Calendario Escolar activos hoy — cualquiera
+  // puede ver el álbum ya armado (solo la contribución está restringida a
+  // los "autorizados", eso se filtra en Stories.tsx).
+  const cargarMomentosActivos = async () => {
+    const hoy = aFechaISO(new Date());
+    const snap = await getDocs(query(collection(db, "calendario_escolar"), where("momentoActivo", "==", true)));
+    const activos = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as any))
+      .filter((ev: any) => expandirRangoFechas(ev.fechaInicio, ev.fechaFin).includes(hoy));
+    setMomentosActivos(activos);
+  };
+
+  const cargarTransmision = async () => {
+    const snap = await getDoc(doc(db, "configuracion", "transmision"));
+    if (snap.exists()) setTransmisionEnVivo(snap.data() as any);
   };
 
   const cargarPosts = async (emailUsuario?: string) => {
@@ -526,6 +548,43 @@ export default function Home() {
               </div>
             </div>
           )}
+
+          {transmisionEnVivo?.activa && transmisionEnVivo.youtubeVideoId && (
+            <div
+              onClick={() => router.push("/en-vivo")}
+              className="bg-gradient-to-r from-red-600 to-red-500 rounded-2xl p-4 mb-4 shadow-md cursor-pointer hover:shadow-lg transition flex items-center gap-3"
+            >
+              <div className="relative flex-shrink-0">
+                <Radio size={22} className="text-white" />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-white rounded-full animate-pulse" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs text-red-100 font-semibold uppercase tracking-wide">Transmisión en vivo</p>
+                <p className="text-sm font-bold text-white">Únete a la transmisión institucional</p>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-white font-semibold">
+                Ver <ArrowRight size={14} />
+              </div>
+            </div>
+          )}
+
+          {momentosActivos.map((ev) => (
+            <div
+              key={ev.id}
+              onClick={() => router.push(`/momento/${ev.id}`)}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-4 mb-4 shadow-md cursor-pointer hover:shadow-lg transition flex items-center gap-3"
+            >
+              <Users size={22} className="text-white flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs text-amber-100 font-semibold uppercase tracking-wide">Momento colaborativo</p>
+                <p className="text-sm font-bold text-white">{ev.titulo}</p>
+                <p className="text-xs text-amber-100 mt-0.5">Álbum de historias del evento</p>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-white font-semibold">
+                Ver <ArrowRight size={14} />
+              </div>
+            </div>
+          ))}
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 shadow-md">
             <div className="flex gap-3 mb-3">
