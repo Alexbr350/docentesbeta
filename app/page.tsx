@@ -20,6 +20,7 @@ import StickersRapidos from "./components/StickersRapidos";
 import { insertarEnCursor } from "./lib/insertarEnCursor";
 import { useToast } from "./components/Toast";
 import { useChat } from "./components/ChatContext";
+import PuntoEnLinea from "./components/PuntoEnLinea";
 import SplashScreen from "./components/SplashScreen";
 import Spinner from "./components/Spinner";
 import { ADMINS as ADMINS_LOCAL } from "./lib/admins";
@@ -788,12 +789,15 @@ export default function Home() {
               style={{ animationDelay: `${Math.min(index * 40, 400)}ms` }}
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow overflow-hidden">
-                  {perfilesFotos[post.email] ? (
-                    <img src={perfilesFotos[post.email]} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    post.autor?.charAt(0).toUpperCase()
-                  )}
+                <div className="relative flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow overflow-hidden">
+                    {perfilesFotos[post.email] ? (
+                      <img src={perfilesFotos[post.email]} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      post.autor?.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <PuntoEnLinea email={post.email} />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-gray-900 dark:text-slate-100 flex items-center gap-1">

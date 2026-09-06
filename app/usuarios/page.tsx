@@ -9,6 +9,7 @@ import { UserPlus, Users2, Check, X } from "lucide-react";
 import { useToast } from "../components/Toast";
 import AmigosSugeridos from "../components/AmigosSugeridos";
 import Spinner from "../components/Spinner";
+import PuntoEnLinea from "../components/PuntoEnLinea";
 
 export default function Usuarios() {
   const { mostrarToast } = useToast();
@@ -160,8 +161,11 @@ export default function Usuarios() {
             {solicitudes.map((sol) => (
               <div key={sol.id} className="flex flex-wrap items-center justify-between gap-2 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-extrabold flex-shrink-0">
-                    {sol.deNombre?.charAt(0).toUpperCase()}
+                  <div className="relative flex-shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-extrabold">
+                      {sol.deNombre?.charAt(0).toUpperCase()}
+                    </div>
+                    <PuntoEnLinea email={sol.de} />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{sol.deNombre}</p>
@@ -201,8 +205,11 @@ export default function Usuarios() {
               className={`flex flex-wrap items-center justify-between gap-2 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors ${u.email === resaltado ? "bg-blue-50 dark:bg-blue-950/40 -mx-3 px-3 rounded-xl" : ""}`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow flex-shrink-0">
-                  {u.nombre?.charAt(0).toUpperCase()}
+                <div className="relative flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center text-sm font-extrabold shadow">
+                    {u.nombre?.charAt(0).toUpperCase()}
+                  </div>
+                  <PuntoEnLinea email={u.email} />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-gray-800 dark:text-slate-100">{u.nombre}</p>

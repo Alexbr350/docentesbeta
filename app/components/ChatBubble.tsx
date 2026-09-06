@@ -5,6 +5,7 @@ import { collection, getDocs, addDoc, serverTimestamp, query, where, orderBy } f
 import SelectorEmojis from "./SelectorEmojis";
 import StickersRapidos from "./StickersRapidos";
 import { useChat, DestinoChat } from "./ChatContext";
+import PuntoEnLinea from "./PuntoEnLinea";
 
 // Detecta si un mensaje es "solo emoji" (sin texto normal), para mostrarlo
 // más grande en la burbuja, como una reacción visual en vez de texto plano.
@@ -178,8 +179,11 @@ export default function ChatBubble() {
                     onClick={() => abrirChat(conv)}
                     className="flex items-center gap-2 p-2 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition"
                   >
-                    <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-bold flex-shrink-0">
-                      {conv.nombre?.charAt(0).toUpperCase()}
+                    <div className="relative flex-shrink-0">
+                      <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
+                        {conv.nombre?.charAt(0).toUpperCase()}
+                      </div>
+                      <PuntoEnLinea email={conv.email} />
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate">{conv.nombre}</p>
@@ -197,8 +201,11 @@ export default function ChatBubble() {
             <>
               <div className="bg-slate-900 px-4 py-3 flex items-center gap-2">
                 <button onClick={() => setAmigoSeleccionado(null)} className="text-white text-sm">←</button>
-                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
-                  {amigoSeleccionado.nombre?.charAt(0).toUpperCase()}
+                <div className="relative flex-shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
+                    {amigoSeleccionado.nombre?.charAt(0).toUpperCase()}
+                  </div>
+                  <PuntoEnLinea email={amigoSeleccionado.email} posicion="absolute -bottom-0.5 -right-0.5" tamano={8} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-white truncate">{amigoSeleccionado.nombre}</p>
