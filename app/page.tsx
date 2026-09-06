@@ -21,6 +21,9 @@ import { insertarEnCursor } from "./lib/insertarEnCursor";
 import { useToast } from "./components/Toast";
 import { useChat } from "./components/ChatContext";
 import PuntoEnLinea from "./components/PuntoEnLinea";
+import ContenidoConHashtags from "./components/ContenidoConHashtags";
+import HashtagsPopulares from "./components/HashtagsPopulares";
+import { extraerHashtags } from "./lib/hashtags";
 import SplashScreen from "./components/SplashScreen";
 import Spinner from "./components/Spinner";
 import { ADMINS as ADMINS_LOCAL } from "./lib/admins";
@@ -180,6 +183,7 @@ export default function Home() {
         tipo: post.tipo,
         postId: post.id,
       },
+      hashtags: extraerHashtags(comentario),
     });
     if (post.email !== user.email) {
       await addDoc(collection(db, "notificaciones"), {
@@ -388,6 +392,7 @@ export default function Home() {
       privacidad,
       ...(privacidad === "especifico" && { visiblePara }),
       ...(archivoUrl && { archivoUrl, archivoNombre }),
+      hashtags: extraerHashtags(contenido),
     });
     setContenido("");
     setArchivoSeleccionado(null);
@@ -816,9 +821,7 @@ export default function Home() {
               </div>
               {post.tipo === "Compartido" ? (
                 <div className="mb-3">
-                  {post.contenido && (
-                    <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">{post.contenido}</p>
-                  )}
+                  <ContenidoConHashtags texto={post.contenido} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3" />
                   <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-3 bg-slate-50 dark:bg-slate-800">
                     <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-1.5">
                       <Repeat2 size={12} /> Publicación original de {post.repostOriginal?.autor || "un usuario"}
@@ -828,12 +831,12 @@ export default function Home() {
                         {post.repostOriginal.tipo}
                       </span>
                     )}
-                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{post.repostOriginal?.contenido}</p>
+                    <ContenidoConHashtags texto={post.repostOriginal?.contenido} className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed" />
                   </div>
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">{post.contenido}</p>
+                  <ContenidoConHashtags texto={post.contenido} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3" />
                   {post.archivoUrl && /\.(jpg|jpeg|png|gif|webp)$/i.test(post.archivoNombre || "") ? (
                     <img
                       src={post.archivoUrl}
@@ -1023,6 +1026,7 @@ export default function Home() {
             </button>
           </div>
           <Tendencias />
+          <HashtagsPopulares />
           <AmigosSugeridos compacto />
           <div className="bg-slate-900 rounded-2xl p-4 mt-4 shadow-md text-center">
             <img src="/logo.png" alt="ENSFA" className="w-12 h-12 rounded-full mx-auto mb-2 opacity-90" />
