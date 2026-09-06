@@ -1,0 +1,40 @@
+{
+  "name": "ENSFA+",
+  "short_name": "ENSFA+",
+  "description": "Plataforma social para practicantes docentes de la Escuela Normal Superior Federal de Aguascalientes: comparte diarios, planeaciones y avances, y da seguimiento a tu semestre.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1d4ed8",
+  "theme_color": "#1d4ed8",
+  "lang": "es-MX",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
