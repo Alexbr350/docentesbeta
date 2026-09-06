@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "./components/Toast";
+import { ChatProvider } from "./components/ChatContext";
 import RegistrarServiceWorker from "./components/RegistrarServiceWorker";
 import GuiaInstalarIOS from "./components/GuiaInstalarIOS";
 
@@ -59,8 +60,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <RegistrarServiceWorker />
-        <ToastProvider>{children}</ToastProvider>
-        <GuiaInstalarIOS />
+        <ChatProvider>
+          <ToastProvider>{children}</ToastProvider>
+          <GuiaInstalarIOS />
+        </ChatProvider>
       </body>
     </html>
   );

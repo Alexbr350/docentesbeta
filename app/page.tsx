@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "./firebase";
 import { signOut } from "firebase/auth";
 import { collection, addDoc, getDocs, orderBy, query, serverTimestamp, doc, updateDoc, where, deleteDoc, setDoc } from "firebase/firestore";
-import { Heart, ThumbsDown, MessageCircle, Flag, Paperclip, Calendar, ArrowRight, Layers, Repeat2, Globe, Users2, UserCheck, Lock, ChevronDown, Flame, Sparkles } from "lucide-react";
+import { Heart, ThumbsDown, MessageCircle, MessageSquare, Flag, Paperclip, Calendar, ArrowRight, Layers, Repeat2, Globe, Users2, UserCheck, Lock, ChevronDown, Flame, Sparkles } from "lucide-react";
 import { calcularRacha } from "./lib/racha";
 import Navbar from "./components/Navbar";
 import Stories from "./components/Stories";
@@ -18,6 +18,7 @@ import SelectorEmojis from "./components/SelectorEmojis";
 import StickersRapidos from "./components/StickersRapidos";
 import { insertarEnCursor } from "./lib/insertarEnCursor";
 import { useToast } from "./components/Toast";
+import { useChat } from "./components/ChatContext";
 import SplashScreen from "./components/SplashScreen";
 import Spinner from "./components/Spinner";
 import { ADMINS as ADMINS_LOCAL } from "./lib/admins";
@@ -82,6 +83,7 @@ export default function Home() {
   const [perfilesFotos, setPerfilesFotos] = useState<Record<string, string>>({});
   const [mostrarSplash, setMostrarSplash] = useState(false);
   const { mostrarToast } = useToast();
+  const { abrirChatConUsuario } = useChat();
 
   const nombreAmigo = (email: string) => posts.find((p) => p.email === email)?.autor || email;
 
@@ -811,6 +813,23 @@ export default function Home() {
                 <button onClick={() => toggleComentarios(post.id)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-blue-500 font-semibold transition">
                   <MessageCircle size={14} /> {showComentarios[post.id] ? "Ocultar" : "Comentar"}
                 </button>
+                {post.tipo === "Pedir ayuda" && post.email !== user?.email && (
+                  <button
+                    onClick={() =>
+                      abrirChatConUsuario({
+                        email: post.email,
+                        nombre: post.autor,
+                        // No se requiere ser amigos para responder a una publicación
+                        // de "Pedir ayuda": se etiqueta el chat con el post de origen
+                        // para justificar la excepción (ver ChatBubble.tsx).
+                        origen: { postId: post.id, esPeticionAyuda: true },
+                      })
+                    }
+                    className="flex items-center gap-1 text-xs text-slate-400 hover:text-blue-500 font-semibold transition"
+                  >
+                    <MessageSquare size={14} /> Responder en privado
+                  </button>
+                )}
                 {(post.privacidad || "publico") === "publico" && (
                   <button onClick={() => compartirPost(post)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-emerald-500 font-semibold transition">
                     <Repeat2 size={14} /> Compartir
