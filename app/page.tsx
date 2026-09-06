@@ -102,7 +102,7 @@ export default function Home() {
       } else {
         setUser(currentUser);
         setLoading(false);
-        cargarPosts();
+        cargarPosts(currentUser.email || "");
         cargarNotificaciones(currentUser.email || "");
         cargarAmigos(currentUser.email || "");
         cargarGrupos(currentUser.email || "");
@@ -229,15 +229,32 @@ export default function Home() {
     setProximoEvento(proximo || null);
   };
 
-  const cargarPosts = async () => {
+  const cargarPosts = async (emailUsuario?: string) => {
+    // Se acepta el email como parámetro (en vez de leer solo el estado
+    // `user`) porque, justo al iniciar sesión, cargarPosts() se llama en el
+    // mismo instante que setUser(currentUser) — por el cierre (closure) de
+    // React, en ese primer llamado `user` todavía sería el valor viejo
+    // (null), así que si dependiéramos solo del estado, el like/dislike del
+    // usuario nunca se marcaría correctamente en la primera carga.
+    const email = emailUsuario || user?.email;
     const q = query(collection(db, "posts"), orderBy("fecha", "desc"));
     const snapshot = await getDocs(q);
+    const nuevosLikes: Record<string, boolean> = {};
+    const nuevosDislikes: Record<string, boolean> = {};
     const data = await Promise.all(snapshot.docs.map(async (d) => {
       const likesSnap = await getDocs(collection(db, "posts", d.id, "likes"));
       const dislikesSnap = await getDocs(collection(db, "posts", d.id, "dislikes"));
+      if (email) {
+        nuevosLikes[d.id] = likesSnap.docs.some((l) => l.id === email);
+        nuevosDislikes[d.id] = dislikesSnap.docs.some((l) => l.id === email);
+      }
       return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSnap.docs.length, ...d.data() };
     }));
     setPosts(data);
+    if (email) {
+      setLikes((prev: any) => ({ ...prev, ...nuevosLikes }));
+      setDislikes((prev: any) => ({ ...prev, ...nuevosDislikes }));
+    }
   };
 
   const cargarNotificaciones = async (email: string) => {
