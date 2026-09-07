@@ -8,6 +8,7 @@ import Navbar from "../../components/Navbar";
 import Spinner from "../../components/Spinner";
 import ContenidoConHashtags from "../../components/ContenidoConHashtags";
 import PuntoEnLinea from "../../components/PuntoEnLinea";
+import { UsuarioDirectorio } from "../../lib/menciones";
 
 const COLORES_TIPO: Record<string, string> = {
   "Diario": "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400",
@@ -30,6 +31,7 @@ export default function HashtagPage() {
   const [user, setUser] = useState<any>(null);
   const [amigos, setAmigos] = useState<string[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
+  const [directorio, setDirectorio] = useState<UsuarioDirectorio[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -46,15 +48,26 @@ export default function HashtagPage() {
     // Sin orderBy combinado con el array-contains a propósito: evita
     // necesitar un índice compuesto en Firestore. El orden por fecha se hace
     // en el cliente, igual que con otras listas de esta app.
-    const [amigosSnap, postsSnap] = await Promise.all([
+    const [amigosSnap, postsSnap, directorioSnap] = await Promise.all([
       getDocs(query(collection(db, "amigos"), where("usuario", "==", currentUser.email))),
       getDocs(query(collection(db, "posts"), where("hashtags", "array-contains", tag))),
+      getDocs(collection(db, "posts")),
     ]);
     setAmigos(amigosSnap.docs.map((d) => d.data().amigo));
     const data = postsSnap.docs
       .map((d) => ({ id: d.id, ...d.data() } as any))
       .sort((a, b) => (b.fecha?.toMillis?.() || 0) - (a.fecha?.toMillis?.() || 0));
     setPosts(data);
+
+    // Directorio de practicantes para resolver @menciones en el contenido —
+    // mismo patrón de derivación que en app/page.tsx.
+    const emails = [...new Set(directorioSnap.docs.map((d) => d.data().email))] as string[];
+    setDirectorio(
+      emails
+        .map((email) => ({ email, nombre: directorioSnap.docs.find((d) => d.data().email === email)?.data().autor }))
+        .filter((u): u is UsuarioDirectorio => !!u.nombre)
+    );
+
     setCargando(false);
   };
 
@@ -121,7 +134,7 @@ export default function HashtagPage() {
                 )}
               </div>
             </div>
-            <ContenidoConHashtags texto={post.contenido} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed" />
+            <ContenidoConHashtags texto={post.contenido} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed" directorio={directorio} />
           </div>
         ))}
       </div>

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { auth, db } from "./firebase";
 import { signOut } from "firebase/auth";
 import { collection, addDoc, getDocs, getDoc, orderBy, query, serverTimestamp, doc, updateDoc, where, deleteDoc, setDoc } from "firebase/firestore";
-import { Heart, ThumbsDown, MessageCircle, MessageSquare, Flag, Paperclip, Calendar, ArrowRight, Layers, Repeat2, Globe, Users2, UserCheck, Lock, ChevronDown, Flame, Sparkles, Radio, Users } from "lucide-react";
+import { MessageCircle, MessageSquare, Flag, Paperclip, Calendar, ArrowRight, Layers, Repeat2, Globe, Users2, UserCheck, Lock, ChevronDown, Flame, Sparkles, Radio, Users } from "lucide-react";
 import { calcularRacha } from "./lib/racha";
 import { aFechaISO, expandirRangoFechas } from "./lib/calendarioEscolar";
 import Navbar from "./components/Navbar";
@@ -23,7 +23,12 @@ import { useChat } from "./components/ChatContext";
 import PuntoEnLinea from "./components/PuntoEnLinea";
 import ContenidoConHashtags from "./components/ContenidoConHashtags";
 import HashtagsPopulares from "./components/HashtagsPopulares";
+import CampoConMenciones from "./components/CampoConMenciones";
 import { extraerHashtags } from "./lib/hashtags";
+import { extraerMenciones, UsuarioDirectorio } from "./lib/menciones";
+import { ConteoReacciones, reaccionPorTipo, TipoReaccion } from "./lib/reacciones";
+import BotonReaccion from "./components/BotonReaccion";
+import ResumenReacciones from "./components/ResumenReacciones";
 import SplashScreen from "./components/SplashScreen";
 import Spinner from "./components/Spinner";
 import { ADMINS as ADMINS_LOCAL } from "./lib/admins";
@@ -68,12 +73,10 @@ export default function Home() {
   const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
   const [showModalMejorarIA, setShowModalMejorarIA] = useState(false);
   const [showModalPlaneacionIA, setShowModalPlaneacionIA] = useState(false);
-  const [likes, setLikes] = useState<any>({});
-  const [dislikes, setDislikes] = useState<any>({});
-  const [likeJustPopped, setLikeJustPopped] = useState<Record<string, boolean>>({});
-  const [likesComentarios, setLikesComentarios] = useState<any>({});
-  const [dislikesComentarios, setDislikesComentarios] = useState<any>({});
-  const [likeComentarioJustPopped, setLikeComentarioJustPopped] = useState<Record<string, boolean>>({});
+  const [misReacciones, setMisReacciones] = useState<Record<string, TipoReaccion | null>>({});
+  const [reaccionJustPopped, setReaccionJustPopped] = useState<Record<string, boolean>>({});
+  const [misReaccionesComentarios, setMisReaccionesComentarios] = useState<Record<string, TipoReaccion | null>>({});
+  const [reaccionComentarioJustPopped, setReaccionComentarioJustPopped] = useState<Record<string, boolean>>({});
   const [amigos, setAmigos] = useState<string[]>([]);
   const [misGrupos, setMisGrupos] = useState<any[]>([]);
   const [proximoEvento, setProximoEvento] = useState<any>(null);
@@ -82,6 +85,7 @@ export default function Home() {
   const [maestrosEmails, setMaestrosEmails] = useState<string[]>([]);
   const [modalReportar, setModalReportar] = useState<{ postId: string; autorNombre: string; autorEmail: string } | null>(null);
   const [modalCompartir, setModalCompartir] = useState<any>(null);
+  const [directorio, setDirectorio] = useState<UsuarioDirectorio[]>([]);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const comentarioInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [privacidad, setPrivacidad] = useState<string>("publico");
@@ -120,6 +124,7 @@ export default function Home() {
         cargarTransmision();
         cargarMaestros();
         cargarPerfiles();
+        cargarDirectorio();
       }
     });
     return () => unsubscribe();
@@ -128,6 +133,22 @@ export default function Home() {
   const cargarMaestros = async () => {
     const snap = await getDocs(collection(db, "maestros"));
     setMaestrosEmails(snap.docs.map((d) => d.data().email));
+  };
+
+  // Directorio de practicantes (email + nombre) para el autocompletado de
+  // @menciones — se deriva de "posts", igual que en otras partes del panel
+  // de admin, ya que no existe una colección única de usuarios registrados.
+  const cargarDirectorio = async () => {
+    const snap = await getDocs(collection(db, "posts"));
+    const emails = [...new Set(snap.docs.map((d) => d.data().email))] as string[];
+    setDirectorio(
+      emails
+        .map((email) => ({
+          email,
+          nombre: snap.docs.find((d) => d.data().email === email)?.data().autor,
+        }))
+        .filter((u): u is UsuarioDirectorio => !!u.nombre)
+    );
   };
 
   const cargarPerfiles = async () => {
@@ -171,6 +192,7 @@ export default function Home() {
     const post = modalCompartir;
     const comentario = comentarioTexto.trim();
     setModalCompartir(null);
+    const menciones = extraerMenciones(comentario, directorio);
     await addDoc(collection(db, "posts"), {
       tipo: "Compartido",
       contenido: comentario,
@@ -184,6 +206,7 @@ export default function Home() {
         postId: post.id,
       },
       hashtags: extraerHashtags(comentario),
+      menciones,
     });
     if (post.email !== user.email) {
       await addDoc(collection(db, "notificaciones"), {
@@ -194,43 +217,71 @@ export default function Home() {
         fecha: serverTimestamp(),
       });
     }
+    await notificarMenciones(menciones, "una publicación");
     cargarPosts();
   };
 
-  const darLike = async (postId: string, postAutorEmail: string) => {
-    const likeRef = doc(db, "posts", postId, "likes", user.email);
-    if (likes[postId]) {
-      await deleteDoc(likeRef);
-      setLikes((prev: any) => ({ ...prev, [postId]: false }));
-    } else {
-      await setDoc(likeRef, { email: user.email, fecha: serverTimestamp() });
-      setLikes((prev: any) => ({ ...prev, [postId]: true }));
-      setLikeJustPopped((prev) => ({ ...prev, [postId]: true }));
-      setTimeout(() => setLikeJustPopped((prev) => ({ ...prev, [postId]: false })), 400);
-      if (postAutorEmail !== user.email) {
-        await addDoc(collection(db, "notificaciones"), {
-          para: postAutorEmail,
-          de: user.displayName || user.email,
-          mensaje: "le dio like a tu publicación",
-          leida: false,
-          fecha: serverTimestamp(),
-        });
-      }
+  // Aplica o cambia mi reacción a una publicación. setDoc con el email como
+  // ID sobreescribe cualquier reacción anterior mía en vez de duplicarla —
+  // así cada persona solo tiene UNA reacción activa por publicación.
+  const reaccionar = async (postId: string, tipo: TipoReaccion, postAutorEmail: string) => {
+    if (!user?.email) return;
+    const actual = misReacciones[postId];
+    const ref = doc(db, "posts", postId, "reacciones", user.email);
+    await setDoc(ref, { tipo, fecha: serverTimestamp() });
+    setMisReacciones((prev) => ({ ...prev, [postId]: tipo }));
+    setReaccionJustPopped((prev) => ({ ...prev, [postId]: true }));
+    setTimeout(() => setReaccionJustPopped((prev) => ({ ...prev, [postId]: false })), 400);
+    setPosts((prevPosts) =>
+      prevPosts.map((p) => {
+        if (p.id !== postId) return p;
+        const nuevoConteo: ConteoReacciones = { ...(p.reaccionesConteo || {}) };
+        if (actual) nuevoConteo[actual] = Math.max((nuevoConteo[actual] || 1) - 1, 0);
+        nuevoConteo[tipo] = (nuevoConteo[tipo] || 0) + 1;
+        return { ...p, reaccionesConteo: nuevoConteo };
+      })
+    );
+    if (postAutorEmail !== user.email) {
+      const info = reaccionPorTipo(tipo)!;
+      await addDoc(collection(db, "notificaciones"), {
+        para: postAutorEmail,
+        de: user.displayName || user.email,
+        mensaje: `le dio ${info.emoji} ${info.label} a tu publicación`,
+        leida: false,
+        fecha: serverTimestamp(),
+      });
     }
   };
 
-  const darDislike = async (postId: string) => {
+  const quitarReaccion = async (postId: string) => {
     if (!user?.email) return;
-    const dislikeRef = doc(db, "posts", postId, "dislikes", user.email);
-    if (dislikes[postId]) {
-      await deleteDoc(dislikeRef);
-      setDislikes((prev: any) => ({ ...prev, [postId]: false }));
-      setPosts(posts.map(p => p.id === postId ? { ...p, dislikesCount: (p.dislikesCount || 1) - 1 } : p));
-    } else {
-      await setDoc(dislikeRef, { email: user.email, fecha: serverTimestamp() });
-      setDislikes((prev: any) => ({ ...prev, [postId]: true }));
-      setPosts(posts.map(p => p.id === postId ? { ...p, dislikesCount: (p.dislikesCount || 0) + 1 } : p));
-    }
+    const actual = misReacciones[postId];
+    if (!actual) return;
+    const ref = doc(db, "posts", postId, "reacciones", user.email);
+    await deleteDoc(ref);
+    setMisReacciones((prev) => ({ ...prev, [postId]: null }));
+    setPosts((prevPosts) =>
+      prevPosts.map((p) => {
+        if (p.id !== postId) return p;
+        const nuevoConteo: ConteoReacciones = { ...(p.reaccionesConteo || {}) };
+        nuevoConteo[actual] = Math.max((nuevoConteo[actual] || 1) - 1, 0);
+        return { ...p, reaccionesConteo: nuevoConteo };
+      })
+    );
+  };
+
+  // Clic simple en el botón principal: si ya tenía una reacción, la quita;
+  // si no tenía ninguna, aplica "Me gusta" por default — igual que Facebook.
+  const clicReaccionPrincipal = (postId: string, postAutorEmail: string) => {
+    if (misReacciones[postId]) quitarReaccion(postId);
+    else reaccionar(postId, "me_gusta", postAutorEmail);
+  };
+
+  // Elegir del menú flotante: repetir la reacción ya activa la quita (toggle),
+  // elegir una distinta la cambia.
+  const elegirReaccion = (postId: string, tipo: TipoReaccion, postAutorEmail: string) => {
+    if (misReacciones[postId] === tipo) quitarReaccion(postId);
+    else reaccionar(postId, tipo, postAutorEmail);
   };
 
   const cargarProximoEvento = async () => {
@@ -263,26 +314,28 @@ export default function Home() {
     // `user`) porque, justo al iniciar sesión, cargarPosts() se llama en el
     // mismo instante que setUser(currentUser) — por el cierre (closure) de
     // React, en ese primer llamado `user` todavía sería el valor viejo
-    // (null), así que si dependiéramos solo del estado, el like/dislike del
-    // usuario nunca se marcaría correctamente en la primera carga.
+    // (null), así que si dependiéramos solo del estado, mi reacción nunca se
+    // marcaría correctamente en la primera carga.
     const email = emailUsuario || user?.email;
     const q = query(collection(db, "posts"), orderBy("fecha", "desc"));
     const snapshot = await getDocs(q);
-    const nuevosLikes: Record<string, boolean> = {};
-    const nuevosDislikes: Record<string, boolean> = {};
+    const nuevasMisReacciones: Record<string, TipoReaccion | null> = {};
     const data = await Promise.all(snapshot.docs.map(async (d) => {
-      const likesSnap = await getDocs(collection(db, "posts", d.id, "likes"));
-      const dislikesSnap = await getDocs(collection(db, "posts", d.id, "dislikes"));
+      const reaccionesSnap = await getDocs(collection(db, "posts", d.id, "reacciones"));
+      const conteo: ConteoReacciones = {};
+      reaccionesSnap.docs.forEach((r) => {
+        const tipo = r.data().tipo as TipoReaccion;
+        conteo[tipo] = (conteo[tipo] || 0) + 1;
+      });
       if (email) {
-        nuevosLikes[d.id] = likesSnap.docs.some((l) => l.id === email);
-        nuevosDislikes[d.id] = dislikesSnap.docs.some((l) => l.id === email);
+        const miDoc = reaccionesSnap.docs.find((r) => r.id === email);
+        nuevasMisReacciones[d.id] = (miDoc?.data().tipo as TipoReaccion) || null;
       }
-      return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSnap.docs.length, ...d.data() };
+      return { id: d.id, reaccionesConteo: conteo, ...d.data() };
     }));
     setPosts(data);
     if (email) {
-      setLikes((prev: any) => ({ ...prev, ...nuevosLikes }));
-      setDislikes((prev: any) => ({ ...prev, ...nuevosDislikes }));
+      setMisReacciones((prev) => ({ ...prev, ...nuevasMisReacciones }));
     }
   };
 
@@ -303,44 +356,52 @@ export default function Home() {
   const cargarComentarios = async (postId: string) => {
     const q = query(collection(db, "posts", postId, "comentarios"), orderBy("fecha", "asc"));
     const snapshot = await getDocs(q);
+    const nuevasMisReacciones: Record<string, TipoReaccion | null> = {};
     const data = await Promise.all(snapshot.docs.map(async (d) => {
-      const likesSnap = await getDocs(collection(db, "posts", postId, "comentarios", d.id, "likes"));
-      const dislikesSnap = await getDocs(collection(db, "posts", postId, "comentarios", d.id, "dislikes"));
-      const userLike = likesSnap.docs.find(l => l.id === user?.email);
-      const userDislike = dislikesSnap.docs.find(l => l.id === user?.email);
-      setLikesComentarios((prev: any) => ({ ...prev, [d.id]: !!userLike }));
-      setDislikesComentarios((prev: any) => ({ ...prev, [d.id]: !!userDislike }));
-      return { id: d.id, likesCount: likesSnap.docs.length, dislikesCount: dislikesSnap.docs.length, ...d.data() };
+      const reaccionesSnap = await getDocs(collection(db, "posts", postId, "comentarios", d.id, "reacciones"));
+      const conteo: ConteoReacciones = {};
+      reaccionesSnap.docs.forEach((r) => {
+        const tipo = r.data().tipo as TipoReaccion;
+        conteo[tipo] = (conteo[tipo] || 0) + 1;
+      });
+      const miDoc = reaccionesSnap.docs.find((r) => r.id === user?.email);
+      nuevasMisReacciones[d.id] = (miDoc?.data().tipo as TipoReaccion) || null;
+      return { id: d.id, reaccionesConteo: conteo, ...d.data() };
     }));
+    setMisReaccionesComentarios((prev) => ({ ...prev, ...nuevasMisReacciones }));
     setComentarios((prev: any) => ({ ...prev, [postId]: data }));
   };
 
-  const darLikeComentario = async (postId: string, comentarioId: string) => {
+  // Igual que reaccionar()/quitarReaccion() de arriba, pero para comentarios
+  // — mismo modelo de datos (posts/{id}/comentarios/{id}/reacciones), así
+  // que se recarga el comentario tras cada cambio en vez de actualizar el
+  // conteo localmente (los comentarios ya se recargan así desde antes).
+  const reaccionarComentario = async (postId: string, comentarioId: string, tipo: TipoReaccion) => {
     if (!user?.email) return;
-    const likeRef = doc(db, "posts", postId, "comentarios", comentarioId, "likes", user.email);
-    if (likesComentarios[comentarioId]) {
-      await deleteDoc(likeRef);
-      setLikesComentarios((prev: any) => ({ ...prev, [comentarioId]: false }));
-    } else {
-      await setDoc(likeRef, { email: user.email, fecha: serverTimestamp() });
-      setLikesComentarios((prev: any) => ({ ...prev, [comentarioId]: true }));
-      setLikeComentarioJustPopped((prev) => ({ ...prev, [comentarioId]: true }));
-      setTimeout(() => setLikeComentarioJustPopped((prev) => ({ ...prev, [comentarioId]: false })), 400);
-    }
+    const ref = doc(db, "posts", postId, "comentarios", comentarioId, "reacciones", user.email);
+    await setDoc(ref, { tipo, fecha: serverTimestamp() });
+    setMisReaccionesComentarios((prev) => ({ ...prev, [comentarioId]: tipo }));
+    setReaccionComentarioJustPopped((prev) => ({ ...prev, [comentarioId]: true }));
+    setTimeout(() => setReaccionComentarioJustPopped((prev) => ({ ...prev, [comentarioId]: false })), 400);
     await cargarComentarios(postId);
   };
 
-  const darDislikeComentario = async (postId: string, comentarioId: string) => {
+  const quitarReaccionComentario = async (postId: string, comentarioId: string) => {
     if (!user?.email) return;
-    const dislikeRef = doc(db, "posts", postId, "comentarios", comentarioId, "dislikes", user.email);
-    if (dislikesComentarios[comentarioId]) {
-      await deleteDoc(dislikeRef);
-      setDislikesComentarios((prev: any) => ({ ...prev, [comentarioId]: false }));
-    } else {
-      await setDoc(dislikeRef, { email: user.email, fecha: serverTimestamp() });
-      setDislikesComentarios((prev: any) => ({ ...prev, [comentarioId]: true }));
-    }
+    const ref = doc(db, "posts", postId, "comentarios", comentarioId, "reacciones", user.email);
+    await deleteDoc(ref);
+    setMisReaccionesComentarios((prev) => ({ ...prev, [comentarioId]: null }));
     await cargarComentarios(postId);
+  };
+
+  const clicReaccionComentarioPrincipal = (postId: string, comentarioId: string) => {
+    if (misReaccionesComentarios[comentarioId]) quitarReaccionComentario(postId, comentarioId);
+    else reaccionarComentario(postId, comentarioId, "me_gusta");
+  };
+
+  const elegirReaccionComentario = (postId: string, comentarioId: string, tipo: TipoReaccion) => {
+    if (misReaccionesComentarios[comentarioId] === tipo) quitarReaccionComentario(postId, comentarioId);
+    else reaccionarComentario(postId, comentarioId, tipo);
   };
 
   const toggleComentarios = async (postId: string) => {
@@ -351,11 +412,13 @@ export default function Home() {
   const publicarComentario = async (postId: string, postAutorEmail: string) => {
     const texto = nuevoComentario[postId];
     if (!texto?.trim()) return;
+    const menciones = extraerMenciones(texto, directorio);
     await addDoc(collection(db, "posts", postId, "comentarios"), {
       texto,
       autor: user.displayName || user.email,
       email: user.email,
       fecha: serverTimestamp(),
+      menciones,
     });
     if (postAutorEmail !== user.email) {
       await addDoc(collection(db, "notificaciones"), {
@@ -366,8 +429,27 @@ export default function Home() {
         fecha: serverTimestamp(),
       });
     }
+    await notificarMenciones(menciones, "un comentario");
     setNuevoComentario((prev: any) => ({ ...prev, [postId]: "" }));
     await cargarComentarios(postId);
+  };
+
+  // Notifica a cada persona mencionada (@Nombre) — se excluye al propio autor
+  // por si se menciona a sí mismo sin querer.
+  const notificarMenciones = async (emails: string[], contexto: "una publicación" | "un comentario") => {
+    await Promise.all(
+      emails
+        .filter((email) => email !== user.email)
+        .map((email) =>
+          addDoc(collection(db, "notificaciones"), {
+            para: email,
+            de: user.displayName || user.email,
+            mensaje: `te mencionó en ${contexto}`,
+            leida: false,
+            fecha: serverTimestamp(),
+          })
+        )
+    );
   };
 
   const publicar = async () => {
@@ -383,6 +465,7 @@ export default function Home() {
       archivoUrl = data.secure_url;
       archivoNombre = archivoSeleccionado.name;
     }
+    const menciones = extraerMenciones(contenido, directorio);
     await addDoc(collection(db, "posts"), {
       tipo: tipoSeleccionado,
       contenido,
@@ -393,7 +476,9 @@ export default function Home() {
       ...(privacidad === "especifico" && { visiblePara }),
       ...(archivoUrl && { archivoUrl, archivoNombre }),
       hashtags: extraerHashtags(contenido),
+      menciones,
     });
+    await notificarMenciones(menciones, "una publicación");
     setContenido("");
     setArchivoSeleccionado(null);
     setShowComposer(false);
@@ -621,13 +706,15 @@ export default function Home() {
             </div>
             {showComposer && (
               <div className="mt-4">
-                <textarea
+                <CampoConMenciones
+                  tipo="textarea"
                   ref={composerRef}
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-sm text-slate-700 dark:text-slate-300 resize-none focus:outline-none focus:border-blue-400"
                   rows={4}
-                  placeholder={`Escribe tu ${tipoSeleccionado.toLowerCase()} aquí...`}
-                  value={contenido}
-                  onChange={(e) => setContenido(e.target.value)}
+                  placeholder={`Escribe tu ${tipoSeleccionado.toLowerCase()} aquí... usa @ para mencionar a alguien`}
+                  valor={contenido}
+                  onCambiar={setContenido}
+                  directorio={directorio}
                 />
                 <div className="mt-2">
                   <StickersRapidos
@@ -821,7 +908,7 @@ export default function Home() {
               </div>
               {post.tipo === "Compartido" ? (
                 <div className="mb-3">
-                  <ContenidoConHashtags texto={post.contenido} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3" />
+                  <ContenidoConHashtags texto={post.contenido} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3" directorio={directorio} />
                   <div className="border border-slate-200 dark:border-slate-800 rounded-xl p-3 bg-slate-50 dark:bg-slate-800">
                     <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-1.5">
                       <Repeat2 size={12} /> Publicación original de {post.repostOriginal?.autor || "un usuario"}
@@ -831,12 +918,12 @@ export default function Home() {
                         {post.repostOriginal.tipo}
                       </span>
                     )}
-                    <ContenidoConHashtags texto={post.repostOriginal?.contenido} className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed" />
+                    <ContenidoConHashtags texto={post.repostOriginal?.contenido} className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed" directorio={directorio} />
                   </div>
                 </div>
               ) : (
                 <>
-                  <ContenidoConHashtags texto={post.contenido} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3" />
+                  <ContenidoConHashtags texto={post.contenido} className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3" directorio={directorio} />
                   {post.archivoUrl && /\.(jpg|jpeg|png|gif|webp)$/i.test(post.archivoNombre || "") ? (
                     <img
                       src={post.archivoUrl}
@@ -852,30 +939,13 @@ export default function Home() {
                 </>
               )}
               <div className="flex gap-3 border-t border-slate-100 dark:border-slate-800 pt-3 items-center">
-                <button
-                  onClick={() => darLike(post.id, post.email)}
-                  className={`flex items-center gap-1 text-xs font-semibold transition-all duration-200 ${likes[post.id] ? "text-red-500 scale-110" : "text-slate-400 hover:text-red-500"}`}
-                >
-                  <Heart
-                    size={14}
-                    fill={likes[post.id] ? "currentColor" : "none"}
-                    className={likeJustPopped[post.id] ? "animate-heart-pop" : ""}
-                  />{" "}
-                  {post.likesCount || 0}
-                </button>
-                {post.email === user?.email && (
-                  <span className="flex items-center gap-1 text-xs text-slate-400 font-semibold">
-                    <ThumbsDown size={14} /> {post.dislikesCount || 0}
-                  </span>
-                )}
-                {post.email !== user?.email && (
-                  <button
-                    onClick={() => darDislike(post.id)}
-                    className={`flex items-center gap-1 text-xs font-semibold transition-all duration-200 ${dislikes[post.id] ? "text-slate-700 dark:text-slate-300 scale-110" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-400"}`}
-                  >
-                    <ThumbsDown size={14} fill={dislikes[post.id] ? "currentColor" : "none"} />
-                  </button>
-                )}
+                <BotonReaccion
+                  miReaccion={misReacciones[post.id]}
+                  onClicPrincipal={() => clicReaccionPrincipal(post.id, post.email)}
+                  onElegir={(tipo) => elegirReaccion(post.id, tipo, post.email)}
+                  justPopped={reaccionJustPopped[post.id]}
+                />
+                <ResumenReacciones conteo={post.reaccionesConteo} />
                 <button onClick={() => toggleComentarios(post.id)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-blue-500 font-semibold transition">
                   <MessageCircle size={14} /> {showComentarios[post.id] ? "Ocultar" : "Comentar"}
                 </button>
@@ -928,25 +998,16 @@ export default function Home() {
                           {ADMINS_LOCAL.includes(c.email) && <InsigniaVerificada tipo="admin" size={11} />}
                           {!ADMINS_LOCAL.includes(c.email) && maestrosEmails.includes(c.email) && <InsigniaVerificada tipo="maestro" size={11} />}
                         </p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">{c.texto}</p>
-                        <div className="flex gap-2 mt-1">
-                          <button
-                            onClick={() => darLikeComentario(post.id, c.id)}
-                            className={`flex items-center gap-1 text-xs font-semibold transition ${likesComentarios[c.id] ? "text-red-500" : "text-slate-400 hover:text-red-500"}`}
-                          >
-                            <Heart
-                              size={12}
-                              fill={likesComentarios[c.id] ? "currentColor" : "none"}
-                              className={likeComentarioJustPopped[c.id] ? "animate-heart-pop" : ""}
-                            />{" "}
-                            {c.likesCount || 0}
-                          </button>
-                          <button
-                            onClick={() => darDislikeComentario(post.id, c.id)}
-                            className={`flex items-center gap-1 text-xs font-semibold transition ${dislikesComentarios[c.id] ? "text-slate-700 dark:text-slate-300" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-400"}`}
-                          >
-                            <ThumbsDown size={12} fill={dislikesComentarios[c.id] ? "currentColor" : "none"} /> {c.dislikesCount || 0}
-                          </button>
+                        <ContenidoConHashtags texto={c.texto} className="text-xs text-slate-600 dark:text-slate-400" directorio={directorio} />
+                        <div className="flex items-center gap-2 mt-1">
+                          <BotonReaccion
+                            miReaccion={misReaccionesComentarios[c.id]}
+                            onClicPrincipal={() => clicReaccionComentarioPrincipal(post.id, c.id)}
+                            onElegir={(tipo) => elegirReaccionComentario(post.id, c.id, tipo)}
+                            justPopped={reaccionComentarioJustPopped[c.id]}
+                            compacto
+                          />
+                          <ResumenReacciones conteo={c.reaccionesConteo} compacto />
                         </div>
                       </div>
                     </div>
@@ -971,14 +1032,15 @@ export default function Home() {
                       obtenerElemento={() => comentarioInputRefs.current[post.id] ?? null}
                       posicionPanel="bottom-full mb-2 left-0"
                     />
-                    <input
-                      ref={(el) => { comentarioInputRefs.current[post.id] = el; }}
-                      type="text"
-                      placeholder="Escribe un comentario..."
-                      value={nuevoComentario[post.id] || ""}
-                      onChange={(e) => setNuevoComentario((prev: any) => ({ ...prev, [post.id]: e.target.value }))}
-                      onKeyDown={(e) => e.key === "Enter" && publicarComentario(post.id, post.email)}
-                      className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-400"
+                    <CampoConMenciones
+                      tipo="input"
+                      ref={(el: any) => { comentarioInputRefs.current[post.id] = el; }}
+                      placeholder="Escribe un comentario... usa @ para mencionar"
+                      valor={nuevoComentario[post.id] || ""}
+                      onCambiar={(nuevoValor) => setNuevoComentario((prev: any) => ({ ...prev, [post.id]: nuevoValor }))}
+                      onEnter={() => publicarComentario(post.id, post.email)}
+                      directorio={directorio}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-400"
                     />
                     <button onClick={() => publicarComentario(post.id, post.email)} className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold transition active:scale-95">
                       Enviar
