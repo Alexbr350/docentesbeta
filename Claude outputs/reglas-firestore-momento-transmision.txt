@@ -1,0 +1,53 @@
+TAREA — Momentos colaborativos + Transmisión en vivo: notas sobre reglas de Firestore
+=======================================================================================
+
+Igual que con el chat de "Pedir ayuda", no encontré un archivo de reglas en tu
+repositorio, así que esto es solo para que lo revises en la consola de
+Firebase (Firestore Database > Reglas) si quieres reforzar la seguridad. Nada
+de esto es obligatorio para que la función trabaje — es una recomendación.
+
+1) Colección `calendario_escolar` (campos nuevos: momentoActivo, autorizados)
+------------------------------------------------------------------------------
+Estos campos solo se escriben desde el panel de Admin (app/admin/page.tsx),
+así que si tu regla actual para `calendario_escolar` ya restringe los
+`create`/`update` a administradores (por ejemplo, verificando el email contra
+tu lista de ADMINS), no necesitas cambiar nada — los campos nuevos quedan
+protegidos igual que el resto del documento.
+
+2) Colección `stories` (campo nuevo opcional: eventoId)
+---------------------------------------------------------
+El campo `eventoId` lo escribe el propio usuario al subir su historia (como
+ya pasa con `imagenUrl`, `autor`, etc.), así que tampoco necesita una regla
+nueva por sí solo. Si quieres reforzarlo, podrías validar que quien lo suba
+esté realmente autorizado:
+
+  allow create: if request.auth != null
+    && request.resource.data.email == request.auth.token.email
+    && (
+      !("eventoId" in request.resource.data)
+      || get(/databases/$(database)/documents/calendario_escolar/$(request.resource.data.eventoId)).data.autorizados.hasAny([request.auth.token.email])
+    );
+
+Esto es opcional: sin esta validación, cualquier usuario autenticado podría
+técnicamente poner un `eventoId` en su propia historia sin haber sido
+autorizado — no podría dañar los datos de nadie más, pero sí aparecer en un
+álbum al que no estaba invitado.
+
+3) Colección nueva `configuracion` (documento `transmision`)
+----------------------------------------------------------------
+Esta es la más importante de revisar: cualquier usuario autenticado podría,
+en teoría, intentar escribir directamente en `configuracion/transmision` si
+no hay una regla que lo impida (por ejemplo, activando una transmisión falsa
+o cambiando el video). Te recomiendo una regla explícita como:
+
+  match /configuracion/{docId} {
+    allow read: if request.auth != null;
+    allow write: if request.auth != null && request.auth.token.email in [
+      // pega aquí los mismos emails de administrador que ya usas en tu
+      // lista de ADMINS (app/lib/admins.ts)
+    ];
+  }
+
+Si me compartes cómo restringes hoy la escritura a admins en tus reglas
+actuales (si ya tienes ese patrón en otra colección), te doy el texto exacto
+para copiar y pegar en vez de este ejemplo genérico.

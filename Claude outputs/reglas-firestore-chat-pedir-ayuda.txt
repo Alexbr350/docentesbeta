@@ -1,0 +1,90 @@
+TAREA 2 — Reglas de Firestore para "Responder en privado" en publicaciones de "Pedir ayuda"
+==============================================================================================
+
+QUÉ CAMBIÓ EN EL CÓDIGO
+------------------------
+Ahora, cuando alguien le escribe por chat privado a una persona que NO es su
+amigo (porque le dio clic a "Responder en privado" en una publicación de tipo
+"Pedir ayuda"), el mensaje que se guarda en la colección `mensajes` incluye dos
+campos nuevos, además de los que ya existían (conversacion, de, deNombre, para,
+texto, fecha):
+
+  - origenPostId: "abc123"      -> el ID de la publicación de "Pedir ayuda" que
+                                    justifica el mensaje
+  - origenPeticionAyuda: true   -> bandera simple para identificar el caso
+
+Estos dos campos se agregan automáticamente a TODOS los mensajes de esa
+conversación (no solo al primero), tanto si los escribe quien pidió ayuda como
+quien está respondiendo — así, si más adelante agregas una regla de seguridad,
+puede revisar cualquier mensaje de la conversación, no solo el inicial.
+
+Si dos personas SÍ son amigos, estos campos simplemente no se envían (como
+antes).
+
+POR QUÉ TE AVISO ESTO
+-----------------------
+No encontré un archivo "firestore.rules" en tu proyecto (ni firebase.json, ni
+.firebaserc), lo cual significa que tus reglas de seguridad de Firestore están
+configuradas directamente en la consola de Firebase, no en el código. Por eso
+no puedo editarlas yo mismo — te dejo aquí la explicación para que decidas si
+quieres (y cómo) ajustarlas.
+
+¿ES OBLIGATORIO CAMBIAR LAS REGLAS?
+-------------------------------------
+Depende de lo que ya tengas configurado en la consola de Firebase para la
+colección `mensajes`:
+
+1. Si tu regla actual para crear mensajes SOLO exige que el usuario esté
+   autenticado (algo como "allow create: if request.auth != null"), entonces
+   NO necesitas cambiar nada — ya permite escribir mensajes entre cualquier
+   par de usuarios, amigos o no. El código ya funciona con esa regla.
+
+2. Si tu regla actual EXIGE que el remitente y el destinatario sean amigos
+   (por ejemplo, verificando que exista un documento en la colección `amigos`
+   antes de permitir el `create`), entonces esa regla bloquearía los mensajes
+   de "Pedir ayuda" entre no-amigos, y sí necesitas agregar una excepción.
+
+EJEMPLO DE EXCEPCIÓN (si aplica el caso 2)
+--------------------------------------------
+La idea general sería algo así (ajusta los nombres de campos/colecciones si
+los tuyos son distintos):
+
+  match /mensajes/{mensajeId} {
+    allow create: if request.auth != null
+      && request.auth.token.email == request.resource.data.de
+      && (
+        sonAmigos(request.auth.token.email, request.resource.data.para)
+        ||
+        (
+          request.resource.data.origenPeticionAyuda == true
+          && request.resource.data.origenPostId is string
+          && existePublicacionDeAyuda(request.resource.data.origenPostId, request.resource.data.para)
+        )
+      );
+  }
+
+  function sonAmigos(usuario, otro) {
+    return exists(/databases/$(database)/documents/amigos/$(usuario + "_" + otro))
+      || exists(/databases/$(database)/documents/amigos/$(otro + "_" + usuario));
+    // Ajusta esto a como realmente busques amistad en tu regla actual —
+    // esto es solo un ejemplo, no conozco el nombre exacto de tus documentos.
+  }
+
+  function existePublicacionDeAyuda(postId, autorEmail) {
+    let post = get(/databases/$(database)/documents/posts/$(postId)).data;
+    return post.tipo == "Pedir ayuda" && post.email == autorEmail;
+  }
+
+Esto verifica que el `postId` etiquetado realmente exista, que sea de tipo
+"Pedir ayuda", y que el autor de esa publicación sea la persona a la que se le
+está escribiendo (para que nadie pueda inventar un origenPostId falso para
+saltarse la restricción de amistad).
+
+QUÉ NECESITO DE TI PARA DARTE UNA REGLA EXACTA
+-------------------------------------------------
+Si me compartes el texto actual de tu regla para la colección `mensajes` (la
+puedes copiar desde Firebase Console > Firestore Database > Reglas), te puedo
+dar el ajuste exacto en vez de un ejemplo genérico. Si prefieres, también
+puedo dejarlo así y simplemente confirmas si tu regla actual ya permite
+mensajes entre cualquier usuario autenticado (caso 1) — en ese caso no hay
+que tocar nada.
